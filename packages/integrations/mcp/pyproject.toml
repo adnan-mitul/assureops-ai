@@ -1,0 +1,15 @@
+[project]
+name = "assureops-mcp-reference"
+version = "0.2.0"
+description = "Reference MCP integration: controlled tool server, enforcement gateway and synthetic refund agent"
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["assureops_mcp*"]
+
+[tool.setuptools.package-data]
+assureops_mcp = ["docs.json", "agent/releases/*/*"]

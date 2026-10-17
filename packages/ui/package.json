@@ -1,0 +1,24 @@
+{
+  "name": "@assureops/ui",
+  "version": "0.2.0",
+  "private": true,
+  "description": "Shared accessible design system, evidence views and session helpers for both portals",
+  "exports": {
+    "./client": "./src/client.ts",
+    "./components": "./src/components.tsx",
+    "./charts": "./src/charts.tsx",
+    "./evidence-drawer": "./src/evidence-drawer.tsx",
+    "./format": "./src/format.ts",
+    "./shell": "./src/shell.tsx",
+    "./server/oidc": "./src/server/oidc.ts",
+    "./server/session": "./src/server/session.ts",
+    "./theme.css": "./src/theme.css"
+  },
+  "peerDependencies": {
+    "clsx": "^2.1.1",
+    "lucide-react": "^0.468.0",
+    "next": "16.4.2",
+    "react": "19.3.0",
+    "recharts": "^2.15.0"
+  }
+}

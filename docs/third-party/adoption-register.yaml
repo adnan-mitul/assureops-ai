@@ -1,0 +1,20 @@
+# Adoption register (plan §30.3). Pins stay empty until an actual reviewed acquisition.
+- name: REA
+  repository: https://github.com/morluto/rea
+  reviewed_commit: null
+  status: not_adopted
+  note: Adapter work package EX09 not started; no code copied.
+- name: ECC
+  repository: https://github.com/affaan-m/ECC
+  reviewed_commit: null
+  status: practices_adapted
+  note: Research/verify/review loop adapted as AGENTS.md, docs/decisions and scripts/verify; no code or hooks imported.
+- name: MCP Python SDK
+  package: mcp==2.3.0
+  license: MIT
+  status: adopted
+  used_in: packages/integrations/mcp
+- name: Keycloak
+  image: quay.io/keycloak/keycloak:26.0.7
+  license: Apache-2.0
+  status: adopted (development identity provider)

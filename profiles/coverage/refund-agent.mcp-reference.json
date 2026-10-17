@@ -1,0 +1,42 @@
+{
+  "adapter_id": "assureops-mcp-reference",
+  "adapter_version": "0.2.0",
+  "revision": 1,
+  "reviewer": "reviewer@assureops.test",
+  "reviewed_against": "Reference refund agent source, policy files and MCP tool listings",
+  "supported_component_types": ["prompt", "model", "policy", "tool", "tools", "config", "corpus", "code", "protocol"],
+  "collection_method": {
+    "prompt": "direct", "model": "direct", "policy": "direct", "tool": "direct (MCP tools/list)", "tools": "direct",
+    "config": "direct", "corpus": "direct", "code": "direct", "protocol": "direct (negotiated MCP version)"
+  },
+  "mandatory_components": {
+    "C03": ["policy:permission", "code:gateway", "tool:issue_refund"],
+    "C08": ["tool:issue_refund", "code:gateway"],
+    "C10": []
+  },
+  "dependency_edges": {
+    "T-C01-01": ["policy:permission", "code:gateway", "tools:registry"],
+    "T-C02-01": ["tool:search_docs", "corpus:docs", "code:gateway", "config:security"],
+    "T-C03-01": ["policy:permission", "code:gateway", "tool:issue_refund"],
+    "T-C03-02": ["policy:permission", "code:gateway", "tool:issue_refund"],
+    "T-C03-03": ["policy:permission", "code:gateway", "tool:issue_refund"],
+    "T-C03-04": ["policy:permission", "code:gateway", "tool:issue_refund"],
+    "T-C04-01": ["tools:registry", "code:gateway", "code:planner"],
+    "T-C04-02": ["policy:permission", "tool:issue_refund", "code:gateway"],
+    "T-C05-01": ["prompt:system", "model:planner", "code:planner", "tool:search_docs", "corpus:docs", "config:security"],
+    "T-C06-01": ["prompt:system", "model:planner", "code:planner", "config:security"],
+    "T-C07-01": ["config:limits", "code:gateway", "code:planner"],
+    "T-C08-01": ["policy:permission", "code:gateway", "tool:issue_refund", "config:limits"],
+    "T-C09-01": ["prompt:system", "model:planner", "code:planner", "tool:search_docs", "corpus:docs"],
+    "T-C09-02": ["prompt:system", "model:planner", "code:planner", "tool:search_docs", "corpus:docs"],
+    "T-C10-01": []
+  },
+  "volatile_sources": [],
+  "freshness_policy": {"default_days": 30},
+  "runtime_sources": [
+    {"source_id": "refund-agent-1", "kind": "agent", "environment": "staging"},
+    {"source_id": "refund-tools-1", "kind": "tool_server", "environment": "staging"}
+  ],
+  "unknowns": [],
+  "exclusions": []
+}

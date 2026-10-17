@@ -1,0 +1,40 @@
+/* Shared AssureOps design tokens (plan §34.2). Each portal imports this after Tailwind. */
+@theme {
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+  --font-mono: ui-monospace, SFMono-Regular, Menlo, monospace;
+
+  --color-canvas: #f4f8f5;
+  --color-surface: #ffffff;
+  --color-line: #d7e2da;
+  --color-ink: #111827;
+  --color-muted: #4b5563;
+
+  --color-brand-50: #eaf3ed;
+  --color-brand-100: #d3f5e1;
+  --color-brand-500: #16a34a;
+  --color-brand-600: #15803d;
+  --color-brand-700: #166534;
+  --color-brand-800: #14532d;
+}
+
+body {
+  background: var(--color-canvas);
+  color: var(--color-ink);
+}
+
+:focus-visible {
+  outline: 2px solid var(--color-brand-600);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+@media print {
+  aside, header, nav, .print\:hidden { display: none !important; }
+  body { background: white; }
+}

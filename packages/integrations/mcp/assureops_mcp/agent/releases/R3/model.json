@@ -1,0 +1,5 @@
+{
+  "planner": "rule-based-planner",
+  "version": "0.1.0",
+  "note": "Deterministic stand-in for an LLM planner so demo results are reproducible"
+}

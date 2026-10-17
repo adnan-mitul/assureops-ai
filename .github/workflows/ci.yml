@@ -1,0 +1,49 @@
+# Pull-request gate (plan §36.2–36.4). Written for the first milestone; not yet exercised on GitHub.
+name: ci
+on:
+  pull_request:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    services:
+      postgres:
+        image: postgres:16.4
+        env:
+          POSTGRES_PASSWORD: ci-only-superuser
+        ports: ["5441:5432"]
+        options: --health-cmd "pg_isready -U postgres" --health-interval 5s --health-retries 20
+      redis:
+        image: redis:7.4.1
+        ports: ["6391:6379"]
+    env:
+      OWNER_DATABASE_URL: postgresql+psycopg://assureops_owner:ci-owner@127.0.0.1:5441/assureops
+      DATABASE_URL: postgresql+psycopg://assureops_app:ci-app@127.0.0.1:5441/assureops
+    steps:
+      - uses: actions/checkout@v4  # pin to a reviewed full SHA before enabling
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+      - name: Create database roles
+        env:
+          PGPASSWORD: ci-only-superuser
+        run: |
+          psql -h 127.0.0.1 -p 5441 -U postgres -c "CREATE ROLE assureops_owner LOGIN PASSWORD 'ci-owner'"
+          psql -h 127.0.0.1 -p 5441 -U postgres -c "CREATE ROLE assureops_app LOGIN PASSWORD 'ci-app' NOBYPASSRLS"
+          psql -h 127.0.0.1 -p 5441 -U postgres -c "CREATE DATABASE assureops OWNER assureops_owner"
+      - name: Install
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+          npm ci
+      - name: Verify
+        run: bash scripts/verify/verify.sh

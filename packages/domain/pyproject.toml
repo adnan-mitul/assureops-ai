@@ -1,0 +1,12 @@
+[project]
+name = "assureops-domain"
+version = "0.2.0"
+description = "Authoritative evidence, control, action and case rules shared by the API and workers"
+requires-python = ">=3.12"
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["assureops_domain*"]

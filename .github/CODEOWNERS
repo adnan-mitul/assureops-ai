@@ -1,0 +1,8 @@
+# Security-sensitive paths need a qualified human reviewer (plan §32.2, §36.3).
+/.github/                                   @assureops/security
+/packages/domain/migrations/                @assureops/platform @assureops/security
+/packages/domain/assureops_domain/reducer.py @assureops/evidence
+/packages/domain/assureops_domain/approvals.py @assureops/security
+/packages/integrations/mcp/assureops_mcp/gateway.py @assureops/security
+/apps/api/assureops_api/auth.py             @assureops/security
+/profiles/                                  @assureops/evidence

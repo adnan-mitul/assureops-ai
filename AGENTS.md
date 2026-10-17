@@ -1,0 +1,33 @@
+# AssureOps — project instructions
+
+The execution specification is `AssureOps-AI-Production-Execution-Plan-v5.md` (kept outside this repo). Section numbers below refer to it.
+
+## Stack and boundaries
+- `apps/api` FastAPI: customer (`/v1/...`, customer token audience), staff (`/v1/staff/...`, staff audience) and integration (`/v1/integration/...`, `/v1/runtime/...`, service or source credentials) surfaces.
+- `apps/worker` Celery worker plus outbox dispatcher. PostgreSQL is the source of truth; Redis only schedules.
+- `packages/domain` authoritative rules: models, RLS migrations, reducer, approvals, findings, events, cases.
+- `packages/integrations/mcp` reference integration: controlled MCP tool server, enforcement gateway, synthetic refund agent (releases R1–R3).
+- `apps/customer-web`, `apps/staff-web` Next.js 16 portals sharing `packages/ui`; browsers talk only to their own BFF (`/api/...`), which holds the session server-side.
+- `profiles/` versioned control profile and coverage contracts. `infra/compose` Postgres, Redis, Keycloak.
+
+## Commands
+- Infra: `docker compose --env-file infra/compose/dev.env -f infra/compose/docker-compose.yml up -d`
+- Reset and seed: `.venv/Scripts/python scripts/seed.py --reset`
+- Backend services: `bash scripts/start_services.sh` (stop: `powershell -File scripts/stop_services.ps1`)
+- Portals: `npm run dev:customer`, `npm run dev:staff`
+- Checks: `bash scripts/verify/verify.sh`
+
+## Rules that must not regress
+- No model decides pass/fail, evidence validity, approvals or release gates (§13.1). Model routes stay disabled until qualified.
+- Separate state dimensions; never one green/red field (§6). Scores are "evidence support/coverage", never "safety" (§27).
+- Evidence reuse only through the reuse predicate; unmapped or partial collection forces conservative retest (§5, §14).
+- One approval authorizes one logical action; reservation is atomic; ambiguous outcomes reconcile, never re-execute (§10).
+- Runtime: blocked attempt ≠ violation; only tool-side verified unauthorized effects open incidents; closure is explicit and reviewed (§12).
+- Staff reach tenant data only via an active case assignment; separation of duties for publication and edge acceptance (§33).
+- Tenant tables keep `workspace_id`, composite FKs and RLS; the runtime role never gets BYPASSRLS (§8).
+
+## Prohibited data handling
+- No customer evidence, real credentials or real money in the repo, fixtures or logs. `infra/compose/dev.env` and rendered realm/env files are local test values and git-ignored.
+
+## Definition of done (§45.3)
+Domain contract, backend authorization, durable state and errors, both relevant UI paths, migration if needed, observable failure behavior, meaningful tests (including a negative test for security-sensitive work), documentation and rollback notes. Run `scripts/verify/verify.sh`.

@@ -1,0 +1,16 @@
+fastapi==0.143.3
+uvicorn==0.34.0
+httpx==0.28.1
+sqlalchemy==2.0.36
+pydantic==2.10.4
+psycopg[binary]==3.2.3
+alembic==1.14.0
+celery==5.4.0
+redis==5.2.1
+pyjwt[crypto]==2.10.1
+mcp==2.3.0
+pytest==8.3.4
+-e packages/domain
+-e packages/integrations/mcp
+-e apps/api
+-e apps/worker
