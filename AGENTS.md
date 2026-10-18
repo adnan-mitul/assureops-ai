@@ -7,8 +7,10 @@ The execution specification is `AssureOps-AI-Production-Execution-Plan-v5.md` (k
 - `apps/worker` Celery worker plus outbox dispatcher. PostgreSQL is the source of truth; Redis only schedules.
 - `packages/domain` authoritative rules: models, RLS migrations, reducer, approvals, findings, events, cases.
 - `packages/integrations/mcp` reference integration: controlled MCP tool server, enforcement gateway, synthetic refund agent (releases R1–R3).
+- `packages/integrations/connectors` versioned adapters (generic `assureops-http-json-v1`, `assureops-mcp-reference`), egress guard, scenario engine, permitted template catalogue, sandbox runner, event bridge. Tests are data (templates + typed args); never add code paths for one application.
+- `packages/ai` phase registry, providers (private, Groq), prompts, retrieval, validation, durable phase jobs. `packages/integrations/rea` source analysis (pinned REA or built-in collector).
 - `apps/customer-web`, `apps/staff-web` Next.js 16 portals sharing `packages/ui`; browsers talk only to their own BFF (`/api/...`), which holds the session server-side.
-- `profiles/` versioned control profile and coverage contracts. `infra/compose` Postgres, Redis, Keycloak.
+- `profiles/` control catalog, per-application profiles, connection templates, coverage contracts, qualification holdouts. `infra/compose` Postgres, Redis, Keycloak, SeaweedFS (private S3).
 
 ## Commands
 - Infra: `docker compose --env-file infra/compose/dev.env -f infra/compose/docker-compose.yml up -d`
@@ -16,6 +18,8 @@ The execution specification is `AssureOps-AI-Production-Execution-Plan-v5.md` (k
 - Backend services: `bash scripts/start_services.sh` (stop: `powershell -File scripts/stop_services.ps1`)
 - Portals: `npm run dev:customer`, `npm run dev:staff`
 - Checks: `bash scripts/verify/verify.sh`
+- Lab journeys: `.venv/Scripts/python scripts/lab_journey.py --app <app> --name <Name> --lab-readme <lab>/README.md`
+- Drills: `scripts/backup_restore_check.py`, `scripts/change_benchmark.py --app <app> --full-check`; staff OTP for local sign-in: `scripts/staff_otp.py <user>`
 
 ## Rules that must not regress
 - No model decides pass/fail, evidence validity, approvals or release gates (§13.1). Model routes stay disabled until qualified.
@@ -25,6 +29,9 @@ The execution specification is `AssureOps-AI-Production-Execution-Plan-v5.md` (k
 - Runtime: blocked attempt ≠ violation; only tool-side verified unauthorized effects open incidents; closure is explicit and reviewed (§12).
 - Staff reach tenant data only via an active case assignment; separation of duties for publication and edge acceptance (§33).
 - Tenant tables keep `workspace_id`, composite FKs and RLS; the runtime role never gets BYPASSRLS (§8).
+- Each application is assessed only with its own active profile; controls outside it stay visible as not assessed. Profile proposer ≠ activator.
+- Runners get one capsule (one frozen test, scoped credentials) and no platform secrets; requests stay on the connection origin, redirects are refused.
+- External model providers receive nothing unless the workspace allows it and the phase/model is qualified; a private outage never enables them.
 
 ## Prohibited data handling
 - No customer evidence, real credentials or real money in the repo, fixtures or logs. `infra/compose/dev.env` and rendered realm/env files are local test values and git-ignored.

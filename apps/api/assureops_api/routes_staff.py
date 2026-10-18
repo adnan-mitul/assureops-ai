@@ -11,18 +11,21 @@ from fastapi import APIRouter, Header
 from pydantic import BaseModel, Field
 from sqlalchemy import func, select
 
-from assureops_domain import cases, reducer
+from assureops_domain import cases, connections, reducer
 from assureops_domain.db import platform_session, tenant_session
 from assureops_domain.findings import FindingError, close_incident
 from assureops_domain.models import (
     Assessment, AssessmentCase, CaseAssignment, CaseIndex, CaseMessage, ChangeSet, DependencyEdge, EvidenceRequest, EvidenceReview, Finding,
-    FindingReview, Incident, JobStep, Outbox, Release, Report, ReportPublication, ReviewDecision, RuntimeEvent, StaffRole, TestRun, User,
+    FindingReview, Incident, JobStep, ModelQualification, Outbox, Release, Report, ReportPublication, ReviewDecision, RuntimeEvent, StaffRole,
+    TestRun, User, Workspace,
 )
-from assureops_domain.profile import canonical_hash, profile, profile_version
+from assureops_domain.profile import ProfileError, canonical_hash, control_catalog, profile_version, try_for_application
 
+from assureops_domain.config import settings
+
+from . import ai_routes
 from . import services as svc
 from .auth import Caller, StaffCaller, api_error
-from .routes_customer import MODEL_ROUTES
 
 router = APIRouter(prefix="/v1/staff", tags=["staff"])
 
@@ -207,7 +210,9 @@ def investigation(case_id: str, caller: Caller = StaffCaller):
             "edges": edges,
             "unmapped_components": sorted(set(release.manifest["components"]) - mapped) if release else [],
             "change": svc.change_json(change) if change else None,
-            "tests": profile()["tests"],
+            "tests": (try_for_application(s, app.id) or {"tests": []})["tests"],
+            "profile": svc.onboarding_status(s, app, try_for_application(s, app.id)),
+            "connection": svc.connection_json(s, app),
             "your_duty": a.duty,
         }
 
@@ -224,10 +229,10 @@ class EdgeReviewIn(BaseModel):
 def coverage_review(case_id: str, body: EdgeReviewIn, caller: Caller = StaffCaller):
     """Propose, accept or reject a dependency edge; a proposer cannot accept their own proposal."""
     a = assignment(caller, case_id)
-    if body.test_id not in profile()["tests_by_id"]:
-        raise api_error(422, "unknown_test", "test is not in the approved catalog")
     with tenant_session(a.workspace_id) as s:
         case = s.get(AssessmentCase, case_id)
+        if body.test_id not in (try_for_application(s, case.application_id) or {"tests_by_id": {}})["tests_by_id"]:
+            raise api_error(422, "unknown_test", "test is not in this application's active profile")
         edge = s.scalars(select(DependencyEdge).where(DependencyEdge.application_id == case.application_id, DependencyEdge.test_id == body.test_id,
                                                       DependencyEdge.component_id == body.component_id).with_for_update()).first()
         if body.action == "propose":
@@ -426,9 +431,10 @@ def review_report(case_id: str, body: ReviewIn, caller: Caller = StaffCaller):
             raise api_error(409, "stale_revision", "this report changed or was already decided; reload it")
         if report.drafted_by == caller.username:
             raise api_error(403, "separation_of_duties", "you drafted this report; another reviewer must decide")
-        latest = svc.latest_release(s, report.application_id)
-        if body.decision == "publish" and latest.id != report.release_id:
-            raise api_error(409, "snapshot_stale", f"a newer release ({latest.version}) exists; the analyst must draft a new snapshot")
+        if body.decision == "publish":
+            drift = svc.publication_drift(s, report)
+            if drift:
+                raise api_error(409, "snapshot_stale", "cannot publish: " + "; ".join(drift) + ". The analyst must draft a new snapshot.")
         s.add(ReviewDecision(workspace_id=a.workspace_id, report_id=report.id, reviewer=caller.username, decision=body.decision,
                              reason=body.reason, report_revision=report.revision))
         report.revision += 1
@@ -484,9 +490,12 @@ def close(incident_id: str, body: CloseIn, caller: Caller = StaffCaller):
         release = svc.latest_release(s, incident.application_id)
         try:
             closure = close_incident(s, incident, expected_revision=body.expected_revision, reviewer=caller.username, note=body.note,
-                                     state=reducer.readiness(s, incident.application_id, release))
+                                     state=reducer.readiness(s, incident.application_id, release, svc.app_profile(s, incident.application_id)))
         except FindingError as exc:
             raise api_error(409, exc.code, exc.detail)
+        s.flush()
+        after = reducer.readiness(s, incident.application_id, release, svc.app_profile(s, incident.application_id))
+        cases.sync_index(s, case, blockers=len(after["gate"]["blocking"]))  # queue metadata follows the reviewed closure
         audit(s, a.workspace_id, caller, "incident.close", incident.id, closure)
         return {"id": incident.id, "state": incident.state, "closure": closure}
 
@@ -520,8 +529,10 @@ def operations(caller: Caller = StaffCaller):
     return {
         "outbox": {"pending": pending, "oldest_age_seconds": round(now - oldest) if oldest else 0},
         "steps": steps, "jobs": jobs, "ingestion": {"events_last_5_minutes": events_last_5m},
-        "inference": {"routes_enabled": 0, "note": "No model route is qualified; semantic steps go to review."},
-        "runner": {"isolation": "local process (development)", "note": "Disposable sandbox isolation is a later work package."},
+        "inference": ai_routes.operations_summary(),
+        "runner": {"isolation": f"disposable {settings().runner_mode} per step", "environment": "scrubbed: no database, broker, storage or platform keys",
+                   "egress": "pinned to the connection origin; redirects refused; private targets only when ALLOW_PRIVATE_TARGETS is set",
+                   "allow_private_targets": settings().allow_private_targets},
     }
 
 
@@ -530,10 +541,73 @@ def governance(caller: Caller = StaffCaller):
     with platform_session() as p:
         staff = [{"user": u.username, "name": u.display_name, "roles": sorted(r.role for r in p.scalars(select(StaffRole).where(StaffRole.user_id == u.id, StaffRole.active.is_(True))))}
                  for u in p.scalars(select(User).where(User.kind == "staff"))]
+        qualifications = [{"phase": q.phase, "provider": q.provider, "model": q.model, "status": q.status, "dataset": q.dataset,
+                           "metrics": q.metrics, "recorded_by": q.recorded_by, "at": q.created_at}
+                          for q in p.scalars(select(ModelQualification).order_by(ModelQualification.created_at.desc()))]
+    from .auth import staff_mfa_required
+
     return {
-        "profile": {"version": profile_version(), "digest": profile()["digest"][:16], "controls": profile()["controls"],
-                    "gate_policy": profile()["gate_policy"], "tests": profile()["tests"], "requirements": profile()["requirements"]},
-        "model_routes": MODEL_ROUTES, "qualification_records": [],
+        "profile": {"version": control_catalog()["catalog_id"] + "-" + control_catalog()["version"], "digest": canonical_hash(control_catalog())[:16],
+                    "controls": control_catalog()["controls"], "gate_policy": {"version": "per application profile", "blocking_severities": ["critical", "high"]},
+                    "tests": [], "requirements": {}, "note": "Tests, gates and requirements are defined per application profile revision."},
+        "model_routes": ai_routes.route_table(None), "qualification_records": qualifications,
         "staff_permissions": staff,
-        "identity": {"provider": "Keycloak (OIDC)", "staff_mfa": "not enforced in local development; required before production"},
+        "identity": {"provider": "Keycloak (OIDC)",
+                     "staff_mfa": "enforced: staff tokens must carry a one-time-password authentication" if staff_mfa_required()
+                     else "not enforced (STAFF_MFA_REQUIRED=false)"},
     }
+
+
+# ---------------- Application profile review ----------------
+
+class StaffProfileIn(BaseModel):
+    profile: dict
+
+
+@router.post("/cases/{case_id}/profiles", status_code=201)
+def staff_propose_profile(case_id: str, body: StaffProfileIn, caller: Caller = StaffCaller):
+    a = assignment(caller, case_id, "analyst")
+    with tenant_session(a.workspace_id) as s:
+        case = s.get(AssessmentCase, case_id)
+        app = svc.get_application(s, case.application_id)
+        try:
+            row = connections.propose_profile(s, app, body.profile, source="analyst", actor=caller.username)
+        except connections.OnboardingError as exc:
+            raise api_error(422 if exc.code == "invalid_profile" else 409, exc.code, exc.detail)
+        audit(s, a.workspace_id, caller, "profile.propose", app.id, {"revision": row.revision})
+        return svc.profile_row_json(row)
+
+
+@router.get("/cases/{case_id}/profiles")
+def staff_profiles(case_id: str, caller: Caller = StaffCaller):
+    from assureops_domain.models import ApplicationProfile
+
+    a = assignment(caller, case_id)
+    with tenant_session(a.workspace_id) as s:
+        case = s.get(AssessmentCase, case_id)
+        return [svc.profile_row_json(r) for r in s.scalars(select(ApplicationProfile).where(ApplicationProfile.application_id == case.application_id)
+                                                          .order_by(ApplicationProfile.revision.desc()))]
+
+
+class StaffProfileDecisionIn(BaseModel):
+    revision: int
+    decision: str = Field(pattern=r"^(activate|reject)$")
+    note: str = Field(min_length=3)
+
+
+@router.post("/cases/{case_id}/profile-reviews")
+def staff_review_profile(case_id: str, body: StaffProfileDecisionIn, caller: Caller = StaffCaller):
+    a = assignment(caller, case_id, "reviewer")
+    caller.require_staff("senior_reviewer")
+    with tenant_session(a.workspace_id) as s:
+        case = s.get(AssessmentCase, case_id)
+        app = svc.get_application(s, case.application_id)
+        try:
+            row = (connections.activate_profile(s, app, body.revision, reviewer=caller.username, note=body.note) if body.decision == "activate"
+                   else connections.reject_profile(s, app, body.revision, reviewer=caller.username, note=body.note))
+        except connections.OnboardingError as exc:
+            raise api_error(403 if exc.code == "separation_of_duties" else 409, exc.code, exc.detail)
+        except ProfileError as exc:
+            raise api_error(422, exc.code, exc.detail)
+        audit(s, a.workspace_id, caller, f"profile.{body.decision}", app.id, {"revision": body.revision})
+        return svc.profile_row_json(row)

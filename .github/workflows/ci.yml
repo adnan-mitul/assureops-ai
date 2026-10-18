@@ -1,13 +1,27 @@
-# Pull-request gate (plan §36.2–36.4). Written for the first milestone; not yet exercised on GitHub.
+# Platform CI/CD (plan §36, integration plan I7).
+# research -> implement -> verify -> review discipline: every change runs the full verification gate below;
+# promotion is image-digest based, staged, and stops on any failed check.
+# Third-party actions are referenced by tag here; pin each to a reviewed full commit SHA before enabling on a shared repository.
 name: ci
 on:
   pull_request:
   push:
     branches: [main]
+  workflow_dispatch:
+    inputs:
+      rollback_digest:
+        description: "Roll production back to this previously promoted image digest (sha256:...)"
+        required: false
 permissions:
   contents: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/assureops
+
 jobs:
-  verify:
+  backend:
+    name: Backend, integration and security tests
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
@@ -23,16 +37,24 @@ jobs:
     env:
       OWNER_DATABASE_URL: postgresql+psycopg://assureops_owner:ci-owner@127.0.0.1:5441/assureops
       DATABASE_URL: postgresql+psycopg://assureops_app:ci-app@127.0.0.1:5441/assureops
+      ASSUREOPS_SECRET_KEY: ${{ secrets.CI_FERNET_TEST_KEY }}
+      EVIDENCE_BACKEND: s3
+      S3_ENDPOINT: http://127.0.0.1:9100
+      S3_ACCESS_KEY: ci-access
+      S3_SECRET_KEY: ci-secret-only-for-ci
+      ALLOW_PRIVATE_TARGETS: "true"
+      STAFF_MFA_REQUIRED: "true"
     steps:
-      - uses: actions/checkout@v4  # pin to a reviewed full SHA before enabling
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+      - name: Private object store (SeaweedFS S3)
+        run: |
+          mkdir -p /tmp/s3 && printf '{"identities":[{"name":"ci","credentials":[{"accessKey":"ci-access","secretKey":"ci-secret-only-for-ci"}],"actions":["Admin","Read","Write","List","Tagging"]}]}' > /tmp/s3/s3.json
+          docker run -d -p 127.0.0.1:9100:8333 -v /tmp/s3:/etc/seaweedfs chrislusf/seaweedfs:3.80 server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
       - name: Create database roles
         env:
           PGPASSWORD: ci-only-superuser
@@ -44,6 +66,140 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install -r requirements.txt
-          npm ci
-      - name: Verify
-        run: bash scripts/verify/verify.sh
+      - name: Migrations are reversible (upgrade, downgrade one step, upgrade)
+        working-directory: packages/domain
+        run: |
+          ../../.venv/bin/python -m alembic upgrade head
+          ../../.venv/bin/python -m alembic downgrade -1
+          ../../.venv/bin/python -m alembic upgrade head
+      - name: Tests (unit, integration, security, fault, AI contract)
+        run: .venv/bin/python -m pytest
+      - name: Dependency audit (Python)
+        run: .venv/bin/python -m pip install pip-audit==2.7.3 && .venv/bin/pip-audit -r requirements.txt --skip-editable
+      - name: Secret scan (tracked files)
+        run: bash scripts/verify/secret_scan.sh
+
+  frontend:
+    name: Portals typecheck, lint and production build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_PORTAL_ID: ci
+      - name: Dependency audit (npm)
+        run: npm audit --audit-level=high --omit=dev
+
+  images:
+    name: Immutable images with SBOM, provenance and signature
+    needs: [backend, frontend]
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write  # keyless signing
+    outputs:
+      api_digest: ${{ steps.api.outputs.digest }}
+      runner_digest: ${{ steps.runner.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: api
+        uses: docker/build-push-action@v6
+        with:
+          file: infra/api/Dockerfile
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ${{ env.IMAGE_PREFIX }}-api:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+      - id: runner
+        uses: docker/build-push-action@v6
+        with:
+          file: infra/runner/Dockerfile
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ${{ env.IMAGE_PREFIX }}-runner:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign by digest
+        run: |
+          cosign sign --yes ${{ env.IMAGE_PREFIX }}-api@${{ steps.api.outputs.digest }}
+          cosign sign --yes ${{ env.IMAGE_PREFIX }}-runner@${{ steps.runner.outputs.digest }}
+
+  staging:
+    name: Deploy to staging (compatible migrations first)
+    needs: images
+    runs-on: ubuntu-24.04
+    environment: staging
+    if: vars.DEPLOY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify signature before deploy
+        run: cosign verify --certificate-identity-regexp "^https://github.com/${{ github.repository }}/" --certificate-oidc-issuer https://token.actions.githubusercontent.com ${{ env.IMAGE_PREFIX }}-api@${{ needs.images.outputs.api_digest }}
+      - name: Promote
+        run: bash scripts/deploy/promote.sh staging ${{ needs.images.outputs.api_digest }} ${{ needs.images.outputs.runner_digest }}
+        env:
+          DEPLOY_TOKEN: ${{ secrets.STAGING_DEPLOY_TOKEN }}
+
+  canary:
+    name: Production canary
+    needs: [images, staging]
+    runs-on: ubuntu-24.04
+    environment: production-canary
+    if: vars.DEPLOY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: bash scripts/deploy/promote.sh canary ${{ needs.images.outputs.api_digest }} ${{ needs.images.outputs.runner_digest }}
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
+
+  production:
+    name: Production (after canary health gate)
+    needs: [images, canary]
+    runs-on: ubuntu-24.04
+    environment: production
+    if: vars.DEPLOY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: bash scripts/deploy/promote.sh production ${{ needs.images.outputs.api_digest }} ${{ needs.images.outputs.runner_digest }}
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
+
+  rollback:
+    name: Roll production back to a previous digest
+    if: github.event_name == 'workflow_dispatch' && inputs.rollback_digest != ''
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: bash scripts/deploy/promote.sh rollback ${{ inputs.rollback_digest }}
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}

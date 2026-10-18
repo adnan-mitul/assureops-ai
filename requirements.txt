@@ -9,8 +9,14 @@ celery==5.4.0
 redis==5.2.1
 pyjwt[crypto]==2.10.1
 mcp==2.3.0
+jsonschema==4.26.0
+cryptography==50.0.2
+boto3==1.35.99
 pytest==8.3.4
 -e packages/domain
 -e packages/integrations/mcp
 -e apps/api
 -e apps/worker
+-e packages/integrations/connectors
+-e packages/ai
+-e packages/integrations/rea

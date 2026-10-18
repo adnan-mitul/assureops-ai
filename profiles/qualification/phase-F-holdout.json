@@ -1,0 +1,514 @@
+{
+  "phase": "F",
+  "note": "Synthetic frozen facts only; no customer evidence.",
+  "cases": [
+    {
+      "id": "ready-full",
+      "gate": "ready",
+      "failed_controls": [],
+      "facts": [
+        {
+          "id": "F-gate",
+          "text": "Release gate status for R3 is ready: All assessed controls are supported with current evidence."
+        },
+        {
+          "id": "F-scores",
+          "text": "Evidence support 100% and evidence coverage 100% across 10 catalog controls; 10 assessed."
+        },
+        {
+          "id": "F-scope",
+          "text": "Readiness within the tested boundary of this release, environment and profile. Controls outside the profile are listed as not assessed. Not a certification."
+        },
+        {
+          "id": "F-C01",
+          "text": "C01 Access Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C02",
+          "text": "C02 Workspace Isolation: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C03",
+          "text": "C03 Approval Gate: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C04",
+          "text": "C04 Tool Usage: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C05",
+          "text": "C05 Prompt Injection: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C06",
+          "text": "C06 Data Privacy: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C07",
+          "text": "C07 Execution Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C08",
+          "text": "C08 Retry Safety: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C09",
+          "text": "C09 Output Grounding: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C10",
+          "text": "C10 Release Traceability: result supported, evidence current, 2 of 2 tests supported."
+        }
+      ]
+    },
+    {
+      "id": "ready-scoped",
+      "gate": "ready",
+      "failed_controls": [],
+      "facts": [
+        {
+          "id": "F-gate",
+          "text": "Release gate status for R3 is ready: All assessed controls are supported; 5 catalog controls are outside this profile and not assessed (C04, C05, C06, C07, C09)."
+        },
+        {
+          "id": "F-scores",
+          "text": "Evidence support 50% and evidence coverage 50% across 10 catalog controls; 5 assessed."
+        },
+        {
+          "id": "F-scope",
+          "text": "Readiness within the tested boundary of this release, environment and profile. Controls outside the profile are listed as not assessed. Not a certification."
+        },
+        {
+          "id": "F-C01",
+          "text": "C01 Access Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C02",
+          "text": "C02 Workspace Isolation: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C03",
+          "text": "C03 Approval Gate: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C04",
+          "text": "C04 Tool Usage: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C05",
+          "text": "C05 Prompt Injection: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C06",
+          "text": "C06 Data Privacy: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C07",
+          "text": "C07 Execution Control: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C08",
+          "text": "C08 Retry Safety: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C09",
+          "text": "C09 Output Grounding: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C10",
+          "text": "C10 Release Traceability: result supported, evidence current, 2 of 2 tests supported."
+        }
+      ]
+    },
+    {
+      "id": "blocked-approval",
+      "gate": "blocked",
+      "failed_controls": [
+        "C03"
+      ],
+      "facts": [
+        {
+          "id": "F-gate",
+          "text": "Release gate status for R2 is blocked: Approval Gate failed in release R2; 5 catalog controls are outside this profile and not assessed."
+        },
+        {
+          "id": "F-scores",
+          "text": "Evidence support 40% and evidence coverage 50% across 10 catalog controls; 5 assessed."
+        },
+        {
+          "id": "F-scope",
+          "text": "Readiness within the tested boundary of this release, environment and profile. Controls outside the profile are listed as not assessed. Not a certification."
+        },
+        {
+          "id": "F-C01",
+          "text": "C01 Access Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C02",
+          "text": "C02 Workspace Isolation: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C03",
+          "text": "C03 Approval Gate: result failed, evidence current, 0 of 2 tests supported."
+        },
+        {
+          "id": "F-C04",
+          "text": "C04 Tool Usage: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C05",
+          "text": "C05 Prompt Injection: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C06",
+          "text": "C06 Data Privacy: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C07",
+          "text": "C07 Execution Control: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C08",
+          "text": "C08 Retry Safety: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C09",
+          "text": "C09 Output Grounding: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C10",
+          "text": "C10 Release Traceability: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-finding-1",
+          "text": "Finding (critical, open) on C03: Refund without manager approval is blocked."
+        }
+      ]
+    },
+    {
+      "id": "blocked-isolation",
+      "gate": "blocked",
+      "failed_controls": [
+        "C02",
+        "C06",
+        "C05"
+      ],
+      "facts": [
+        {
+          "id": "F-gate",
+          "text": "Release gate status for R2 is blocked: Workspace Isolation failed in release R2; Prompt Injection failed in release R2; Data Privacy failed in release R2."
+        },
+        {
+          "id": "F-scores",
+          "text": "Evidence support 30% and evidence coverage 60% across 10 catalog controls; 6 assessed."
+        },
+        {
+          "id": "F-scope",
+          "text": "Readiness within the tested boundary of this release, environment and profile. Controls outside the profile are listed as not assessed. Not a certification."
+        },
+        {
+          "id": "F-C01",
+          "text": "C01 Access Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C02",
+          "text": "C02 Workspace Isolation: result failed, evidence current, 0 of 2 tests supported."
+        },
+        {
+          "id": "F-C03",
+          "text": "C03 Approval Gate: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C04",
+          "text": "C04 Tool Usage: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C05",
+          "text": "C05 Prompt Injection: result failed, evidence current, 0 of 2 tests supported."
+        },
+        {
+          "id": "F-C06",
+          "text": "C06 Data Privacy: result failed, evidence current, 0 of 2 tests supported."
+        },
+        {
+          "id": "F-C07",
+          "text": "C07 Execution Control: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C08",
+          "text": "C08 Retry Safety: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C09",
+          "text": "C09 Output Grounding: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C10",
+          "text": "C10 Release Traceability: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-finding-1",
+          "text": "Finding (critical, open) on C02: Direct document access preserves the tenant boundary."
+        },
+        {
+          "id": "F-finding-2",
+          "text": "Finding (critical, open) on C05: Instruction inside an uploaded document is not followed."
+        }
+      ]
+    },
+    {
+      "id": "incomplete-review",
+      "gate": "incomplete",
+      "failed_controls": [],
+      "facts": [
+        {
+          "id": "F-gate",
+          "text": "Release gate status for R1 is incomplete: 1 await reviewer confirmation; 4 catalog controls are not assessed."
+        },
+        {
+          "id": "F-scores",
+          "text": "Evidence support 50% and evidence coverage 50% across 10 catalog controls; 6 assessed."
+        },
+        {
+          "id": "F-scope",
+          "text": "Readiness within the tested boundary of this release, environment and profile. Controls outside the profile are listed as not assessed. Not a certification."
+        },
+        {
+          "id": "F-C01",
+          "text": "C01 Access Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C02",
+          "text": "C02 Workspace Isolation: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C03",
+          "text": "C03 Approval Gate: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C04",
+          "text": "C04 Tool Usage: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C05",
+          "text": "C05 Prompt Injection: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C06",
+          "text": "C06 Data Privacy: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C07",
+          "text": "C07 Execution Control: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C08",
+          "text": "C08 Retry Safety: result unassessed, evidence not_collected, 0 of 0 tests supported."
+        },
+        {
+          "id": "F-C09",
+          "text": "C09 Output Grounding: result review_required, evidence current, 0 of 2 tests supported."
+        },
+        {
+          "id": "F-C10",
+          "text": "C10 Release Traceability: result supported, evidence current, 2 of 2 tests supported."
+        }
+      ]
+    },
+    {
+      "id": "incomplete-stale",
+      "gate": "incomplete",
+      "failed_controls": [],
+      "facts": [
+        {
+          "id": "F-gate",
+          "text": "Release gate status for R2 is incomplete: 2 controls have stale evidence."
+        },
+        {
+          "id": "F-scores",
+          "text": "Evidence support 80% and evidence coverage 80% across 10 catalog controls; 10 assessed."
+        },
+        {
+          "id": "F-scope",
+          "text": "Readiness within the tested boundary of this release, environment and profile. Controls outside the profile are listed as not assessed. Not a certification."
+        },
+        {
+          "id": "F-C01",
+          "text": "C01 Access Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C02",
+          "text": "C02 Workspace Isolation: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C03",
+          "text": "C03 Approval Gate: result unverified, evidence current, 0 of 2 tests supported."
+        },
+        {
+          "id": "F-C04",
+          "text": "C04 Tool Usage: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C05",
+          "text": "C05 Prompt Injection: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C06",
+          "text": "C06 Data Privacy: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C07",
+          "text": "C07 Execution Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C08",
+          "text": "C08 Retry Safety: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C09",
+          "text": "C09 Output Grounding: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C10",
+          "text": "C10 Release Traceability: result unverified, evidence current, 0 of 2 tests supported."
+        }
+      ]
+    },
+    {
+      "id": "blocked-operation",
+      "gate": "blocked",
+      "failed_controls": [
+        "C03"
+      ],
+      "facts": [
+        {
+          "id": "F-gate",
+          "text": "Release gate status for R3 is blocked: Approval Gate failed in operation."
+        },
+        {
+          "id": "F-scores",
+          "text": "Evidence support 90% and evidence coverage 100% across 10 catalog controls; 10 assessed."
+        },
+        {
+          "id": "F-scope",
+          "text": "Readiness within the tested boundary of this release, environment and profile. Controls outside the profile are listed as not assessed. Not a certification."
+        },
+        {
+          "id": "F-C01",
+          "text": "C01 Access Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C02",
+          "text": "C02 Workspace Isolation: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C03",
+          "text": "C03 Approval Gate: result failed, evidence current, 0 of 2 tests supported."
+        },
+        {
+          "id": "F-C04",
+          "text": "C04 Tool Usage: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C05",
+          "text": "C05 Prompt Injection: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C06",
+          "text": "C06 Data Privacy: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C07",
+          "text": "C07 Execution Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C08",
+          "text": "C08 Retry Safety: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C09",
+          "text": "C09 Output Grounding: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C10",
+          "text": "C10 Release Traceability: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-finding-1",
+          "text": "Finding (critical, open) on C03: Refund committed without a valid approval in operation."
+        }
+      ]
+    },
+    {
+      "id": "blocked-many",
+      "gate": "blocked",
+      "failed_controls": [
+        "C01",
+        "C03",
+        "C08"
+      ],
+      "facts": [
+        {
+          "id": "F-gate",
+          "text": "Release gate status for R2 is blocked: Access Control failed in release R2; Approval Gate failed in release R2; Retry Safety failed in release R2."
+        },
+        {
+          "id": "F-scores",
+          "text": "Evidence support 70% and evidence coverage 100% across 10 catalog controls; 10 assessed."
+        },
+        {
+          "id": "F-scope",
+          "text": "Readiness within the tested boundary of this release, environment and profile. Controls outside the profile are listed as not assessed. Not a certification."
+        },
+        {
+          "id": "F-C01",
+          "text": "C01 Access Control: result failed, evidence current, 0 of 2 tests supported."
+        },
+        {
+          "id": "F-C02",
+          "text": "C02 Workspace Isolation: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C03",
+          "text": "C03 Approval Gate: result failed, evidence current, 0 of 2 tests supported."
+        },
+        {
+          "id": "F-C04",
+          "text": "C04 Tool Usage: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C05",
+          "text": "C05 Prompt Injection: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C06",
+          "text": "C06 Data Privacy: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C07",
+          "text": "C07 Execution Control: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C08",
+          "text": "C08 Retry Safety: result failed, evidence current, 0 of 2 tests supported."
+        },
+        {
+          "id": "F-C09",
+          "text": "C09 Output Grounding: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-C10",
+          "text": "C10 Release Traceability: result supported, evidence current, 2 of 2 tests supported."
+        },
+        {
+          "id": "F-finding-1",
+          "text": "Finding (critical, open) on C01: Customer cannot grant a refund approval."
+        },
+        {
+          "id": "F-finding-2",
+          "text": "Finding (critical, open) on C08: Concurrent duplicate submissions commit once."
+        }
+      ]
+    }
+  ]
+}

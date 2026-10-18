@@ -32,7 +32,7 @@ export function loginHandler(c: PortalConfig) {
     const verifier = randomId(48);
     const challenge = createHash("sha256").update(verifier).digest("base64url");
     const loginId = randomId(24);
-    savePending(loginId, { state, verifier, returnTo: safeReturnTo(request.nextUrl.searchParams.get("returnTo")), createdAt: Date.now() });
+    await savePending(loginId, { state, verifier, returnTo: safeReturnTo(request.nextUrl.searchParams.get("returnTo")), createdAt: Date.now() });
     const url = new URL(`${c.issuer}/protocol/openid-connect/auth`);
     url.search = new URLSearchParams({
       client_id: c.clientId, response_type: "code", scope: "openid profile email", redirect_uri: `${c.origin}/auth/callback`,
@@ -65,7 +65,7 @@ function claims(jwt: string): Record<string, unknown> {
 export function callbackHandler(c: PortalConfig) {
   return async (request: NextRequest) => {
     const names = cookieNames(c.clientId);
-    const pending = takePending(request.cookies.get(names.login)?.value);
+    const pending = await takePending(request.cookies.get(names.login)?.value);
     const state = request.nextUrl.searchParams.get("state");
     const code = request.nextUrl.searchParams.get("code");
     if (!pending || !code || state !== pending.state) {
@@ -78,7 +78,7 @@ export function callbackHandler(c: PortalConfig) {
       id: randomId(), accessToken: tokens.access_token, refreshToken: tokens.refresh_token, idToken: tokens.id_token,
       expiresAt: Date.now() + tokens.expires_in * 1000, username: String(claims(tokens.id_token).preferred_username ?? ""), csrf: randomId(24),
     };
-    saveSession(session);
+    await saveSession(session);
     const response = NextResponse.redirect(new URL(pending.returnTo, c.origin));
     response.cookies.set(names.session, session.id, { httpOnly: true, sameSite: "lax", secure, path: "/" });
     response.cookies.set(names.csrf, session.csrf, { httpOnly: false, sameSite: "strict", secure, path: "/" });
@@ -90,10 +90,10 @@ export function callbackHandler(c: PortalConfig) {
 export function logoutHandler(c: PortalConfig) {
   return async (request: NextRequest) => {
     const names = cookieNames(c.clientId);
-    const session = getSession(request.cookies.get(names.session)?.value);
+    const session = await getSession(request.cookies.get(names.session)?.value);
     const csrf = (await request.formData().catch(() => null))?.get("csrf");
     if (session && csrf !== session.csrf) return new NextResponse("CSRF check failed", { status: 403 });
-    deleteSession(session?.id);
+    await deleteSession(session?.id);
     const url = new URL(`${c.issuer}/protocol/openid-connect/logout`);
     url.search = new URLSearchParams({ post_logout_redirect_uri: `${c.origin}/`, client_id: c.clientId, ...(session ? { id_token_hint: session.idToken } : {}) }).toString();
     const response = NextResponse.redirect(url, 303);
@@ -109,10 +109,10 @@ async function freshToken(c: PortalConfig, session: Session): Promise<Session | 
     const tokens = await tokenRequest(c, { grant_type: "refresh_token", refresh_token: session.refreshToken });
     const updated = { ...session, accessToken: tokens.access_token, refreshToken: tokens.refresh_token ?? session.refreshToken,
       idToken: tokens.id_token ?? session.idToken, expiresAt: Date.now() + tokens.expires_in * 1000 };
-    saveSession(updated);
+    await saveSession(updated);
     return updated;
   } catch {
-    deleteSession(session.id);
+    await deleteSession(session.id);
     return null;
   }
 }
@@ -125,7 +125,7 @@ export function proxyHandler(c: PortalConfig) {
     if (!c.allowedPrefixes.some((p) => target.startsWith(p)) || c.deniedPrefixes?.some((p) => target.startsWith(p))) {
       return NextResponse.json({ detail: { code: "forbidden", message: "not available from this portal" } }, { status: 403 });
     }
-    const stored = getSession(request.cookies.get(cookieNames(c.clientId).session)?.value);
+    const stored = await getSession(request.cookies.get(cookieNames(c.clientId).session)?.value);
     if (!stored) return NextResponse.json({ detail: { code: "unauthenticated", message: "sign in required" } }, { status: 401 });
     if (request.method !== "GET" && request.headers.get("x-csrf-token") !== stored.csrf) {
       return NextResponse.json({ detail: { code: "csrf", message: "request rejected: missing or invalid CSRF token" } }, { status: 403 });
@@ -146,14 +146,18 @@ export function proxyHandler(c: PortalConfig) {
     const body = await upstream.text();
     return new NextResponse(body, {
       status: upstream.status,
-      headers: { "Content-Type": upstream.headers.get("content-type") ?? "application/json", "Cache-Control": "private, no-store" },
+      headers: {
+        "Content-Type": upstream.headers.get("content-type") ?? "application/json", "Cache-Control": "private, no-store",
+        ...(upstream.headers.get("content-disposition") ? { "Content-Disposition": upstream.headers.get("content-disposition") as string } : {}),
+        ...(upstream.headers.get("x-evidence-sha256") ? { "X-Evidence-SHA256": upstream.headers.get("x-evidence-sha256") as string } : {}),
+      },
     });
   };
 }
 
 export function sessionInfoHandler(portalId: string) {
   return async (request: NextRequest) => {
-    const session = getSession(request.cookies.get(cookieNames(portalId).session)?.value);
+    const session = await getSession(request.cookies.get(cookieNames(portalId).session)?.value);
     return NextResponse.json(session ? { signedIn: true, username: session.username } : { signedIn: false }, {
       headers: { "Cache-Control": "private, no-store" },
     });

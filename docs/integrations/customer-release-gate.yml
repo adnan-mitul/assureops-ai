@@ -1,0 +1,43 @@
+# Example customer pipeline step: deploy only an exact commit that AssureOps assessed and that is still ready.
+# Copy into the application's repository (.github/workflows/) and set the ASSUREOPS_CI_TOKEN secret
+# (issued once from POST /v1/applications/{id}/ci-credentials by a workspace owner).
+name: release-gate
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+jobs:
+  gate:
+    runs-on: ubuntu-24.04
+    outputs:
+      receipt_id: ${{ steps.check.outputs.receipt_id }}
+      signature: ${{ steps.check.outputs.signature }}
+    steps:
+      - id: check
+        name: AssureOps release gate (exact SHA)
+        env:
+          API: ${{ vars.ASSUREOPS_API_URL }}
+          TOKEN: ${{ secrets.ASSUREOPS_CI_TOKEN }}
+        run: |
+          body=$(curl -sf -X POST "$API/v1/integration/release-gate/check" -H "Authorization: Bearer $TOKEN" \
+                 -H "Content-Type: application/json" -d "{\"commit_sha\":\"$GITHUB_SHA\"}")
+          echo "$body" | jq '{decision, reasons, release, profile, unassessed_controls}'
+          test "$(echo "$body" | jq -r .decision)" = "allow"
+          echo "receipt_id=$(echo "$body" | jq -r .receipt.id)" >> "$GITHUB_OUTPUT"
+          echo "signature=$(echo "$body" | jq -r .receipt.signature)" >> "$GITHUB_OUTPUT"
+  deploy:
+    needs: gate
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - name: Re-verify the receipt at deployment time (expires; invalidated by policy changes or incidents)
+        env:
+          API: ${{ vars.ASSUREOPS_API_URL }}
+          TOKEN: ${{ secrets.ASSUREOPS_CI_TOKEN }}
+        run: |
+          curl -sf -X POST "$API/v1/integration/release-gate/verify" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+            -d "{\"receipt_id\":\"${{ needs.gate.outputs.receipt_id }}\",\"signature\":\"${{ needs.gate.outputs.signature }}\",\"commit_sha\":\"$GITHUB_SHA\"}" \
+            | tee /dev/stderr | jq -e .valid
+      - run: echo "deploy $GITHUB_SHA here"

@@ -11,7 +11,7 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .models import Approval, LogicalAction, now
-from .profile import canonical_hash, profile
+from .profile import canonical_hash
 
 APPROVAL_POLICY_VERSION = "approval-v1"
 SCHEMAS = {"issue_refund": {"order_id": str, "amount_minor": int}}
@@ -62,8 +62,8 @@ def payload_hash(tool: str, payload: dict) -> str:
 
 def grant(session: Session, *, workspace_id: str, application_id: str, environment: str, release: str, tool: str,
           tool_schema_hash: str, payload: dict, permission_policy_version: str, requester: str, approver: str,
-          ttl_seconds: int) -> Approval:
-    if not profile()["requirements"]["self_approval_allowed"] and requester == approver:
+          ttl_seconds: int, self_approval_allowed: bool = False) -> Approval:
+    if not self_approval_allowed and requester == approver:
         raise ApprovalError("self_approval", "requester cannot approve their own consequential action")
     if not 30 <= ttl_seconds <= 3600:
         raise ApprovalError("invalid_ttl", "approval lifetime must be between 30 seconds and one hour")

@@ -18,6 +18,7 @@ next-env.d.ts
 !.env.example
 infra/compose/dev.env
 infra/compose/keycloak/*.rendered.json
+infra/compose/seaweedfs/*.rendered.json
 
 # Local runtime data: evidence store, tool ledger, agent release, logs
 var/

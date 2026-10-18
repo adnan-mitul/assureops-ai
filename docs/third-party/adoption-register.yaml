@@ -2,13 +2,13 @@
 - name: REA
   repository: https://github.com/morluto/rea
   reviewed_commit: null
-  status: not_adopted
-  note: Adapter work package EX09 not started; no code copied.
+  status: adapter_ready_not_installed
+  note: packages/integrations/rea runs a pinned REA only when REA_COMMAND and pin.json (commit, entry SHA-256) are set; until then the AssureOps-owned built-in static collector is used and REA is reported as a capability gap. No REA code copied.
 - name: ECC
   repository: https://github.com/affaan-m/ECC
   reviewed_commit: null
   status: practices_adapted
-  note: Research/verify/review loop adapted as AGENTS.md, docs/decisions and scripts/verify; no code or hooks imported.
+  note: Research/verify/review loop adapted as AGENTS.md, docs/decisions, scripts/verify and the CI gate; no code or hooks imported.
 - name: MCP Python SDK
   package: mcp==2.3.0
   license: MIT
@@ -17,4 +17,36 @@
 - name: Keycloak
   image: quay.io/keycloak/keycloak:26.0.7
   license: Apache-2.0
-  status: adopted (development identity provider)
+  status: adopted (development identity provider; staff realm enforces TOTP and AMR claims)
+- name: SeaweedFS
+  image: chrislusf/seaweedfs:3.80
+  license: Apache-2.0
+  status: adopted (local private S3-compatible evidence bucket)
+  note: Chosen because MinIO no longer publishes pullable images. Any S3-compatible private bucket works through EVIDENCE_BACKEND=s3.
+- name: boto3
+  package: boto3==1.35.99
+  license: Apache-2.0
+  status: adopted
+  used_in: packages/domain/assureops_domain/evidence_store.py
+- name: cryptography (Fernet)
+  package: cryptography==50.0.2
+  license: Apache-2.0 OR BSD-3-Clause
+  status: adopted
+  used_in: packages/domain/assureops_domain/vault.py (connector secrets at rest)
+- name: jsonschema
+  package: jsonschema==4.26.0
+  license: MIT
+  status: adopted
+  used_in: profile, template and AI output validation
+- name: node-redis
+  package: redis@4.7.0 (npm)
+  license: MIT
+  status: adopted
+  used_in: packages/ui/src/server/session.ts (portal sessions, AES-256-GCM sealed)
+- name: Groq API
+  endpoint: https://api.groq.com/openai/v1
+  status: integrated_disabled
+  note: Phase F only, server-side key, workspace opt-in, pinned and qualified model required; GROQ_ENABLED=false by default.
+- name: Candidate small models (A Granite-4.0-micro, B/E Phi-4-mini, C Qwen2.5-Coder-1.5B, D DeBERTa NLI, F SmolLM2-1.7B, R BGE-small, G Prompt Guard 2)
+  status: registered_not_served
+  note: Registry, prompts, schemas and adapters exist; no private inference endpoint is configured on this machine, so every private route reports no_route_configured.

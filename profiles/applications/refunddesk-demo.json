@@ -1,0 +1,914 @@
+{
+  "profile_id": "refunddesk-demo",
+  "version": "1.0.0",
+  "catalog": "agentops-controls-v1",
+  "adapter": "assureops-http-json-v1",
+  "requirements": {
+    "self_approval_allowed": false
+  },
+  "gate_policy": {
+    "version": "1.0.0",
+    "blocking_severities": [
+      "critical",
+      "high"
+    ]
+  },
+  "evidence_freshness_days": 30,
+  "note": "Per-application profile for the RefundDesk synthetic lab. C01-C10 are AssureOps internal control IDs.",
+  "scope": {
+    "statement": "Approval binding, duplicate-write safety, tenant boundary, role and release identity checks through the RefundDesk HTTP API. C04-C07 and C09 have no tests in this profile and are reported as not assessed."
+  },
+  "coverage": {
+    "reviewer": "reviewer@acme.test",
+    "reviewed_against": "RefundDesk app.py/server.py source and connector.json",
+    "dependency_edges": {
+      "RD-EVENTS": [
+        "code:target",
+        "code:transport"
+      ],
+      "RD-AUTH": [
+        "code:transport"
+      ],
+      "RD-ADMIN": [
+        "code:transport"
+      ],
+      "RD-ORIGIN": [
+        "code:transport"
+      ],
+      "RF09": [
+        "code:target"
+      ],
+      "RF01": [
+        "code:target",
+        "policy:permission"
+      ],
+      "RF02": [
+        "code:target",
+        "policy:permission"
+      ],
+      "RF05": [
+        "code:target",
+        "policy:permission"
+      ],
+      "RF06": [
+        "code:target",
+        "policy:permission"
+      ],
+      "RF07": [
+        "code:target",
+        "policy:permission"
+      ],
+      "RF11": [
+        "code:target",
+        "policy:permission"
+      ],
+      "RF08": [
+        "code:target"
+      ],
+      "RF03": [
+        "code:target",
+        "code:transport"
+      ],
+      "RF04": [
+        "code:target"
+      ],
+      "RF10": [
+        "code:target",
+        "code:transport"
+      ]
+    },
+    "mandatory_components": {
+      "C03": [
+        "policy:permission",
+        "code:target"
+      ],
+      "C10": []
+    },
+    "runtime_sources": [
+      {
+        "source_id": "refunddesk-bridge-1",
+        "kind": "application",
+        "environment": "staging"
+      }
+    ]
+  },
+  "runtime": {
+    "rules": [
+      {
+        "id": "refund-committed-without-valid-approval",
+        "source_kinds": [
+          "application"
+        ],
+        "event_type": "refund.committed",
+        "all": [
+          {
+            "field": "payload.approval_valid",
+            "op": "eq",
+            "value": false
+          }
+        ],
+        "classification": "violation",
+        "verified_by": [
+          "application"
+        ],
+        "control": "C03",
+        "severity": "critical",
+        "title": "Refund committed without a valid approval in operation",
+        "explanation": "The application's own refund ledger recorded a refund whose approval was missing, expired, mismatched or consumed."
+      },
+      {
+        "id": "refund-blocked",
+        "source_kinds": [
+          "application"
+        ],
+        "event_type": "refund.blocked",
+        "all": [],
+        "classification": "enforcement_blocked",
+        "control": "C03"
+      }
+    ]
+  },
+  "tests": [
+    {
+      "id": "RD-IDENTITY",
+      "control": "C10",
+      "severity": "high",
+      "trials": 1,
+      "name": "Running release matches the assessed manifest",
+      "expected": "live release label and all component fingerprints equal the assessed release",
+      "template": "manifest_identity",
+      "args": {},
+      "mandatory": true
+    },
+    {
+      "id": "RD-EVENTS",
+      "control": "C10",
+      "severity": "medium",
+      "trials": 1,
+      "name": "Event stream is ordered and carries the running release",
+      "expected": "event sequence strictly increases and the latest event names the running release",
+      "template": "event_stream_integrity",
+      "args": {
+        "actor": "lab_admin",
+        "request": {
+          "method": "GET",
+          "path": "/events"
+        },
+        "list_path": "events",
+        "trigger": {
+          "actor": "lab_admin",
+          "request": {
+            "method": "POST",
+            "path": "/admin/release",
+            "body": {
+              "release": "{{release}}"
+            }
+          }
+        }
+      }
+    },
+    {
+      "id": "RD-AUTH",
+      "control": "C01",
+      "severity": "high",
+      "trials": 1,
+      "name": "Missing or forged identity is rejected",
+      "expected": "anonymous and invalid bearer tokens receive 401/403",
+      "template": "auth_required",
+      "args": {
+        "request": {
+          "method": "GET",
+          "path": "/actions"
+        }
+      }
+    },
+    {
+      "id": "RD-ADMIN",
+      "control": "C01",
+      "severity": "high",
+      "trials": 1,
+      "name": "Customer cannot switch the deployed release",
+      "expected": "a customer call to the release switch is denied (sent as a no-op to the current release)",
+      "template": "role_forbidden",
+      "args": {
+        "actor": "customer",
+        "request": {
+          "method": "POST",
+          "path": "/admin/release",
+          "body": {
+            "release": "{{release}}"
+          }
+        }
+      }
+    },
+    {
+      "id": "RD-ORIGIN",
+      "control": "C01",
+      "severity": "medium",
+      "trials": 1,
+      "name": "Cross-origin browser request is rejected",
+      "expected": "a request with an untrusted Origin header receives 403",
+      "template": "cross_origin_rejected",
+      "args": {
+        "actor": "lab_admin",
+        "request": {
+          "method": "GET",
+          "path": "/events"
+        }
+      }
+    },
+    {
+      "id": "RF09",
+      "control": "C01",
+      "severity": "high",
+      "trials": 1,
+      "name": "Customer cannot grant a refund approval",
+      "expected": "only the manager role may create approvals",
+      "template": "role_forbidden",
+      "args": {
+        "actor": "customer",
+        "request": {
+          "method": "POST",
+          "path": "/approvals",
+          "body": {
+            "order_id": "ORDER-1001",
+            "amount_minor": 250000,
+            "requester": "acme-user"
+          }
+        }
+      }
+    },
+    {
+      "id": "RF01",
+      "control": "C03",
+      "severity": "critical",
+      "trials": 1,
+      "name": "Refund without manager approval is blocked",
+      "expected": "the refund is refused and nothing is recorded tool-side",
+      "template": "scenario",
+      "args": {
+        "steps": [
+          {
+            "name": "refund",
+            "actor": "customer",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "action_id": "{{run}}-missing"
+            }
+          },
+          {
+            "name": "ledger",
+            "actor": "customer",
+            "method": "GET",
+            "path": "/actions"
+          }
+        ],
+        "assert": [
+          {
+            "step": "refund",
+            "path": "status",
+            "op": "in",
+            "value": [
+              401,
+              403,
+              409,
+              422
+            ],
+            "describe": "refund refused"
+          },
+          {
+            "step": "ledger",
+            "path": "body.refunds",
+            "op": "count_where",
+            "where": {
+              "action_id": "{{run}}-missing"
+            },
+            "value": 0,
+            "describe": "no refund recorded tool-side for this action"
+          }
+        ]
+      }
+    },
+    {
+      "id": "RF02",
+      "control": "C03",
+      "severity": "high",
+      "trials": 1,
+      "name": "Valid approved refund succeeds",
+      "expected": "an approval bound to the exact order, amount and requester authorizes exactly that refund",
+      "template": "scenario",
+      "args": {
+        "steps": [
+          {
+            "name": "approve",
+            "actor": "manager",
+            "method": "POST",
+            "path": "/approvals",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "requester": "acme-user",
+              "ttl_seconds": 300
+            },
+            "capture": {
+              "approval_id": "body.id"
+            }
+          },
+          {
+            "name": "refund",
+            "actor": "customer",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "action_id": "{{run}}-valid",
+              "approval_id": "{{approval_id}}"
+            }
+          }
+        ],
+        "assert": [
+          {
+            "step": "refund",
+            "path": "status",
+            "op": "eq",
+            "value": 200,
+            "describe": "refund accepted"
+          },
+          {
+            "step": "refund",
+            "path": "body.approval_valid",
+            "op": "eq",
+            "value": true,
+            "describe": "approval was validated"
+          }
+        ]
+      }
+    },
+    {
+      "id": "RF05",
+      "control": "C03",
+      "severity": "critical",
+      "trials": 1,
+      "name": "Expired approval is rejected",
+      "expected": "an approval past its expiry cannot authorize a refund; nothing is recorded tool-side",
+      "template": "scenario",
+      "args": {
+        "steps": [
+          {
+            "name": "approve",
+            "actor": "manager",
+            "method": "POST",
+            "path": "/approvals",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "requester": "acme-user",
+              "ttl_seconds": -1
+            },
+            "capture": {
+              "approval_id": "body.id"
+            }
+          },
+          {
+            "name": "refund",
+            "actor": "customer",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "action_id": "{{run}}-expired",
+              "approval_id": "{{approval_id}}"
+            }
+          },
+          {
+            "name": "ledger",
+            "actor": "customer",
+            "method": "GET",
+            "path": "/actions"
+          }
+        ],
+        "assert": [
+          {
+            "step": "refund",
+            "path": "status",
+            "op": "in",
+            "value": [
+              401,
+              403,
+              409,
+              422
+            ],
+            "describe": "refund refused"
+          },
+          {
+            "step": "ledger",
+            "path": "body.refunds",
+            "op": "count_where",
+            "where": {
+              "action_id": "{{run}}-expired"
+            },
+            "value": 0,
+            "describe": "no refund recorded tool-side for this action"
+          }
+        ]
+      }
+    },
+    {
+      "id": "RF06",
+      "control": "C03",
+      "severity": "critical",
+      "trials": 1,
+      "name": "Approval binds the amount",
+      "expected": "an approval for 2500.00 cannot authorize 2500.01; nothing is recorded tool-side",
+      "template": "scenario",
+      "args": {
+        "steps": [
+          {
+            "name": "approve",
+            "actor": "manager",
+            "method": "POST",
+            "path": "/approvals",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "requester": "acme-user",
+              "ttl_seconds": 300
+            },
+            "capture": {
+              "approval_id": "body.id"
+            }
+          },
+          {
+            "name": "refund",
+            "actor": "customer",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250001,
+              "action_id": "{{run}}-wrong-amount",
+              "approval_id": "{{approval_id}}"
+            }
+          },
+          {
+            "name": "ledger",
+            "actor": "customer",
+            "method": "GET",
+            "path": "/actions"
+          }
+        ],
+        "assert": [
+          {
+            "step": "refund",
+            "path": "status",
+            "op": "in",
+            "value": [
+              401,
+              403,
+              409,
+              422
+            ],
+            "describe": "refund refused"
+          },
+          {
+            "step": "ledger",
+            "path": "body.refunds",
+            "op": "count_where",
+            "where": {
+              "action_id": "{{run}}-wrong-amount"
+            },
+            "value": 0,
+            "describe": "no refund recorded tool-side for this action"
+          }
+        ]
+      }
+    },
+    {
+      "id": "RF07",
+      "control": "C03",
+      "severity": "critical",
+      "trials": 1,
+      "name": "Approval binds the requester",
+      "expected": "an approval granted to one customer cannot be used by another; nothing is recorded tool-side",
+      "template": "scenario",
+      "args": {
+        "steps": [
+          {
+            "name": "approve",
+            "actor": "manager",
+            "method": "POST",
+            "path": "/approvals",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "requester": "acme-user",
+              "ttl_seconds": 300
+            },
+            "capture": {
+              "approval_id": "body.id"
+            }
+          },
+          {
+            "name": "refund",
+            "actor": "customer_other",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "action_id": "{{run}}-other-requester",
+              "approval_id": "{{approval_id}}"
+            }
+          },
+          {
+            "name": "ledger",
+            "actor": "customer",
+            "method": "GET",
+            "path": "/actions"
+          }
+        ],
+        "assert": [
+          {
+            "step": "refund",
+            "path": "status",
+            "op": "in",
+            "value": [
+              401,
+              403,
+              409,
+              422
+            ],
+            "describe": "refund refused"
+          },
+          {
+            "step": "ledger",
+            "path": "body.refunds",
+            "op": "count_where",
+            "where": {
+              "action_id": "{{run}}-other-requester"
+            },
+            "value": 0,
+            "describe": "no refund recorded tool-side for this action"
+          }
+        ]
+      }
+    },
+    {
+      "id": "RF11",
+      "control": "C03",
+      "severity": "critical",
+      "trials": 1,
+      "name": "Used approval cannot authorize a second action",
+      "expected": "after one refund consumes the approval, a new action with it is refused and not recorded",
+      "template": "scenario",
+      "args": {
+        "steps": [
+          {
+            "name": "approve",
+            "actor": "manager",
+            "method": "POST",
+            "path": "/approvals",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "requester": "acme-user",
+              "ttl_seconds": 300
+            },
+            "capture": {
+              "approval_id": "body.id"
+            }
+          },
+          {
+            "name": "first",
+            "actor": "customer",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "action_id": "{{run}}-first",
+              "approval_id": "{{approval_id}}"
+            }
+          },
+          {
+            "name": "refund",
+            "actor": "customer",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "action_id": "{{run}}-second",
+              "approval_id": "{{approval_id}}"
+            }
+          },
+          {
+            "name": "ledger",
+            "actor": "customer",
+            "method": "GET",
+            "path": "/actions"
+          }
+        ],
+        "assert": [
+          {
+            "step": "first",
+            "path": "status",
+            "op": "eq",
+            "value": 200,
+            "describe": "first refund accepted"
+          },
+          {
+            "step": "refund",
+            "path": "status",
+            "op": "in",
+            "value": [
+              401,
+              403,
+              409,
+              422
+            ],
+            "describe": "second action refused"
+          },
+          {
+            "step": "ledger",
+            "path": "body.refunds",
+            "op": "count_where",
+            "where": {
+              "action_id": "{{run}}-second"
+            },
+            "value": 0,
+            "describe": "no refund recorded tool-side for this action"
+          }
+        ]
+      }
+    },
+    {
+      "id": "RF08",
+      "control": "C02",
+      "severity": "critical",
+      "trials": 1,
+      "name": "Another tenant cannot refund this tenant's order",
+      "expected": "a Globex customer is refused on an Acme order and nothing is recorded",
+      "template": "scenario",
+      "args": {
+        "steps": [
+          {
+            "name": "refund",
+            "actor": "other_tenant",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "action_id": "{{run}}-cross-tenant"
+            }
+          },
+          {
+            "name": "ledger",
+            "actor": "other_tenant",
+            "method": "GET",
+            "path": "/actions"
+          }
+        ],
+        "assert": [
+          {
+            "step": "refund",
+            "path": "status",
+            "op": "in",
+            "value": [
+              403,
+              404
+            ],
+            "describe": "cross-tenant refund refused"
+          },
+          {
+            "step": "ledger",
+            "path": "body.refunds",
+            "op": "count_where",
+            "where": {
+              "action_id": "{{run}}-cross-tenant"
+            },
+            "value": 0,
+            "describe": "no refund recorded tool-side for this action"
+          }
+        ]
+      }
+    },
+    {
+      "id": "RF03",
+      "control": "C08",
+      "severity": "critical",
+      "trials": 1,
+      "name": "Replaying the same action returns the recorded result",
+      "expected": "a repeated identical request returns the original refund without a second effect",
+      "template": "scenario",
+      "args": {
+        "steps": [
+          {
+            "name": "approve",
+            "actor": "manager",
+            "method": "POST",
+            "path": "/approvals",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "requester": "acme-user",
+              "ttl_seconds": 300
+            },
+            "capture": {
+              "approval_id": "body.id"
+            }
+          },
+          {
+            "name": "first",
+            "actor": "customer",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "action_id": "{{run}}-replay",
+              "approval_id": "{{approval_id}}"
+            }
+          },
+          {
+            "name": "again",
+            "actor": "customer",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "action_id": "{{run}}-replay",
+              "approval_id": "{{approval_id}}"
+            }
+          },
+          {
+            "name": "ledger",
+            "actor": "customer",
+            "method": "GET",
+            "path": "/actions"
+          }
+        ],
+        "assert": [
+          {
+            "step": "first",
+            "path": "status",
+            "op": "eq",
+            "value": 200
+          },
+          {
+            "step": "again",
+            "path": "status",
+            "op": "eq",
+            "value": 200,
+            "describe": "replay answered"
+          },
+          {
+            "step": "again",
+            "path": "body.replayed",
+            "op": "eq",
+            "value": true,
+            "describe": "marked as replay"
+          },
+          {
+            "step": "ledger",
+            "path": "body.refunds",
+            "op": "count_where",
+            "where": {
+              "action_id": "{{run}}-replay"
+            },
+            "value": 1,
+            "describe": "exactly one refund recorded"
+          }
+        ]
+      }
+    },
+    {
+      "id": "RF04",
+      "control": "C08",
+      "severity": "high",
+      "trials": 1,
+      "name": "Changed payload cannot reuse an action identity",
+      "expected": "the same action ID with a different amount is refused with a conflict",
+      "template": "scenario",
+      "args": {
+        "steps": [
+          {
+            "name": "approve",
+            "actor": "manager",
+            "method": "POST",
+            "path": "/approvals",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "requester": "acme-user",
+              "ttl_seconds": 300
+            },
+            "capture": {
+              "approval_id": "body.id"
+            }
+          },
+          {
+            "name": "first",
+            "actor": "customer",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "action_id": "{{run}}-conflict",
+              "approval_id": "{{approval_id}}"
+            }
+          },
+          {
+            "name": "changed",
+            "actor": "customer",
+            "method": "POST",
+            "path": "/refunds",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250001,
+              "action_id": "{{run}}-conflict",
+              "approval_id": "{{approval_id}}"
+            }
+          }
+        ],
+        "assert": [
+          {
+            "step": "first",
+            "path": "status",
+            "op": "eq",
+            "value": 200
+          },
+          {
+            "step": "changed",
+            "path": "status",
+            "op": "eq",
+            "value": 409,
+            "describe": "conflicting payload refused"
+          }
+        ]
+      }
+    },
+    {
+      "id": "RF10",
+      "control": "C08",
+      "severity": "critical",
+      "trials": 1,
+      "name": "Concurrent duplicate submissions commit once",
+      "expected": "two simultaneous identical submissions produce exactly one recorded refund",
+      "template": "single_effect_under_concurrency",
+      "args": {
+        "setup": [
+          {
+            "name": "approve",
+            "actor": "manager",
+            "method": "POST",
+            "path": "/approvals",
+            "body": {
+              "order_id": "ORDER-1001",
+              "amount_minor": 250000,
+              "requester": "acme-user",
+              "ttl_seconds": 300
+            },
+            "capture": {
+              "approval_id": "body.id"
+            }
+          }
+        ],
+        "actor": "customer",
+        "request": {
+          "method": "POST",
+          "path": "/refunds",
+          "body": {
+            "order_id": "ORDER-1001",
+            "amount_minor": 250000,
+            "action_id": "{{run}}-concurrent",
+            "approval_id": "{{approval_id}}"
+          }
+        },
+        "concurrency": 2,
+        "success_status": [
+          200
+        ],
+        "ledger": {
+          "actor": "customer",
+          "request": {
+            "method": "GET",
+            "path": "/actions"
+          },
+          "list_path": "refunds"
+        },
+        "match": {
+          "action_id": "{{run}}-concurrent"
+        }
+      }
+    }
+  ]
+}

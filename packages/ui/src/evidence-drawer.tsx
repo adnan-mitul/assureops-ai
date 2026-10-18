@@ -79,7 +79,9 @@ export function EvidenceDrawer({ runId, onClose, path = "/v1/evidence" }: { runI
                 <div className="col-span-2"><dt className="text-xs text-muted">Observation source</dt><dd>{evidence.observation_source}</dd></div>
                 <div className="col-span-2"><dt className="text-xs text-muted">Collection scope</dt><dd>{evidence.collection_scope}</dd></div>
                 <div><dt className="text-xs text-muted">Recorded</dt><dd>{formatTime(evidence.created_at)} ({timeAgo(evidence.created_at)})</dd></div>
-                <div><dt className="text-xs text-muted">Integrity</dt><dd>{evidence.available ? <Mono>sha256 {shortHash(evidence.evidence_hash, 16)}</Mono> : <StatusBadge status="unavailable" />}</dd></div>
+                <div><dt className="text-xs text-muted">Integrity</dt><dd>{evidence.available ? <Mono>sha256 {shortHash(evidence.evidence_hash, 16)}</Mono> : <StatusBadge status="unavailable" />}
+                  {evidence.available && path === "/v1/evidence" && (
+                    <a className="ml-2 text-xs text-brand-700 underline" href={`/api/v1/evidence/${encodeURIComponent(evidence.id)}/download`}>Download exact bytes</a>)}</dd></div>
               </dl>
               <p className="mt-3 text-xs text-muted">Depended on (reviewed edges)</p>
               <ul className="mt-1 flex flex-wrap gap-1.5">

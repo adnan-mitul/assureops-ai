@@ -93,6 +93,8 @@ const STATUS: Record<string, { label: string; style: string; icon: typeof Circle
   current: { label: "Current", style: GOOD, icon: CircleCheck },
   stale: { label: "Stale", style: WARN, icon: Clock3 },
   unavailable: { label: "Evidence unavailable", style: NEUTRAL, icon: CircleHelp },
+  unassessed: { label: "Not assessed", style: NEUTRAL, icon: CircleHelp },
+  not_collected: { label: "Outside profile", style: NEUTRAL, icon: CircleHelp },
   reused: { label: "Reused", style: INFO, icon: CircleCheck },
   // test outcome
   passed: { label: "Passed", style: GOOD, icon: CircleCheck },
@@ -206,7 +208,7 @@ export function ControlStateBadges({ result, validity }: { result: string; valid
   return (
     <span className="inline-flex flex-wrap items-center gap-1">
       <StatusBadge status={result} />
-      {validity !== "current" && <StatusBadge status={validity} />}
+      {validity !== "current" && validity !== "not_collected" && <StatusBadge status={validity} />}
     </span>
   );
 }

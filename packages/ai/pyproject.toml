@@ -1,0 +1,12 @@
+[project]
+name = "assureops-ai"
+version = "1.0.0"
+requires-python = ">=3.12"
+dependencies = ["httpx", "jsonschema"]
+
+[build-system]
+requires = ["setuptools>=69"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+include = ["assureops_ai*"]

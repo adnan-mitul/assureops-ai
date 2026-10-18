@@ -1,0 +1,35 @@
+# Isolated real-model qualification (manual). Sends only the synthetic holdout suite; never customer data.
+name: model-qualification
+on:
+  workflow_dispatch:
+    inputs:
+      phase:
+        description: "Phase to qualify"
+        default: "F"
+      provider:
+        description: "groq or private"
+        default: "groq"
+      model:
+        description: "Exact model ID to pin"
+        required: true
+permissions:
+  contents: read
+jobs:
+  qualify:
+    runs-on: ubuntu-24.04
+    environment: model-qualification
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m venv .venv && .venv/bin/python -m pip install -r requirements.txt
+      - name: Run holdout (results printed; recording happens against the platform database by an operator)
+        env:
+          GROQ_API_KEY: ${{ secrets.GROQ_API_KEY }}
+          GROQ_ENABLED: "true"
+          DATABASE_URL: sqlite:///unused
+        run: .venv/bin/python scripts/qualify_phase.py --phase ${{ inputs.phase }} --provider ${{ inputs.provider }} --model ${{ inputs.model }}

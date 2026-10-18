@@ -10,6 +10,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { Fragment, Suspense, useState } from "react";
 import { ActionDone, ActionError, CaseTabs, KeyValue, RevisionDrift, SectionTitle } from "@/components/staff-ui";
+import { ProfilePanel } from "@/components/case/ProfilePanel";
 import { useStaffAction } from "@/lib/actions";
 import type { DependencyEdge, Investigation } from "@/lib/types";
 
@@ -141,6 +142,7 @@ function InvestigationView() {
       </div>
       <CaseTabs caseId={id} active="investigation" />
       {error && <ApiErrorBanner error={error} />}
+      <div className="mb-5"><ProfilePanel caseId={id} duty={data.your_duty} connection={data.connection ?? null} /></div>
 
       <div className="grid gap-5 xl:grid-cols-2">
         <Card className="mb-0">

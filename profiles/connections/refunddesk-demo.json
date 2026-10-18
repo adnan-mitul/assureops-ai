@@ -1,0 +1,71 @@
+{
+  "adapter_id": "assureops-http-json-v1",
+  "config": {
+    "base_url": "http://127.0.0.1:8811",
+    "environment": "staging",
+    "manifest_path": "/manifest",
+    "health_path": "/health",
+    "auth": {
+      "type": "bearer",
+      "header": "Authorization",
+      "prefix": "Bearer "
+    },
+    "scope": {
+      "allowed_paths": [
+        "/refunds",
+        "/approvals",
+        "/actions",
+        "/events",
+        "/admin/release"
+      ],
+      "allowed_methods": [
+        "GET",
+        "POST"
+      ],
+      "max_requests_per_test": 30
+    },
+    "test_marker_header": "X-AssureOps-Test",
+    "ownership": {
+      "method": "manifest_application",
+      "expected_application": "refunddesk-demo"
+    },
+    "credential_probe": {
+      "method": "GET",
+      "path": "/events"
+    },
+    "events": {
+      "path": "/events",
+      "actor": "lab_admin",
+      "format": "local-lab-v1",
+      "list_path": "events"
+    },
+    "action_evidence": {
+      "actor": "customer",
+      "method": "GET",
+      "path": "/actions",
+      "list_path": "refunds"
+    },
+    "actor_identities": {
+      "customer": "acme-user",
+      "customer_other": "acme-other",
+      "manager": "acme-manager",
+      "other_tenant": "globex-user",
+      "lab_admin": "lab-admin"
+    },
+    "lab": {
+      "release_switch": {
+        "method": "POST",
+        "path": "/admin/release",
+        "actor": "lab_admin",
+        "field": "release"
+      }
+    }
+  },
+  "actors": [
+    "customer",
+    "customer_other",
+    "manager",
+    "other_tenant",
+    "lab_admin"
+  ]
+}

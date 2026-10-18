@@ -6,8 +6,8 @@ import type { Evidence } from "@assureops/ui/evidence-drawer";
 export type { Evidence };
 
 export type Severity = "critical" | "high" | "medium" | "low";
-export type ControlResult = "supported" | "failed" | "unverified" | "review_required";
-export type EvidenceValidity = "current" | "stale" | "unavailable";
+export type ControlResult = "supported" | "failed" | "unverified" | "review_required" | "unassessed";
+export type EvidenceValidity = "current" | "stale" | "unavailable" | "not_collected";
 export type Duty = "analyst" | "reviewer";
 
 export type Me = { user: string; display_name: string; roles: string[] };
@@ -292,6 +292,7 @@ export type Investigation = {
   unmapped_components: string[];
   change: ChangeSet | null;
   tests: ProfileTest[];
+  connection?: import("@/components/case/ProfilePanel").ConnectionSummary;
   your_duty: Duty;
 };
 
@@ -358,7 +359,8 @@ export type Governance = {
     tests: ProfileTest[];
     requirements: Record<string, unknown>;
   };
-  model_routes: { phase: string; model: string; enabled: boolean; qualification: unknown; optional?: boolean }[];
+  model_routes: { phase: string; id?: string; model: string; parameters?: string; enabled: boolean; qualification: unknown; optional?: boolean;
+    status?: string; route?: { provider: string | null; model: string | null; external: boolean } }[];
   qualification_records: unknown[];
   staff_permissions: { user: string; name: string; roles: string[] }[];
   identity: { provider: string; staff_mfa: string };

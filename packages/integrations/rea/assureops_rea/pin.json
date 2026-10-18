@@ -1,0 +1,10 @@
+{
+  "tool": "REA (Reverse Engineering Assistant)",
+  "repository": "https://github.com/morluto/rea",
+  "license": "MIT (upstream); external engines keep their own terms",
+  "commit": null,
+  "entry_sha256": null,
+  "reviewed_by": null,
+  "status": "not_installed",
+  "note": "Set commit and entry_sha256 after reviewing a specific upstream revision; until then the built-in static collector is used and REA is reported as a capability gap."
+}

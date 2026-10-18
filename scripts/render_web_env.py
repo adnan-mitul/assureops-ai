@@ -1,9 +1,16 @@
 """Write each portal's .env.local from dev.env test values (git-ignored)."""
 
+import secrets
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent.parent
-env = dict(line.split("=", 1) for line in (ROOT / "infra/compose/dev.env").read_text().splitlines() if line and not line.startswith("#"))
+ENV_FILE = ROOT / "infra/compose/dev.env"
+env = dict(line.split("=", 1) for line in ENV_FILE.read_text().splitlines() if line and not line.startswith("#"))
+if "SESSION_ENCRYPTION_KEY" not in env:  # server-only key for portal session tokens at rest
+    env["SESSION_ENCRYPTION_KEY"] = secrets.token_urlsafe(32)
+    NL = chr(10)
+    ENV_FILE.write_text(ENV_FILE.read_text().rstrip(NL) + NL + f"SESSION_ENCRYPTION_KEY={env['SESSION_ENCRYPTION_KEY']}" + NL,
+                        encoding="utf-8", newline=NL)
 
 PORTALS = {
     "customer-web": ("customer-web", env["CUSTOMER_WEB_CLIENT_SECRET"], 3700, "assureops"),
@@ -19,6 +26,8 @@ for folder, (client_id, secret, port, realm) in PORTALS.items():
         f"OIDC_CLIENT_SECRET={secret}",
         f"APP_ORIGIN=http://localhost:{port}",
         "ASSUREOPS_API_URL=http://127.0.0.1:8700",
+        "SESSION_REDIS_URL=redis://127.0.0.1:6391/1",
+        f"SESSION_ENCRYPTION_KEY={env['SESSION_ENCRYPTION_KEY']}",
         "",
     ]))
     print(f"wrote apps/{folder}/.env.local")
