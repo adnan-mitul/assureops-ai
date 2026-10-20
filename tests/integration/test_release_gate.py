@@ -81,7 +81,7 @@ def test_ready_commit_gets_receipt_and_new_incident_invalidates_it(ready_app):
     assert not after["valid"] and any("incident" in p for p in after["problems"])
 
 
-def _webhook(body: dict, secret: str | None, delivery: str):
+def _webhook(body: dict, secret: str | None, delivery: str, event: str = "push"):
     raw = json.dumps(body).encode()
 
     class Req:
@@ -89,7 +89,7 @@ def _webhook(body: dict, secret: str | None, delivery: str):
             return raw
 
     sig = "sha256=" + hmac.new(secret.encode(), raw, hashlib.sha256).hexdigest() if secret else "sha256=bad"
-    return asyncio.run(rd.github_webhook(Req(), x_hub_signature_256=sig, x_github_event="push", x_github_delivery=delivery))
+    return asyncio.run(rd.github_webhook(Req(), x_hub_signature_256=sig, x_github_event=event, x_github_delivery=delivery))
 
 
 def test_webhook_rejects_bad_signature_and_dedupes(ready_app):
@@ -128,3 +128,34 @@ def test_commit_status_is_posted_for_the_exact_sha(monkeypatch):
     body = json.loads(seen[0].content)
     assert seen[0].url.path == f"/repos/acme/app/statuses/{SHA}" and body["context"] == "assureops/release-gate"
     assert seen[0].headers["authorization"] == "Bearer test-status-token"
+
+
+def test_pull_request_is_judged_on_its_merge_candidate_not_the_head():
+    assessed_head, candidate = SHA, "c" * 40
+    pr = {"number": 7, "head": {"sha": assessed_head}, "merge_commit_sha": candidate}
+    sha, status_sha, notes = rd.commit_under_test("pull_request", {"pull_request": pr})
+    assert (sha, status_sha) == (candidate, assessed_head) and "merge candidate" in notes[0]
+    sha, status_sha, notes = rd.commit_under_test("pull_request", {"pull_request": {**pr, "merge_commit_sha": None}})
+    assert sha is None and status_sha == assessed_head and "not computed" in notes[0]
+    assert rd.commit_under_test("push", {"after": SHA}) == (SHA, SHA, [])
+
+
+def test_pull_request_whose_head_was_assessed_is_denied_until_the_merge_candidate_is(ready_app, monkeypatch):
+    secret = settings().github_webhook_secret
+    if not secret:
+        pytest.skip("webhook secret not configured")
+    posted = []
+    monkeypatch.setattr(rd, "post_commit_status", lambda repo, sha, decision, reasons: posted.append((sha, decision)) or {"posted": True})
+    repo = f"acme/{ready_app.application_id}-pr"
+    with platform_session() as p:
+        p.add(RepositoryRoute(repository=repo, workspace_id=ready_app.workspace_id, application_id=ready_app.application_id))
+    delivery = uuid.uuid4().hex
+    try:
+        out = _webhook({"repository": {"full_name": repo}, "pull_request": {"number": 3, "head": {"sha": SHA}, "merge_commit_sha": OTHER}},
+                       secret, delivery, event="pull_request")
+        assert out["decision"] == "deny" and out["commit_sha"] == OTHER  # the head (SHA) is assessed and ready; the candidate is not
+        assert posted == [(SHA, "deny")]  # shown on the head commit
+    finally:
+        with platform_session() as p:
+            p.query(RepositoryRoute).filter_by(repository=repo).delete()
+            p.query(GithubDelivery).filter_by(id=delivery).delete()

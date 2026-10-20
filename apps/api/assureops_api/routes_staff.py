@@ -589,7 +589,9 @@ def governance(caller: Caller = StaffCaller):
 
     return {
         "profile": {"version": control_catalog()["catalog_id"] + "-" + control_catalog()["version"], "digest": canonical_hash(control_catalog())[:16],
-                    "controls": control_catalog()["controls"], "gate_policy": {"version": "per application profile", "blocking_severities": ["critical", "high"]},
+                    "controls": control_catalog()["controls"], "gate_policy": {"version": "per application profile", "blocking_severities": ["critical", "high"],
+                                    # the reducer's incomplete rule: evidence not current, or results not yet decided
+                                    "incomplete_when": ["stale", "unavailable", "unverified", "review_required"]},
                     "tests": [], "requirements": {}, "note": "Tests, gates and requirements are defined per application profile revision."},
         "model_routes": ai_routes.route_table(None), "qualification_records": qualifications,
         "staff_permissions": staff,

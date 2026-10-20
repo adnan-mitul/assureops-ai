@@ -14,33 +14,7 @@ from assureops_domain.models import (
     ApplicationGrant, AssessmentCase, CaseAssignment, CaseIndex, CaseMessage, Invitation, Membership, Notification, StaffRole, User, now,
 )
 from fastapi import HTTPException
-
-
-def _user(username: str, kind: str = "customer") -> User:
-    with platform_session() as s:
-        u = User(username=username, display_name=username.split("@")[0], kind=kind)
-        s.add(u)
-        s.flush()
-        s.expunge(u)
-        return u
-
-
-@pytest.fixture
-def people(workspace):
-    tag = uuid.uuid4().hex[:6]
-    made = {role: _user(f"{role}-{tag}@acme.test") for role in ("owner", "developer", "viewer")}
-    with platform_session() as s:
-        for role, u in made.items():
-            s.add(Membership(workspace_id=workspace, user_id=u.id, role=role))
-    callers = {role: Caller(u.id, u.username, u.display_name, "customer", workspace_id=workspace, role=role, memberships={workspace: role})
-               for role, u in made.items()}
-    yield callers
-    with platform_session() as s:
-        ids = [u.id for u in made.values()]
-        s.execute(delete(Membership).where(Membership.user_id.in_(ids)))
-        s.execute(delete(Notification).where(Notification.workspace_id == workspace))
-        s.execute(delete(Invitation).where(Invitation.workspace_id == workspace))
-        s.execute(delete(User).where(User.id.in_(ids)))
+from tests.conftest import make_user as _user
 
 
 def _denied(fn) -> str:

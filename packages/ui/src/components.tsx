@@ -179,9 +179,10 @@ export function Td({ children, className }: { children?: ReactNode; className?: 
   return <td className={clsx("px-5 py-3 align-middle text-[13px] text-ink", className)}>{children}</td>;
 }
 
-export function TableWrap({ children, minWidth = "min-w-[560px]" }: { children: ReactNode; minWidth?: string }) {
+export function TableWrap({ children, minWidth = "min-w-[560px]", label = "Table" }: { children: ReactNode; minWidth?: string; label?: string }) {
+  // Focusable so keyboard users can scroll wide tables on small screens.
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-brand-600" tabIndex={0} role="region" aria-label={label}>
       <table className={clsx("w-full border-t border-line", minWidth)}>{children}</table>
     </div>
   );

@@ -512,6 +512,36 @@ class EvidenceRequest(Base):
     answered_at: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
+class RiskAcceptance(Base):
+    """A time-limited, release-bound decision to ship despite one failed control.
+
+    It never changes the test result, finding or evidence: the control stays failed and
+    visible. It can move a non-critical failure out of the gate's blocking list only when
+    the application's reviewed profile allows that severity, a second person approved it,
+    it has not expired and no verified runtime violation exists for the control.
+    """
+
+    __tablename__ = "risk_acceptances"
+    __table_args__ = tenant_keys(("application_id", "applications"), ("release_id", "releases"))
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("rsk"))
+    workspace_id: Mapped[str] = mapped_column(String)
+    application_id: Mapped[str] = mapped_column(String)
+    release_id: Mapped[str] = mapped_column(String)
+    control_id: Mapped[str] = mapped_column(String)
+    severity: Mapped[str] = mapped_column(String)  # failure severity when proposed
+    reason: Mapped[str] = mapped_column(Text)
+    compensating_controls: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String, default="proposed")  # proposed | active | rejected | revoked
+    requested_by: Mapped[str] = mapped_column(String)
+    decided_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    expires_at: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[float] = mapped_column(Float, default=now)
+    decided_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    revoked_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    revoked_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
 class CaseMessage(Base):
     __tablename__ = "case_messages"
     __table_args__ = tenant_keys(("case_id", "assessment_cases"))
@@ -867,6 +897,7 @@ class Notification(Base):
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=now)
     delivered_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    read_at: Mapped[float | None] = mapped_column(Float, nullable=True)  # in-app inbox; delivery state stays separate
 
 
 class GithubDelivery(Base):
@@ -884,5 +915,5 @@ TENANT_TABLES = [
     "incidents", "assessment_cases", "evidence_requests", "case_messages", "reports", "review_decisions",
     "report_publications", "readiness_points", "audit_events", "evidence_reviews",
     "application_profiles", "connections", "connector_secrets", "artifact_deletions", "source_documents", "model_calls",
-    "ai_results", "deployment_receipts", "repository_bindings", "analysis_runs", "application_grants",
+    "ai_results", "deployment_receipts", "repository_bindings", "analysis_runs", "application_grants", "risk_acceptances",
 ]

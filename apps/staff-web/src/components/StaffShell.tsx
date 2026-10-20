@@ -1,6 +1,7 @@
 "use client";
 
-import { MobileNav, NoAccess, Sidebar, Topbar, type NavItem } from "@assureops/ui/shell";
+import { useUnread } from "@assureops/ui/inbox";
+import { MobileNav, NoAccess, Sidebar, SkipLink, Topbar, type NavItem } from "@assureops/ui/shell";
 import { Activity, ClipboardCheck, Inbox, Landmark, Server, UserCog } from "lucide-react";
 import type { ReactNode } from "react";
 import { ROLE_LABEL, StaffProvider, useStaff } from "@/lib/staff-context";
@@ -16,7 +17,8 @@ const NAV: NavItem[] = [
 const ADMIN: NavItem = { href: "/admin", label: "Administration", icon: UserCog };
 
 function Frame({ children }: { children: ReactNode }) {
-  const { me, meError, blocked, hasRole } = useStaff();
+  const { me, meError, hasRole } = useStaff();
+  const unread = useUnread(me ? "/v1/staff/notifications" : "");
   const nav = hasRole("admin", "case_manager") ? [...NAV, ADMIN] : NAV;
   if (meError?.status === 403) return <NoAccess portal="staff portal" message={meError.message} />;
   const subtitle = me ? (me.roles.length ? me.roles.map((r) => ROLE_LABEL[r] ?? r).join(", ") : "No staff roles") : "Staff portal";
@@ -31,11 +33,12 @@ function Frame({ children }: { children: ReactNode }) {
 
   return (
     <>
+      <SkipLink />
       <Sidebar portal="Staff Portal" items={nav} footer={footer} home="/work-queue" />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar user={me?.display_name ?? null} subtitle={subtitle} alerts={blocked} alertsHref="/work-queue" searchHref="/work-queue" />
+        <Topbar user={me?.display_name ?? null} subtitle={subtitle} alerts={unread} alertsHref="/notifications" searchHref="/work-queue" />
         <MobileNav items={nav} />
-        <main className="flex-1 px-4 py-6 sm:px-8">{children}</main>
+        <main id="main" tabIndex={-1} className="flex-1 px-4 py-6 outline-none sm:px-8">{children}</main>
       </div>
     </>
   );

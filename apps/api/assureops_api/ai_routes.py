@@ -182,3 +182,18 @@ def review_result(result_id: str, body: AiReviewIn, caller: Caller = CustomerCal
         except service.AiError as exc:
             raise api_error(403 if exc.code == "separation_of_duties" else 409, exc.code, exc.detail)
         return {**service.result_json(row), "effects": effects}
+
+
+@router.post("/ai/results/{result_id}/cancel")
+def cancel_result(result_id: str, caller: Caller = CustomerCaller):
+    from assureops_ai import service
+
+    with tenant_session(caller.workspace_id) as s:
+        row = s.scalars(select(AiResult).where(AiResult.id == result_id).with_for_update()).first()
+        if row is None:
+            raise api_error(404, "not_found", "result not found")
+        require_application_writer(s, caller, row.application_id, "reviewer")
+        cancelled = service.cancel(s, row, actor=caller.username)
+        cases.audit(s, workspace_id=caller.workspace_id, actor=caller.username, actor_kind="customer", action="ai.cancel", target=row.id,
+                    detail={"phase": row.phase, "cancelled": cancelled})
+        return {**service.result_json(row), "cancelled": cancelled}

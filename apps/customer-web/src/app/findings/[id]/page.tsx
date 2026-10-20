@@ -8,6 +8,7 @@ import { FileCheck2, Loader2, MessagesSquare, Send } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState, type FormEvent } from "react";
 import { Fact, PageTop, useRouteId, WithSuspense } from "@/components/bits";
+import { RiskPanel } from "@/components/RiskPanel";
 import { useApp } from "@/lib/app-context";
 import type { FindingDetail } from "@/lib/types";
 
@@ -154,6 +155,8 @@ function FindingView() {
           </>
         )}
       </Card>
+
+      {f.source === "test" && <RiskPanel applicationId={f.application_id} control={f.control} severity={f.severity} failing={f.state !== "resolved"} />}
 
       <Card className="mt-5">
         <CardHeader title="Review thread" icon={<MessagesSquare className="size-4" aria-hidden />} count={`${f.reviews.length}`} />

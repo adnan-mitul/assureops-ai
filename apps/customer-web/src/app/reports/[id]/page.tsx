@@ -4,7 +4,7 @@ import { usePoll } from "@assureops/ui/client";
 import { ApiErrorBanner, Button, Card, CardHeader, ControlStateBadges, EmptyState, LoadingState, Mono, Notice, SeverityBadge, StatusBadge, TableWrap, Td, Th } from "@assureops/ui/components";
 import { EvidenceDrawer } from "@assureops/ui/evidence-drawer";
 import { formatTime, pct, shortHash } from "@assureops/ui/format";
-import { Printer, Radio, ShieldAlert, ShieldCheck, Snowflake } from "lucide-react";
+import { Download, Printer, Radio, ShieldAlert, ShieldCheck, Snowflake } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useState } from "react";
 import { Fact, PageTop, ScoreSummary, useRouteId, WithSuspense } from "@/components/bits";
@@ -30,7 +30,13 @@ function ReportView() {
   return (
     <div className="mx-auto max-w-[1400px]">
       <PageTop eyebrow="Reports" title={`Readiness report · ${snap.release.version}`} subtitle={`${snap.application.name} · ${snap.application.environment}`}
-        actions={<span className="print:hidden"><Button onClick={() => window.print()}><Printer className="size-4" aria-hidden /> Print</Button></span>} />
+        actions={<span className="flex gap-2 print:hidden">
+          <a href={`/api/v1/reports/${encodeURIComponent(report.id)}/export`} download
+            className="inline-flex items-center gap-2 rounded-lg border border-line bg-surface px-3.5 py-2 text-sm font-medium hover:bg-canvas focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600">
+            <Download className="size-4" aria-hidden /> Evidence bundle
+          </a>
+          <Button onClick={() => window.print()}><Printer className="size-4" aria-hidden /> Print</Button>
+        </span>} />
 
       <div className="mb-4 space-y-2">
         <ApiErrorBanner error={error} />

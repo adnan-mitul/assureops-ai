@@ -87,6 +87,7 @@ export type ChangeSet = {
 
 export type Finding = {
   id: string;
+  application_id: string;
   control: string;
   control_name: string;
   test_id: string | null;

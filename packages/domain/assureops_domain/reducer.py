@@ -9,10 +9,12 @@ not test are reported as `unassessed`; they never count as supported and the
 coverage score includes them in its denominator.
 """
 
+import time
+
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from . import evidence_store
+from . import evidence_store, risk
 from .models import AnalysisRun, Artifact, DependencyEdge, EvidenceReview, Finding, Incident, Release, TestRun, now
 from .profile import COMPONENT_LABELS, SEVERITY_RANK, canonical_hash, profile_version
 
@@ -223,6 +225,16 @@ def readiness(session: Session, application_id: str, release: Release, p: dict) 
     coverage_pct = round(100 * sum(weights[c["id"]] for c in covered) / total_weight) if total_weight else None
     support_pct = round(100 * sum(weights[c["id"]] for c in supported) / total_weight) if total_weight else None
 
+    # Reviewed, release-bound risk acceptances move an eligible blocking failure aside; the control itself stays failed.
+    accepted = []
+    acceptances = risk.active_for(session, application_id, release.id)
+    for c in list(blocking):
+        row = acceptances.get(c["id"])
+        if row is not None and risk.eligible(c, p)[0]:
+            c["risk_accepted"] = {"id": row.id, "expires_at": row.expires_at, "decided_by": row.decided_by}
+            blocking.remove(c)
+            accepted.append(c)
+
     status = "blocked" if blocking else "incomplete" if incomplete else "ready"
     reason_parts = []
     for c in blocking:
@@ -238,6 +250,9 @@ def readiness(session: Session, application_id: str, release: Release, p: dict) 
         reason_parts.append(f"{len(review)} await reviewer confirmation")
     if warnings:
         reason_parts.append(f"{len(warnings)} non-blocking failure{'s' if len(warnings) > 1 else ''}")
+    for c in accepted:
+        reason_parts.append(f"{c['name']} failed and is accepted as a risk until {time.strftime('%Y-%m-%d', time.gmtime(c['risk_accepted']['expires_at']))} "
+                            f"({c['risk_accepted']['id']})")
     if not reason_parts:
         reason_parts.append("All assessed controls are supported with current evidence")
     if unassessed:
@@ -269,6 +284,7 @@ def readiness(session: Session, application_id: str, release: Release, p: dict) 
         "gate": {
             "status": status, "reason": reason,
             "blocking": [c["id"] for c in blocking], "warnings": [c["id"] for c in warnings],
+            "accepted_risks": [{"control": c["id"], **c["risk_accepted"]} for c in accepted],
             "incomplete": [c["id"] for c in incomplete], "unassessed": [c["id"] for c in unassessed],
             "scope_limited": bool(unassessed),
         },

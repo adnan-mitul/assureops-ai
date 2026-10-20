@@ -107,3 +107,27 @@ def test_private_only_workspace_sends_nothing_to_an_external_route(workspace, mo
     with tenant_session(workspace) as s:
         assert "external_processing_not_allowed" in s.get(AiResult, rid).error
         assert s.scalars(select(Outbox).where(Outbox.ref_id == rid)).first() is not None  # the original dispatch intent only
+
+
+def test_a_late_external_reply_after_cancellation_is_never_stored(workspace, monkeypatch):
+    """Groq answers after the job was cancelled: the call is kept for cost accounting, the output is discarded."""
+    route = router.Route("C", "groq", "openai/gpt-oss-20b", True, "test external route", external=True)
+    monkeypatch.setattr(router, "resolve", lambda phase, allowed: route)
+    monkeypatch.setattr(service, "external_allowed", lambda ws: True)
+    rid = _request(workspace)
+
+    class LateClient(FakeClient):
+        def generate(self, **kwargs):
+            with tenant_session(workspace) as s:  # the user cancels while the provider is still working
+                assert service.cancel(s, s.get(AiResult, rid), actor="dev@acme.test")
+            return ProviderResult("succeeded", "groq", route.model, content=json.dumps(C_OUTPUT), parsed=C_OUTPUT,
+                                  usage={"total_tokens": 99}, request_id="late-1", latency_ms=900)
+
+    monkeypatch.setattr(router, "generation_client", lambda r: LateClient([]))
+    assert service.execute(workspace, rid) == "stale_owner"
+    with tenant_session(workspace) as s:
+        row = s.get(AiResult, rid)
+        assert row.status == "cancelled" and row.output in (None, {}) and row.model_call_id is None
+        late = s.scalars(select(ModelCall).where(ModelCall.job_ref == rid)).one()
+        assert late.status == "stale_owner" and late.provider == "groq" and late.usage["total_tokens"] == 99
+    assert service.claim(workspace, rid) is None  # a cancelled job is never picked up again

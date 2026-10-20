@@ -1,11 +1,10 @@
 "use client";
 
-import { usePoll } from "@assureops/ui/client";
-import { MobileNav, NoAccess, Sidebar, Topbar, type NavItem } from "@assureops/ui/shell";
+import { useUnread } from "@assureops/ui/inbox";
+import { MobileNav, NoAccess, Sidebar, SkipLink, Topbar, type NavItem } from "@assureops/ui/shell";
 import { Activity, Boxes, Building2, ClipboardCheck, FileBadge, FileText, FolderKanban, GitBranch, House, Settings, TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { AppProvider, useApp } from "@/lib/app-context";
-import type { Finding } from "@/lib/types";
 
 const NAV: NavItem[] = [
   { href: "/overview", label: "Dashboard", icon: House },
@@ -22,8 +21,7 @@ const NAV: NavItem[] = [
 
 function Frame({ children }: { children: ReactNode }) {
   const { me, meError, applications, applicationId, setApplicationId } = useApp();
-  const { data: findings } = usePoll<Finding[]>(applicationId ? `/v1/findings?application_id=${applicationId}` : null, 10000);
-  const open = findings?.filter((f) => f.state !== "resolved").length ?? 0;
+  const unread = useUnread(me ? "/v1/notifications" : "");
 
   if (meError?.status === 403) return <NoAccess portal="customer portal" message={meError.message} />;
 
@@ -46,11 +44,12 @@ function Frame({ children }: { children: ReactNode }) {
 
   return (
     <>
+      <SkipLink />
       <Sidebar portal="Customer Portal" items={NAV} footer={org} home="/overview" />
       <div className="flex min-w-0 flex-1 flex-col">
-        <Topbar user={me?.display_name ?? null} subtitle={me ? `${me.role} · ${me.workspace_id}` : "Customer portal"} alerts={open} alertsHref="/findings" searchHref="/findings" />
+        <Topbar user={me?.display_name ?? null} subtitle={me ? `${me.role} · ${me.workspace_id}` : "Customer portal"} alerts={unread} alertsHref="/notifications" searchHref="/findings" />
         <MobileNav items={NAV} />
-        <main className="flex-1 px-4 py-6 sm:px-8">{children}</main>
+        <main id="main" tabIndex={-1} className="flex-1 px-4 py-6 outline-none sm:px-8">{children}</main>
       </div>
     </>
   );

@@ -123,7 +123,30 @@ def deliver_pending(session: Session, limit: int = 20) -> int:
     return len(rows)
 
 
+def webhook_payload(n: Notification) -> dict:
+    """Redacted: kind, subject and workspace only. Bodies (which may carry invitation links) and recipients never leave."""
+    return {"id": n.id, "kind": n.kind, "subject": n.subject, "workspace_id": n.workspace_id, "created_at": round(n.created_at, 3)}
+
+
+def _webhook(n: Notification):
+    url = os.environ.get("NOTIFY_WEBHOOK_URL")
+    if not url:
+        return
+    import hmac
+    import json
+
+    import httpx
+
+    body = json.dumps(webhook_payload(n), sort_keys=True, separators=(",", ":")).encode()
+    signature = hmac.new(os.environ.get("NOTIFY_WEBHOOK_SECRET", "").encode(), body, hashlib.sha256).hexdigest()
+    res = httpx.post(url, content=body, timeout=10, follow_redirects=False,
+                     headers={"Content-Type": "application/json", "X-AssureOps-Signature": f"sha256={signature}", "X-AssureOps-Delivery": n.id})
+    if res.status_code >= 300:
+        raise RuntimeError(f"webhook answered {res.status_code}")
+
+
 def _send(n: Notification):
+    _webhook(n)  # receivers dedupe on X-AssureOps-Delivery; a webhook grants no access to anything
     msg = EmailMessage()
     msg["From"] = os.environ.get("NOTIFY_FROM", "AssureOps <no-reply@assureops.test>")
     msg["To"] = n.recipient

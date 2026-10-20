@@ -220,7 +220,7 @@ def change_json(c: ChangeSet) -> dict:
 # ---------------- Findings and evidence ----------------
 
 def finding_json(f: Finding, s: Session, detail: bool = False) -> dict:
-    data = {"id": f.id, "control": f.control_id, "control_name": control_name(f.control_id), "test_id": f.test_id,
+    data = {"id": f.id, "application_id": f.application_id, "control": f.control_id, "control_name": control_name(f.control_id), "test_id": f.test_id,
             "source": f.source, "severity": f.severity, "title": f.title, "description": f.description, "state": f.state,
             "revision": f.revision, "first_release": f.first_release, "last_release": f.last_release, "evidence_refs": f.evidence_refs,
             "resolution": f.resolution, "remediation_note": f.remediation_note, "created_at": ts(f.created_at), "updated_at": ts(f.updated_at)}

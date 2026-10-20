@@ -451,6 +451,62 @@ def get_report(report_id: str, caller: Caller = CustomerCaller):
         return data
 
 
+
+@router.get("/reports/{report_id}/export")
+def export_report(report_id: str, caller: Caller = CustomerCaller):
+    """Scoped evidence bundle: the frozen published report, its accepted explanations and the exact evidence it cites.
+
+    Every file is listed with its SHA-256 in manifest.json. Evidence whose stored bytes fail their
+    integrity check is listed as unavailable instead of being exported. Internal staff notes, drafts
+    and other applications are never included.
+    """
+    import io
+    import json
+    import zipfile
+
+    from fastapi.responses import Response
+
+    from assureops_domain.models import Artifact
+    from assureops_domain.profile import canonical_hash
+
+    with tenant_session(caller.workspace_id) as s:
+        report = s.get(Report, report_id)
+        if report is None or report.state not in ("published", "superseded"):
+            raise api_error(404, "not_found", "report not found")
+        files, unavailable = {}, []
+
+        def add(name: str, data: bytes):
+            files[name] = data
+
+        add("report.json", json.dumps({"id": report.id, "state": report.state, "sha256": report.sha256,
+                                       "integrity": "verified" if canonical_hash(report.snapshot) == report.sha256 else "tampered",
+                                       "snapshot": report.snapshot}, indent=2, sort_keys=True).encode())
+        add("explanations.json", json.dumps(svc.explanations(s, report.id, accepted_only=True), indent=2, sort_keys=True).encode())
+        for item in report.snapshot.get("evidence", []):
+            run = s.get(TestRun, item.get("id"))
+            artifact = s.get(Artifact, run.artifact_id) if run else None
+            try:
+                add(f"evidence/{run.id}.json", evidence_store.read_bytes(artifact))
+            except Exception as exc:  # missing, deleted or failed integrity: say so, never substitute
+                unavailable.append({"run_id": item.get("id"), "reason": str(exc)[:200]})
+        import hashlib
+
+        manifest = {"bundle": "assureops-report-export-v1", "report_id": report.id, "workspace_id": caller.workspace_id,
+                    "application_id": report.application_id, "release": report.snapshot.get("release", {}).get("version"),
+                    "exported_by": caller.username, "exported_at": time.time(),
+                    "scope": "published report, accepted explanations and cited evidence only; no internal notes, drafts or other applications",
+                    "files": {name: hashlib.sha256(data).hexdigest() for name, data in sorted(files.items())},
+                    "unavailable_evidence": unavailable}
+        buffer = io.BytesIO()
+        with zipfile.ZipFile(buffer, "w", zipfile.ZIP_DEFLATED) as z:
+            for name, data in sorted(files.items()):
+                z.writestr(name, data)
+            z.writestr("manifest.json", json.dumps(manifest, indent=2, sort_keys=True))
+        audit(s, caller, "report.export", report.id, {"files": len(files), "unavailable": len(unavailable)})
+    return Response(content=buffer.getvalue(), media_type="application/zip",
+                    headers={"Content-Disposition": f'attachment; filename="assureops-{report.id}.zip"'})
+
+
 # ---------------- Settings ----------------
 
 @router.get("/settings")

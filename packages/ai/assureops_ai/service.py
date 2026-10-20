@@ -189,6 +189,17 @@ def claim(workspace_id: str, result_id: str) -> int | None:
         return row[0] if row else None
 
 
+def cancel(s, row: AiResult, *, actor: str) -> bool:
+    """Stop a queued or running phase job. The fencing token moves on, so a reply still in flight
+    (private or external) is recorded as a stale call for cost accounting and never stored as output."""
+    if row.status not in ("pending", "running"):
+        return False
+    row.status, row.error = "cancelled", f"cancelled by {actor}"
+    row.fencing_token = (row.fencing_token or 0) + 1
+    row.lease_expires_at, row.updated_at = None, now()
+    return True
+
+
 def _usage_today(s, workspace_id: str) -> int:
     rows = s.scalars(select(ModelCall).where(ModelCall.provider == "groq", ModelCall.created_at > now() - 86400)).all()
     return sum((r.usage or {}).get("total_tokens") or 0 for r in rows)
