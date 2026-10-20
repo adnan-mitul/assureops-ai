@@ -29,6 +29,7 @@ def main():
     config = {"identities": [{"name": "assureops-evidence", "credentials": [{"accessKey": values["S3_ACCESS_KEY"], "secretKey": values["S3_SECRET_KEY"]}],
                               "actions": ["Admin", "Read", "Write", "List", "Tagging"]}]}
     out = ROOT / "infra" / "compose" / "seaweedfs" / "s3.rendered.json"
+    out.parent.mkdir(parents=True, exist_ok=True)  # only the rendered (git-ignored) file lives here
     out.write_text(json.dumps(config, indent=2), encoding="utf-8", newline="\n")
     print(f"rendered {out.relative_to(ROOT)} (values not shown)")
 
