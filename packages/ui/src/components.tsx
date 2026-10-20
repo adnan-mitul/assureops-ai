@@ -29,7 +29,7 @@ export function ViewAll({ href, label = "View all" }: { href: string; label?: st
 }
 
 export function Button({
-  children, onClick, variant = "secondary", disabled, className, type = "button",
+  children, onClick, variant = "secondary", disabled, className, type = "button", ariaLabel, pressed,
 }: {
   children: ReactNode;
   onClick?: () => void;
@@ -37,12 +37,16 @@ export function Button({
   disabled?: boolean;
   className?: string;
   type?: "button" | "submit";
+  ariaLabel?: string;
+  pressed?: boolean;
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
+      aria-label={ariaLabel}
+      aria-pressed={pressed}
       className={clsx(
         "inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-60",
         variant === "primary" && "bg-brand-700 text-white hover:bg-brand-800",

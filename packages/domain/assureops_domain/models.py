@@ -69,8 +69,12 @@ class StaffRole(Base):
     __table_args__ = (UniqueConstraint("user_id", "role"),)
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("srl"))
     user_id: Mapped[str] = mapped_column(String)
-    role: Mapped[str] = mapped_column(String)  # analyst | senior_reviewer | case_manager | operator
+    role: Mapped[str] = mapped_column(String)  # admin | analyst | senior_reviewer | case_manager | operator
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    granted_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    granted_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    revoked_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    revoked_at: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class ServiceCredential(Base):
@@ -156,6 +160,25 @@ class Application(Base):
     tools_url: Mapped[str] = mapped_column(String)
     authorized_scope: Mapped[dict] = mapped_column(JSON, default=dict)
     created_at: Mapped[float] = mapped_column(Float, default=now)
+
+
+class ApplicationGrant(Base):
+    """Application-scoped responsibility: a customer developer may change only the applications assigned to them.
+
+    Workspace membership still decides who may read. Owners write to every application of their workspace.
+    """
+
+    __tablename__ = "application_grants"
+    __table_args__ = tenant_keys(("application_id", "applications"))
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("agr"))
+    workspace_id: Mapped[str] = mapped_column(String)
+    application_id: Mapped[str] = mapped_column(String)
+    user_id: Mapped[str] = mapped_column(String)
+    granted_by: Mapped[str] = mapped_column(String)
+    granted_at: Mapped[float] = mapped_column(Float, default=now)
+    expires_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    revoked_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    revoked_at: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class CoverageContract(Base):
@@ -861,5 +884,5 @@ TENANT_TABLES = [
     "incidents", "assessment_cases", "evidence_requests", "case_messages", "reports", "review_decisions",
     "report_publications", "readiness_points", "audit_events", "evidence_reviews",
     "application_profiles", "connections", "connector_secrets", "artifact_deletions", "source_documents", "model_calls",
-    "ai_results", "deployment_receipts", "repository_bindings", "analysis_runs",
+    "ai_results", "deployment_receipts", "repository_bindings", "analysis_runs", "application_grants",
 ]

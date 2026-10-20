@@ -7,7 +7,7 @@ from fastapi import APIRouter, Header
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from assureops_domain import approvals, cases, evidence_store, reducer
+from assureops_domain import approvals, cases, evidence_store, grants, reducer
 from assureops_domain.db import tenant_session
 from assureops_domain.models import (
     Application, Assessment, AssessmentCase, CaseMessage, ChangeSet, EvidenceRequest, Finding, FindingReview, Membership, Release,
@@ -17,6 +17,7 @@ from assureops_domain.models import Workspace
 from assureops_domain.profile import control_catalog, coverage_contract_for, profile_version, try_for_application
 
 from . import services as svc
+from .access import require_application_writer
 from .auth import Caller, CustomerCaller, api_error
 
 router = APIRouter(prefix="/v1", tags=["customer"])
@@ -100,6 +101,7 @@ def submit_release(application_id: str, caller: Caller = CustomerCaller, body: R
     body = body or ReleaseIn()
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, application_id)
+        require_application_writer(s, caller, app.id)
         result = svc.collect_release(s, app, caller.username, source_commit=body.source_commit, artifact_digest=body.artifact_digest)
         if result["created"]:
             release = s.get(Release, result["release"]["id"])
@@ -134,6 +136,7 @@ def compare(body: CompareIn, caller: Caller = CustomerCaller):
     caller.require_role(*WRITE_ROLES, "reviewer")
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, body.application_id)
+        require_application_writer(s, caller, app.id, "reviewer")
         target = s.get(Release, body.target_release_id)
         if target is None or target.application_id != app.id:
             raise api_error(404, "not_found", "release not found")
@@ -165,6 +168,7 @@ def schedule_retests(change_id: str, caller: Caller = CustomerCaller, idempotenc
         if change is None:
             raise api_error(404, "not_found", "change not found")
         app = svc.get_application(s, change.application_id)
+        require_application_writer(s, caller, app.id)
         target = s.get(Release, change.target_release_id)
         if svc.latest_release(s, app.id).id != target.id:
             raise api_error(409, "superseded", "a newer release exists; compare against it instead")
@@ -188,6 +192,7 @@ def create_assessment(body: AssessmentIn, caller: Caller = CustomerCaller, idemp
     caller.require_role(*WRITE_ROLES)
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, body.application_id)
+        require_application_writer(s, caller, app.id)
         release = s.get(Release, body.release_id) if body.release_id else svc.latest_release(s, app.id)
         if release is None:
             raise api_error(409, "no_release", "submit a release before assessing")
@@ -231,6 +236,7 @@ def cancel_assessment(assessment_id: str, caller: Caller = CustomerCaller):
         job = s.scalars(select(Assessment).where(Assessment.id == assessment_id).with_for_update()).first()
         if job is None:
             raise api_error(404, "not_found", "assessment not found")
+        require_application_writer(s, caller, job.application_id)
         if job.status in ("completed", "failed", "cancelled"):
             return {"id": job.id, "status": job.status, "message": "already finished"}
         svc.cancel_assessment(s, job)
@@ -271,6 +277,7 @@ def review_finding(finding_id: str, body: FindingReviewIn, caller: Caller = Cust
         f = s.scalars(select(Finding).where(Finding.id == finding_id).with_for_update()).first()
         if f is None:
             raise api_error(404, "not_found", "finding not found")
+        require_application_writer(s, caller, f.application_id, "reviewer")
         if f.revision != body.expected_revision:
             raise api_error(409, "stale_revision", "the finding changed since you loaded it; reload and review again")
         if f.state == "resolved":
@@ -362,6 +369,7 @@ def submit_case(body: CaseIn, caller: Caller = CustomerCaller):
     caller.require_role(*WRITE_ROLES)
     with tenant_session(caller.workspace_id) as s:
         svc.get_application(s, body.application_id)
+        require_application_writer(s, caller, body.application_id)
         case = AssessmentCase(workspace_id=caller.workspace_id, application_id=body.application_id, title=body.title, scope_note=body.scope_note,
                               created_by=caller.username)
         s.add(case)
@@ -394,6 +402,7 @@ def respond(case_id: str, body: ResponseIn, caller: Caller = CustomerCaller):
         request = s.get(EvidenceRequest, body.request_id)
         if case is None or request is None or request.case_id != case.id:
             raise api_error(404, "not_found", "evidence request not found")
+        require_application_writer(s, caller, case.application_id, "reviewer")
         if request.state != "open":
             raise api_error(409, "answered", "this request was already answered")
         request.state, request.response, request.responded_by, request.answered_at = "answered", body.response, caller.username, time.time()
@@ -412,8 +421,10 @@ class MessageIn(BaseModel):
 def customer_message(case_id: str, body: MessageIn, caller: Caller = CustomerCaller):
     caller.require_role(*WRITE_ROLES, "reviewer")
     with tenant_session(caller.workspace_id) as s:
-        if s.get(AssessmentCase, case_id) is None:
+        case = s.get(AssessmentCase, case_id)
+        if case is None:
             raise api_error(404, "not_found", "case not found")
+        require_application_writer(s, caller, case.application_id, "reviewer")
         s.add(CaseMessage(workspace_id=caller.workspace_id, case_id=case_id, author=caller.username, author_kind="customer", visibility="customer", body=body.body))
         return {"ok": True}
 
@@ -461,7 +472,8 @@ def get_settings(caller: Caller = CustomerCaller):
         first = next(iter(profiles.values()), None)
         from . import ai_routes
         return {
-            "workspace": caller.workspace_id, "your_role": caller.role, "members": members, "applications": apps,
+            "workspace": caller.workspace_id, "your_role": caller.role, "you": caller.username, "members": members, "applications": apps,
+            "your_applications": sorted(grants.assigned_application_ids(s, caller.user_id)) if caller.role == "developer" else [a["id"] for a in apps],
             "profile": {**(first or {}), "controls": control_catalog()["controls"], "version": (first or {}).get("version", "none"),
                         "gate_policy": (first or {}).get("gate_policy", {"version": "-", "blocking_severities": []}),
                         "requirements": (first or {}).get("requirements", {}),

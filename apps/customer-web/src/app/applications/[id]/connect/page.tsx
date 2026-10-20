@@ -5,6 +5,7 @@ import { ApiErrorBanner, Button, Card, CardHeader, EmptyState, ErrorBanner, Fiel
 import { CircleCheck, CircleDashed, KeyRound, Link2, PlugZap, Radio, ScrollText, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { PageTop, useRouteId, WithSuspense } from "@/components/bits";
+import { DevelopersPanel } from "@/components/DevelopersPanel";
 import { useApp } from "@/lib/app-context";
 
 type Check = { id: string; status: "pass" | "fail" | "gap"; detail: string };
@@ -108,6 +109,8 @@ function Connect() {
         subtitle="Connect any HTTP/JSON AI application with a versioned adapter, prove the target and scope, store test credentials encrypted, and have a different person review the control profile." />
       <ApiErrorBanner error={overview.error} />
       {(action.error || localError) && <ErrorBanner message={localError ?? action.error ?? ""} />}
+
+      <DevelopersPanel appId={appId} />
 
       <Card className="p-5">
         <CardHeader title="Onboarding" icon={<ShieldCheck className="size-4" aria-hidden />} />

@@ -4,8 +4,9 @@ import { api, useAction, usePoll } from "@assureops/ui/client";
 import { ApiErrorBanner, Button, Card, CardHeader, ErrorBanner, LoadingState, Mono, StatusBadge, TableWrap, Td, Th, inputClass } from "@assureops/ui/components";
 import { useState } from "react";
 import { money } from "@assureops/ui/format";
-import { Bot, Boxes, Database, ScrollText, Users } from "lucide-react";
+import { Bot, Boxes, Database, ScrollText } from "lucide-react";
 import { Fact, PageTop } from "@/components/bits";
+import { MembersPanel } from "@/components/MembersPanel";
 import type { Settings } from "@/lib/types";
 
 function show(value: unknown): string {
@@ -24,7 +25,7 @@ function KeyValues({ data, format }: { data: Record<string, unknown>; format?: (
 }
 
 export default function SettingsPage() {
-  const { data, error, loading } = usePoll<Settings>("/v1/settings", 0);
+  const { data, error, loading, refresh } = usePoll<Settings>("/v1/settings", 0);
 
   if (loading && !data) return <LoadingState label="Loading settings…" />;
   if (!data) return <ApiErrorBanner error={error} />;
@@ -33,20 +34,11 @@ export default function SettingsPage() {
 
   return (
     <div className="mx-auto max-w-[1400px]">
-      <PageTop eyebrow="Settings" title="Workspace settings" subtitle={<>Workspace <span className="font-mono">{data.workspace}</span> · your role: <strong className="capitalize">{data.your_role}</strong> · read-only</>} />
+      <PageTop eyebrow="Settings" title="Workspace settings" subtitle={<>Workspace <span className="font-mono">{data.workspace}</span> · your role: <strong className="capitalize">{data.your_role}</strong></>} />
       <ApiErrorBanner error={error} />
 
       <div className="grid gap-5 xl:grid-cols-2">
-        <Card>
-          <CardHeader title="Members" icon={<Users className="size-4" aria-hidden />} count={`${data.members.length}`} />
-          <TableWrap minWidth="min-w-[400px]">
-            <thead><tr><Th>Name</Th><Th>User</Th><Th>Role</Th></tr></thead>
-            <tbody className="divide-y divide-line">
-              {data.members.map((m) => <tr key={m.user}><Td>{m.name}</Td><Td><Mono>{m.user}</Mono></Td><Td className="capitalize">{m.role}</Td></tr>)}
-            </tbody>
-          </TableWrap>
-          <p className="px-5 py-3 text-xs text-muted">Owners and developers submit releases and start assessments; owners and reviewers grant approvals; viewers read only.</p>
-        </Card>
+        <MembersPanel members={data.members} isOwner={data.your_role === "owner"} you={data.you} onChanged={refresh} />
 
         <Card>
           <CardHeader title="Data policy and retention" icon={<Database className="size-4" aria-hidden />} />

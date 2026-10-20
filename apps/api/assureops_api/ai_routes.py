@@ -11,6 +11,7 @@ from assureops_domain.db import platform_session, tenant_session
 from assureops_domain.models import AiResult, Incident, Release, Report, SourceDocument, Workspace
 
 from . import services as svc
+from .access import require_application_writer
 from .auth import Caller, CustomerCaller, api_error
 
 router = APIRouter(prefix="/v1", tags=["ai"])
@@ -123,6 +124,7 @@ def request_phase(application_id: str, phase: str, body: PhaseIn, caller: Caller
     check("ai_phase", caller.workspace_id, limit=60, window_seconds=3600)
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, application_id)
+        require_application_writer(s, caller, app.id, "reviewer")
         refs = {k: v for k, v in body.model_dump().items() if v is not None}
         phase = phase.upper()
         if phase == "B":

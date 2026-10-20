@@ -26,6 +26,7 @@ ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT))
 
 from assureops_api import routes_customer as rc  # noqa: E402
+from assureops_api import routes_handoffs as rh  # noqa: E402
 from assureops_api import routes_onboarding as ro  # noqa: E402
 from assureops_api import routes_staff as rs  # noqa: E402
 from assureops_api.auth import Caller  # noqa: E402
@@ -109,6 +110,7 @@ def main():
     if not exists:
         rc.register_application(rc.ApplicationIn(id=args.app, name=args.name, purpose=raw_profile["scope"]["statement"], environment="staging",
                                                  mode="observe_only"), caller=owner)
+    rh.assign_application_developer(args.app, dev.username, caller=owner)  # the owner assigns the developer to this application
     conn = ro.create_connection(args.app, ro.ConnectionIn(adapter_id=conn_cfg["adapter_id"], config=conn_cfg["config"],
                                                           actors={a: ro.ActorCredentialIn(secret_value=actors[a]) for a in conn_cfg["actors"]}), caller=dev)
     print(f"connection r{conn['revision']} {conn['adapter_id']} status={conn['status']}; credentials stored as fingerprints "

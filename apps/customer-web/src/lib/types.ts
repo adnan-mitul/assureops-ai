@@ -284,7 +284,9 @@ export type AssessmentCase = {
 export type Settings = {
   workspace: string;
   your_role: string;
+  you: string;
   members: { user: string; name: string; role: string }[];
+  your_applications: string[];
   applications: { id: string; name: string; mode: string; environment: string; target_url: string; tools_url: string; authorized_scope: Record<string, unknown> }[];
   profile: {
     version: string;

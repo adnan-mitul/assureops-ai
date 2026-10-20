@@ -8,4 +8,5 @@ const handle = (request: NextRequest, context: Context) => proxyHandler(portal()
 
 export const GET = handle;
 export const POST = handle;
+export const PUT = handle;
 export const DELETE = handle;
