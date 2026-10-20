@@ -44,6 +44,8 @@ def main():
     parser.add_argument("--provider", required=True, choices=["groq", "private"])
     parser.add_argument("--model", required=True)
     parser.add_argument("--record", action="store_true")
+    parser.add_argument("--json-out", type=Path, help="also write the metrics and per-case outcomes to this file")
+    parser.add_argument("--require-qualified", action="store_true", help="exit non-zero unless the phase qualifies (CI)")
     args = parser.parse_args()
     phase = PHASES[args.phase]
     route = router.Route(args.phase, args.provider, args.model, True, "qualification run", external=args.provider == "groq")
@@ -60,6 +62,14 @@ def main():
                                      dataset=f"phase-{args.phase}-holdout ({metrics['holdout_sha256']})", metrics=metrics,
                                      status="qualified" if result["qualified"] else "not_qualified", recorded_by="qualify_phase.py"))
         print("qualification record stored")
+    if args.json_out:
+        args.json_out.parent.mkdir(parents=True, exist_ok=True)
+        args.json_out.write_text(json.dumps({"phase": args.phase, "provider": args.provider, "model": args.model,
+                                             "artifact_digest": artifact_digest(phase.kind, args.provider, args.model),
+                                             "prompt_version": phase.prompt_version, "schema_version": phase.schema_version,
+                                             "qualified": result["qualified"], "metrics": metrics}, indent=2), encoding="utf-8")
+    if args.require_qualified and not result["qualified"]:
+        raise SystemExit(1)
 
 
 if __name__ == "__main__":

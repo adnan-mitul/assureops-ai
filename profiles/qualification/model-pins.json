@@ -1,0 +1,13 @@
+{
+  "description": "Private model artifacts per phase. CI model qualification pulls these and fails if a digest differs. Encoder revisions and weight digests live in packages/ai/assureops_ai/encoder_pins.json.",
+  "ollama_version": "0.40.6",
+  "phases": {
+    "A": {"model": "granite4:micro", "digest": "89962fcc75239ac434cdebceb6b7e0669397f92eaef9c487774b718bc36a3e5f"},
+    "B": {"model": "phi4-mini", "digest": "78fad5d182a7c33065e153a5f8ba210754207ba9d91973f57dffa7f487363753"},
+    "C": {"model": "qwen2.5-coder:1.5b", "digest": "d7372fd828518a4d38b1eb196c673c31a85f2ed302b3d1e406c4c2d1b64a0668"},
+    "D": {"model": "cross-encoder/nli-deberta-v3-small", "encoder": true},
+    "E": {"model": "phi4-mini", "digest": "78fad5d182a7c33065e153a5f8ba210754207ba9d91973f57dffa7f487363753"},
+    "F": {"model": "smollm2:1.7b", "digest": "cef4a1e09247f018ca0c482ad4c2ce1474aba5e87f245dacf97f07948d05d8b4"},
+    "R": {"model": "BAAI/bge-small-en-v1.5", "encoder": true}
+  }
+}

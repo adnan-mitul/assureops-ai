@@ -17,10 +17,10 @@ The execution specification is `AssureOps-AI-Production-Execution-Plan-v5.md` (k
 - Reset and seed: `.venv/Scripts/python scripts/seed.py --reset`
 - Backend services: `bash scripts/start_services.sh` (stop: `powershell -File scripts/stop_services.ps1`)
 - Portals: `npm run dev:customer`, `npm run dev:staff`
-- Checks: `bash scripts/verify/verify.sh`
+- Checks: `bash scripts/verify/verify.sh`; browser journeys `npm run test:e2e` (stack and portals running); first run creates test values with `python scripts/init_dev_env.py`
 - Lab journeys: `.venv/Scripts/python scripts/lab_journey.py --app <app> --name <Name> --lab-readme <lab>/README.md`
 - Drills: `scripts/backup_restore_check.py`, `scripts/change_benchmark.py --app <app> --full-check`; staff OTP for local sign-in: `scripts/staff_otp.py <user>`
-- Models: `bash scripts/start_models.sh` (Ollama :8740, encoders :8730; started by start_services.sh), qualify with `scripts/qualify_phase.py --phase X --provider private|groq --model <id> --record`, run phases with `scripts/run_ai_phases.py`
+- Models: `bash scripts/start_models.sh` (Ollama :8740, encoders :8730; started by start_services.sh), qualify with `scripts/qualify_phase.py --phase X --provider private|groq --model <id> --record`, run phases with `scripts/run_ai_phases.py`; CI qualification against pinned artifacts `scripts/ci_qualify_models.py --phases C D R` (pins in `profiles/qualification/model-pins.json`)
 - Isolation, limits, delivery: `scripts/container_runner_check.py`, `scripts/load_recovery_check.py load|recovery`, `scripts/deploy/local_promote.py promote|rollback`; monitoring config `scripts/render_monitoring.py`
 
 ## Rules that must not regress

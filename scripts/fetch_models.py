@@ -24,20 +24,28 @@ MODELS = {
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--dir", default="D:/AssureOpsModels/hf")
+    parser.add_argument("--pinned", action="store_true", help="download the recorded revisions and fail unless the digests match (CI)")
     args = parser.parse_args()
     from huggingface_hub import HfApi, snapshot_download
 
     from assureops_ai.encoder_server import _artifact_digest
 
+    out = ROOT / "packages" / "ai" / "assureops_ai" / "encoder_pins.json"
+    recorded = json.loads(out.read_text()) if args.pinned else {}
     api = HfApi()
     pins = {}
     for repo, meta in MODELS.items():
-        revision = api.model_info(repo).sha
+        revision = recorded[repo]["revision"] if args.pinned else api.model_info(repo).sha
         path = snapshot_download(repo, revision=revision, cache_dir=args.dir,
                                  allow_patterns=["*.json", "*.safetensors", "*.txt", "*.model", "spm.model", "tokenizer*"])
         pins[repo] = {**meta, "revision": revision, "artifact_digest": _artifact_digest(Path(path))}
         print(f"{repo}: revision {revision[:12]}, digest {pins[repo]['artifact_digest'][:16]}")
-    out = ROOT / "packages" / "ai" / "assureops_ai" / "encoder_pins.json"
+    if args.pinned:
+        changed = [r for r in MODELS if pins[r]["artifact_digest"] != recorded[r]["artifact_digest"]]
+        if changed:
+            raise SystemExit(f"weights differ from the recorded pins: {changed}")
+        print("all encoder weights match the recorded pins")
+        return
     out.write_text(json.dumps(pins, indent=2) + "\n", encoding="utf-8", newline="\n")
     print(f"pins written to {out.relative_to(ROOT)}")
 

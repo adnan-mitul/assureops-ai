@@ -7,10 +7,15 @@ on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: "0 3 * * 1"  # weekly private-model qualification against the pinned artifacts
   workflow_dispatch:
     inputs:
       rollback_digest:
         description: "Roll production back to this previously promoted image digest (sha256:...)"
+        required: false
+      qualify_phases:
+        description: "Qualify these private model phases (space-separated, e.g. 'C D R' or 'A B C D E F R')"
         required: false
 permissions:
   contents: read
@@ -105,9 +110,133 @@ jobs:
       - name: Dependency audit (npm)
         run: npm audit --audit-level=high --omit=dev
 
+  browser:
+    name: Browser journeys (portals, Keycloak MFA, BFF, API)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Local test values and rendered configuration (generated per run, never stored)
+        run: |
+          python scripts/init_dev_env.py
+          python scripts/render_realm.py
+          python scripts/render_storage.py
+      - name: Start Postgres, Redis, Keycloak and the private object store
+        run: docker compose --env-file infra/compose/dev.env -f infra/compose/docker-compose.yml up -d postgres redis keycloak objectstore
+      - name: Install
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+          npm ci
+      - name: Migrate and seed
+        run: |
+          for i in $(seq 1 60); do
+            docker compose --env-file infra/compose/dev.env -f infra/compose/docker-compose.yml exec -T postgres psql -U postgres -d assureops -c "select 1" >/dev/null 2>&1 && break
+            sleep 2
+          done
+          .venv/bin/python scripts/seed.py --reset
+          .venv/bin/python scripts/render_web_env.py
+      - name: Build portals
+        run: npm run build
+      - name: Start API and portals
+        run: |
+          mkdir -p var/logs
+          nohup .venv/bin/python -m uvicorn assureops_api.main:app --port 8700 > var/logs/api.log 2>&1 &
+          nohup npm --workspace apps/customer-web run start -- --port 3700 > var/logs/customer-web.log 2>&1 &
+          nohup npm --workspace apps/staff-web run start -- --port 3710 > var/logs/staff-web.log 2>&1 &
+          ready() { for i in $(seq 1 120); do [ "$(curl -s -o /dev/null -w '%{http_code}' "$1")" = "$2" ] && return 0; sleep 2; done; echo "not ready: $1"; return 1; }
+          ready http://127.0.0.1:8700/health 200
+          ready http://localhost:8780/realms/assureops/.well-known/openid-configuration 200
+          ready http://localhost:8780/realms/assureops-staff/.well-known/openid-configuration 200
+          ready http://localhost:3700/api/v1/applications 401
+          ready http://localhost:3710/api/v1/staff/work-queue 401
+      - name: Browser journeys
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test
+      - name: Report and service logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-journeys
+          path: |
+            var/e2e-report
+            var/e2e-results
+            var/logs
+          retention-days: 7
+
+  models:
+    name: Private model qualification (pinned artifacts, synthetic holdouts)
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.qualify_phases != '')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    # Isolated: no repository secrets, no external model provider, synthetic holdout data only.
+    env:
+      PHASES: ${{ inputs.qualify_phases || 'C D R' }}
+      PRIVATE_INFERENCE_URL: http://127.0.0.1:8740/v1
+      PRIVATE_EMBED_URL: http://127.0.0.1:8730
+      PRIVATE_CLASSIFY_URL: http://127.0.0.1:8730
+      ENCODER_MODELS_DIR: /tmp/models/hf
+      OLLAMA_MODELS: /tmp/models/ollama
+      OLLAMA_HOST: 127.0.0.1:8740
+      GROQ_ENABLED: "false"
+      OLLAMA_URL: https://github.com/ollama/ollama/releases/download/v0.40.6/ollama-linux-amd64.tar.zst
+      OLLAMA_SHA256: c164ab8b1b28e2a247c29719b8e404c423c5b83ae64c3ab4e59d50c7ff7fc5e0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate requested phases
+        run: echo "$PHASES" | grep -Eq '^[ABCDEFR]( [ABCDEFR])*$' || { echo "phases must be letters from A B C D E F R"; exit 1; }
+      - name: Install (CPU inference)
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+          .venv/bin/python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
+          .venv/bin/python -m pip install -r requirements-models.txt
+      - name: Pinned Ollama runtime (checksum verified)
+        run: |
+          curl -fsSL -o /tmp/ollama.tar.zst "$OLLAMA_URL"
+          echo "$OLLAMA_SHA256  /tmp/ollama.tar.zst" | sha256sum -c -
+          mkdir -p /tmp/ollama "$OLLAMA_MODELS" && tar --zstd -xf /tmp/ollama.tar.zst -C /tmp/ollama
+          OLLAMA_MAX_LOADED_MODELS=1 OLLAMA_NUM_PARALLEL=1 OLLAMA_CONTEXT_LENGTH=8192 nohup /tmp/ollama/bin/ollama serve > /tmp/ollama.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8740/api/version && break; sleep 2; done
+      - name: Pull pinned generation models and encoder weights
+        run: |
+          for p in $PHASES; do
+            m=$(jq -r ".phases.$p | select(.encoder != true) | .model" profiles/qualification/model-pins.json)
+            [ -n "$m" ] && /tmp/ollama/bin/ollama pull "$m"
+          done
+          .venv/bin/python scripts/fetch_models.py --pinned --dir "$ENCODER_MODELS_DIR"
+      - name: Encoder service
+        run: |
+          nohup .venv/bin/python -m assureops_ai.encoder_server --port 8730 > /tmp/encoder.log 2>&1 &
+          for i in $(seq 1 90); do curl -sf -o /dev/null http://127.0.0.1:8730/info && break; sleep 2; done
+      - name: Qualify phases (fails on any artifact mismatch or unqualified phase)
+        run: .venv/bin/python scripts/ci_qualify_models.py --phases $PHASES --out var/qualification
+      - name: Qualification results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-qualification
+          path: var/qualification
+          retention-days: 90
+
   images:
     name: Immutable images with SBOM, provenance and signature
-    needs: [backend, frontend]
+    needs: [backend, frontend, browser]
     runs-on: ubuntu-24.04
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:

@@ -32,6 +32,7 @@ Readiness reports describe evidence within a tested boundary. They are not certi
 ## First run
 
 ```bash
+python scripts/init_dev_env.py
 python scripts/render_realm.py
 python scripts/render_storage.py
 docker compose --env-file infra/compose/dev.env -f infra/compose/docker-compose.yml up -d
@@ -42,6 +43,7 @@ npm install
 bash scripts/start_services.sh
 npm run dev:customer
 npm run dev:staff
+npx playwright install chromium && npm run test:e2e   # browser journeys through both portals
 ```
 
 `infra/compose/dev.env` holds generated local test values and is git-ignored. Customer accounts: `owner@acme.test`, `dev@acme.test`, `reviewer@acme.test`, `viewer@acme.test`, `dev@globex.test`. Staff accounts: `analyst@assureops.test`, `reviewer@assureops.test`, `manager@assureops.test`, `operator@assureops.test`. Staff sign-in asks for a one-time code: `python scripts/staff_otp.py analyst@assureops.test` prints the current code for the local test authenticator.
