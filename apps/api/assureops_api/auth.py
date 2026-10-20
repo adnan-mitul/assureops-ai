@@ -7,6 +7,7 @@ customer tokens have distinct audiences. Machines use scoped service credentials
 """
 
 import hashlib
+import os
 from dataclasses import dataclass, field
 
 import jwt
@@ -89,8 +90,23 @@ def customer(authorization: str | None = Header(default=None), x_workspace_id: s
     return caller
 
 
+def staff_mfa_required() -> bool:
+    from assureops_domain.config import _dev_env
+
+    return (os.environ.get("STAFF_MFA_REQUIRED") or _dev_env().get("STAFF_MFA_REQUIRED") or "true").lower() == "true"
+
+
+def _has_second_factor(claims: dict) -> bool:
+    """The staff realm's OTP step adds "otp" to the authentication-method references of the session's tokens."""
+    amr = claims.get("amr") or []
+    return isinstance(amr, list) and "otp" in amr
+
+
 def staff(authorization: str | None = Header(default=None)) -> Caller:
-    caller = _load_user(_verify(authorization, settings().staff_audience, settings().staff_issuer), "staff")
+    claims = _verify(authorization, settings().staff_audience, settings().staff_issuer)
+    if staff_mfa_required() and not _has_second_factor(claims):
+        raise api_error(403, "mfa_required", "staff access requires a second factor; sign in again with your one-time code")
+    caller = _load_user(claims, "staff")
     if not caller.staff_roles:
         raise api_error(403, "no_staff_role", "no active staff role")
     return caller

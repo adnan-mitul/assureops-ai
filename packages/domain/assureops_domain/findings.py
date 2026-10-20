@@ -9,7 +9,6 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from .models import Finding, Incident, Release, TestRun, now
-from .profile import profile
 
 
 class FindingError(Exception):
@@ -19,8 +18,8 @@ class FindingError(Exception):
         self.detail = detail
 
 
-def record_test_outcome(session: Session, run: TestRun, release: Release):
-    test = profile()["tests_by_id"][run.test_id]
+def record_test_outcome(session: Session, run: TestRun, release: Release, p: dict):
+    test = p["tests_by_id"][run.test_id]
     rows = session.scalars(select(Finding).where(Finding.application_id == run.application_id, Finding.test_id == run.test_id,
                                                  Finding.source == "test").order_by(Finding.created_at.desc())).all()
     active = next((f for f in rows if f.state != "resolved"), None)
@@ -52,7 +51,8 @@ def record_test_outcome(session: Session, run: TestRun, release: Release):
 
 
 def open_runtime_violation(session: Session, *, workspace_id: str, application_id: str, control_id: str, release: str,
-                           event_revision: int, description: str) -> Incident:
+                           event_revision: int, description: str, severity: str = "critical",
+                           title: str = "Verified unauthorized effect in operation") -> Incident:
     rows = session.scalars(select(Finding).where(Finding.application_id == application_id, Finding.control_id == control_id,
                                                  Finding.source == "runtime").order_by(Finding.created_at.desc())).all()
     finding = next((f for f in rows if f.state != "resolved"), None)
@@ -61,14 +61,20 @@ def open_runtime_violation(session: Session, *, workspace_id: str, application_i
         finding.state, finding.resolution, finding.revision = "reopened", None, finding.revision + 1
     if finding is None:
         finding = Finding(workspace_id=workspace_id, application_id=application_id, control_id=control_id, source="runtime",
-                          severity="critical", title="Refund executed without required approval in operation",
+                          severity=severity, title=title,
                           description=description, first_release=release, last_release=release, evidence_refs=[])
         session.add(finding)
         session.flush()
     finding.last_release = release
     finding.evidence_refs = [*finding.evidence_refs, {"event_revision": event_revision, "release": release}]
     finding.updated_at = now()
-    incident = Incident(workspace_id=workspace_id, application_id=application_id, control_id=control_id, severity="critical",
+    open_same = session.scalars(select(Incident).where(Incident.application_id == application_id, Incident.control_id == control_id,
+                                                       Incident.cohort == release, Incident.state == "open").with_for_update()).first()
+    if open_same is not None:  # same control and cohort: one incident accumulates its verified events
+        open_same.event_revisions = [*open_same.event_revisions, event_revision]
+        open_same.revision += 1
+        return open_same
+    incident = Incident(workspace_id=workspace_id, application_id=application_id, control_id=control_id, severity=severity,
                         title=finding.title, release=release, cohort=release, event_revisions=[event_revision], finding_id=finding.id)
     session.add(incident)
     session.flush()

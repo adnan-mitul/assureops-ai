@@ -90,5 +90,8 @@ class EventBatch(BaseModel):
 @router.post("/runtime/events:batch")
 def ingest(batch: EventBatch, source: EventSource = Depends(event_source)):
     """Per-event acceptance; accepted events are persisted before this returns."""
+    from .ratelimit import check
+
+    check("ingest", source.id, limit=600, window_seconds=60)
     with tenant_session(source.workspace_id) as s:
         return {"results": events.ingest(s, source, batch.events)}

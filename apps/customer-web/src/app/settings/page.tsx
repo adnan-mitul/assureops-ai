@@ -1,7 +1,8 @@
 "use client";
 
-import { usePoll } from "@assureops/ui/client";
-import { ApiErrorBanner, Card, CardHeader, LoadingState, Mono, StatusBadge, TableWrap, Td, Th } from "@assureops/ui/components";
+import { api, useAction, usePoll } from "@assureops/ui/client";
+import { ApiErrorBanner, Button, Card, CardHeader, ErrorBanner, LoadingState, Mono, StatusBadge, TableWrap, Td, Th, inputClass } from "@assureops/ui/components";
+import { useState } from "react";
 import { money } from "@assureops/ui/format";
 import { Bot, Boxes, Database, ScrollText, Users } from "lucide-react";
 import { Fact, PageTop } from "@/components/bits";
@@ -52,7 +53,7 @@ export default function SettingsPage() {
           <div className="space-y-4 px-5 pb-5">
             <dl className="grid gap-3 sm:grid-cols-3">
               <Fact label="Inference">{data.data_policy.inference.replaceAll("_", " ")}</Fact>
-              <Fact label="External model fallback">{data.data_policy.external_fallback ? "Allowed" : "Not allowed"}</Fact>
+              <Fact label="External processing">{data.data_policy.external_processing ? "Allowed for approved phases" : "Not allowed (private only)"}</Fact>
               <Fact label="Training on your evidence">{data.data_policy.training_on_customer_evidence ? "Yes" : "Never"}</Fact>
               <Fact label="Evidence retention">{data.retention.evidence_days} days</Fact>
               <Fact label="Runtime event retention">{data.retention.runtime_events_days} days</Fact>
@@ -112,20 +113,43 @@ export default function SettingsPage() {
 
       <Card className="mt-5">
         <CardHeader title="Model routes" icon={<Bot className="size-4" aria-hidden />} count={`${data.model_routes.filter((m) => m.enabled).length} enabled`} />
-        <TableWrap minWidth="min-w-[560px]">
-          <thead><tr><Th>Phase</Th><Th>Model</Th><Th>Status</Th></tr></thead>
+        <TableWrap minWidth="min-w-[720px]">
+          <thead><tr><Th>Phase</Th><Th>Candidate model</Th><Th>Route</Th><Th>Status</Th></tr></thead>
           <tbody className="divide-y divide-line">
             {data.model_routes.map((m) => (
               <tr key={m.phase}>
-                <Td className="capitalize">{m.phase.replaceAll("_", " ")}{m.optional && <span className="ml-1 text-xs text-muted">(optional)</span>}</Td>
-                <Td><Mono>{m.model}</Mono></Td>
-                <Td>{m.enabled ? <StatusBadge status="accepted" label="Enabled" /> : <StatusBadge status="unverified" label={m.qualification ? "Disabled" : "Disabled · not qualified"} />}</Td>
+                <Td className="capitalize">{m.id ? `${m.id} · ` : ""}{m.phase.replaceAll("_", " ")}{m.optional && <span className="ml-1 text-xs text-muted">(optional)</span>}</Td>
+                <Td><Mono>{m.model}</Mono>{m.parameters && <span className="ml-1 text-xs text-muted">{m.parameters}</span>}</Td>
+                <Td className="text-xs">{m.route?.provider ? `${m.route.provider}${m.route.model ? ` · ${m.route.model}` : ""}${m.route.external ? " (external)" : ""}` : "none configured"}</Td>
+                <Td>{m.enabled ? <StatusBadge status="accepted" label="Enabled" /> : <span title={m.status}><StatusBadge status="unverified" label={(m.status ?? "disabled").split(":")[0].replaceAll("_", " ")} /></span>}</Td>
               </tr>
             ))}
           </tbody>
         </TableWrap>
-        <p className="px-5 py-3 text-xs text-muted">No model contributes to results until it passes qualification. All current results come from deterministic tests and rules.</p>
+        <p className="px-5 py-3 text-xs text-muted">Models only propose (requirements, links, tests, explanations); deterministic rules and reviewers decide every result. A phase stays disabled until its exact model is qualified, and an external provider receives nothing unless this workspace allows external processing.</p>
+        {data.your_role === "owner" && <DataPolicy current={data.data_policy.external_processing} />}
       </Card>
+    </div>
+  );
+}
+
+
+function DataPolicy({ current }: { current: boolean }) {
+  const action = useAction();
+  const [reason, setReason] = useState("");
+  const [value, setValue] = useState(current);
+  return (
+    <div className="border-t border-line px-5 py-4">
+      <p className="text-sm font-medium">External processing</p>
+      <p className="text-xs text-muted">When allowed, only phases approved for an external provider (today: explanation drafts) may send minimized, redacted facts to it. A private-server outage never enables it.</p>
+      <div className="mt-2 flex flex-wrap items-center gap-2">
+        <label className="flex items-center gap-2 text-sm"><input type="checkbox" checked={value} onChange={(e) => setValue(e.target.checked)} /> Allow external processing</label>
+        <input aria-label="Reason" className={`${inputClass} max-w-sm`} placeholder="Reason (recorded in the audit log)" value={reason} onChange={(e) => setReason(e.target.value)} />
+        <Button disabled={!!action.busy || reason.trim().length < 5 || value === current}
+          onClick={() => action.run("policy", () => api("/v1/workspace/data-policy", { method: "PUT", body: JSON.stringify({ external_processing: value, reason }) }),
+            () => window.location.reload())}>Save policy</Button>
+      </div>
+      {action.error && <ErrorBanner message={action.error} />}
     </div>
   );
 }

@@ -1,12 +1,20 @@
 {
   "name": "assureops",
   "private": true,
-  "workspaces": ["apps/customer-web", "apps/staff-web", "packages/ui"],
+  "workspaces": [
+    "apps/customer-web",
+    "apps/staff-web",
+    "packages/ui"
+  ],
   "scripts": {
     "dev:customer": "npm --workspace apps/customer-web run dev -- --port 3700",
     "dev:staff": "npm --workspace apps/staff-web run dev -- --port 3710",
     "build": "npm --workspace apps/customer-web run build && npm --workspace apps/staff-web run build",
     "lint": "npm --workspace apps/customer-web run lint && npm --workspace apps/staff-web run lint",
-    "typecheck": "npm --workspace apps/customer-web exec tsc -- --noEmit && npm --workspace apps/staff-web exec tsc -- --noEmit"
+    "typecheck": "npm --workspace apps/customer-web exec tsc -- --noEmit && npm --workspace apps/staff-web exec tsc -- --noEmit",
+    "test:e2e": "playwright test"
+  },
+  "devDependencies": {
+    "@playwright/test": "1.63.0"
   }
 }

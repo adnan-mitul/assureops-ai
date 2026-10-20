@@ -28,7 +28,7 @@ export type ControlState = {
   name: string;
   family: string;
   weight: number;
-  result: "supported" | "failed" | "unverified" | "review_required";
+  result: "supported" | "failed" | "unverified" | "review_required" | "unassessed";
   evidence_validity: "current" | "stale" | "unavailable";
   failure_severity: Severity | null;
   runtime_violation: boolean;
@@ -47,9 +47,12 @@ export type Readiness = {
     controls_supported: number;
     controls_covered: number;
     controls_total: number;
+    controls_assessed?: number;
+    controls_unassessed?: number;
   };
   counts: { tests_total: number; tests_current_passing: number; retest_needed: number; critical_open: number; open_findings: number };
-  gate: { status: "blocked" | "incomplete" | "ready"; reason: string; blocking: string[]; warnings: string[]; incomplete: string[] };
+  gate: { status: "blocked" | "incomplete" | "ready"; reason: string; blocking: string[]; warnings: string[]; incomplete: string[];
+    unassessed?: string[]; scope_limited?: boolean };
   computed_at: number;
 };
 
@@ -153,6 +156,7 @@ export type Overview = {
   assessment?: { running: AssessmentJob | null; last: AssessmentJob | null };
   case?: { id: string; title: string; state: string } | null;
   publication?: { report_id: string; release: string; at: number } | null;
+  onboarding?: { steps: { id: string; label: string; done: boolean }[]; complete: boolean };
 };
 
 export type ApplicationSummary = {
@@ -164,6 +168,10 @@ export type ApplicationSummary = {
   release: string | null;
   gate: Readiness["gate"] | null;
   scores: Readiness["scores"] | null;
+  profile: string | null;
+  onboarding: { steps: { id: string; label: string; done: boolean }[]; complete: boolean;
+    connection: { status: string; revision: number; adapter_id: string; gaps: string[] } | null;
+    profile: { version: string; assessed_controls: string[]; unassessed_controls: string[]; tests: number } | null } | null;
 };
 
 export type Me = { user: string; display_name: string; workspace_id: string; role: string; memberships: Record<string, string> };
@@ -285,7 +293,8 @@ export type Settings = {
     requirements: Record<string, unknown>;
     evidence_freshness_days: number;
   };
-  data_policy: { inference: string; external_fallback: boolean; training_on_customer_evidence: boolean };
-  model_routes: { phase: string; model: string; enabled: boolean; qualification: unknown; optional?: boolean }[];
+  data_policy: { inference: string; external_processing: boolean; training_on_customer_evidence: boolean };
+  model_routes: { phase: string; id?: string; model: string; parameters?: string; enabled: boolean; qualification: unknown; optional?: boolean;
+    status?: string; route?: { provider: string | null; model: string | null; external: boolean } }[];
   retention: { evidence_days: number; runtime_events_days: number };
 };

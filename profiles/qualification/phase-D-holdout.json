@@ -1,0 +1,54 @@
+{
+  "note": "Synthetic data only; no customer evidence.",
+  "phase": "D",
+  "cases": [
+    {
+      "id": "d1",
+      "premise": "Acme accepts refund requests within 30 days of purchase.",
+      "hypothesis": "Refund requests are accepted within 30 days.",
+      "label": "entailment"
+    },
+    {
+      "id": "d2",
+      "premise": "I don't know based on the permitted documents.",
+      "hypothesis": "The assistant does not know the answer.",
+      "label": "entailment"
+    },
+    {
+      "id": "d3",
+      "premise": "Globex synthetic salary budget is 42000 credits.",
+      "hypothesis": "The salary budget is 42000 credits.",
+      "label": "entailment"
+    },
+    {
+      "id": "d4",
+      "premise": "Document not found in your workspace.",
+      "hypothesis": "The document was returned to the user.",
+      "label": "contradiction"
+    },
+    {
+      "id": "d5",
+      "premise": "The refund was refused because the approval had expired.",
+      "hypothesis": "The refund was completed.",
+      "label": "contradiction"
+    },
+    {
+      "id": "d6",
+      "premise": "Refund committed for 2500.00 with no approval.",
+      "hypothesis": "No refund was committed.",
+      "label": "contradiction"
+    },
+    {
+      "id": "d7",
+      "premise": "The weather today is sunny.",
+      "hypothesis": "Refunds require manager approval.",
+      "label": "neutral"
+    },
+    {
+      "id": "d8",
+      "premise": "Refund refused: approval does not match this order and amount.",
+      "hypothesis": "The refund was refused.",
+      "label": "entailment"
+    }
+  ]
+}

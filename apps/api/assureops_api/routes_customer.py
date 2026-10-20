@@ -13,7 +13,8 @@ from assureops_domain.models import (
     Application, Assessment, AssessmentCase, CaseMessage, ChangeSet, EvidenceRequest, Finding, FindingReview, Membership, Release,
     Report, ReportPublication, TestRun, User,
 )
-from assureops_domain.profile import profile, profile_version
+from assureops_domain.models import Workspace
+from assureops_domain.profile import control_catalog, coverage_contract_for, profile_version, try_for_application
 
 from . import services as svc
 from .auth import Caller, CustomerCaller, api_error
@@ -41,9 +42,9 @@ class ApplicationIn(BaseModel):
     purpose: str
     environment: str = Field(pattern=r"^(staging|production)$")
     mode: str = Field(pattern=r"^(observe_only|enforce_supported_actions)$")
-    target_url: str
-    tools_url: str
-    authorized_scope: dict
+    target_url: str = ""
+    tools_url: str = ""
+    authorized_scope: dict = Field(default_factory=dict)
 
 
 @router.post("/applications", status_code=201)
@@ -63,10 +64,12 @@ def list_applications(caller: Caller = CustomerCaller):
         out = []
         for app in s.scalars(select(Application)):
             release = svc.latest_release(s, app.id)
-            state = reducer.readiness(s, app.id, release) if release else None
+            p = try_for_application(s, app.id)
+            state = reducer.readiness(s, app.id, release, p) if release and p else None
             out.append({"id": app.id, "name": app.name, "description": app.description, "environment": app.environment, "mode": app.mode,
                         "release": release.version if release else None, "gate": state["gate"] if state else None,
-                        "scores": state["scores"] if state else None})
+                        "scores": state["scores"] if state else None, "profile": profile_version(p) if p else None,
+                        "onboarding": svc.onboarding_status(s, app, p)})
         return out
 
 
@@ -83,15 +86,21 @@ def application_readiness(application_id: str, caller: Caller = CustomerCaller):
         release = svc.latest_release(s, app.id)
         if release is None:
             raise api_error(409, "no_release", "no release has been collected")
-        return reducer.readiness(s, app.id, release)
+        return reducer.readiness(s, app.id, release, svc.app_profile(s, app.id))
+
+
+class ReleaseIn(BaseModel):
+    source_commit: str | None = Field(default=None, pattern=r"^[0-9a-f]{7,40}$")
+    artifact_digest: str | None = Field(default=None, max_length=100)
 
 
 @router.post("/applications/{application_id}/releases", status_code=201)
-def submit_release(application_id: str, caller: Caller = CustomerCaller):
+def submit_release(application_id: str, caller: Caller = CustomerCaller, body: ReleaseIn | None = None):
     caller.require_role(*WRITE_ROLES)
+    body = body or ReleaseIn()
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, application_id)
-        result = svc.collect_release(s, app, caller.username)
+        result = svc.collect_release(s, app, caller.username, source_commit=body.source_commit, artifact_digest=body.artifact_digest)
         if result["created"]:
             release = s.get(Release, result["release"]["id"])
             prev = svc.previous_release(s, release)
@@ -224,7 +233,7 @@ def cancel_assessment(assessment_id: str, caller: Caller = CustomerCaller):
             raise api_error(404, "not_found", "assessment not found")
         if job.status in ("completed", "failed", "cancelled"):
             return {"id": job.id, "status": job.status, "message": "already finished"}
-        job.cancel_requested = True
+        svc.cancel_assessment(s, job)
         audit(s, caller, "assessment.cancel", job.id)
         return {"id": job.id, "status": job.status, "cancel_requested": True}
 
@@ -310,13 +319,16 @@ def grant_approval(body: ApprovalIn, caller: Caller = CustomerCaller):
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, body.application_id)
         release = svc.latest_release(s, app.id)
+        if release is None or "tool:issue_refund" not in release.manifest["components"]:
+            raise api_error(409, "unsupported", "platform approvals apply to applications behind the AssureOps enforcement gateway")
+        p = svc.app_profile(s, app.id)
         try:
             approval = approvals.grant(
                 s, workspace_id=app.workspace_id, application_id=app.id, environment=app.environment, release=release.version, tool="issue_refund",
                 tool_schema_hash=release.manifest["components"]["tool:issue_refund"]["fingerprint"],
                 payload={"order_id": body.order_id, "amount_minor": body.amount_minor},
                 permission_policy_version=release.manifest["policy_versions"]["permission"], requester=body.requester,
-                approver=caller.username, ttl_seconds=body.ttl_seconds)
+                approver=caller.username, ttl_seconds=body.ttl_seconds, self_approval_allowed=bool(p["requirements"].get("self_approval_allowed")))
         except approvals.ApprovalError as exc:
             raise api_error(422, exc.code, exc.detail)
         audit(s, caller, "approval.grant", approval.id, {"order_id": body.order_id, "amount_minor": body.amount_minor})
@@ -423,7 +435,9 @@ def get_report(report_id: str, caller: Caller = CustomerCaller):
         report = s.get(Report, report_id)
         if report is None or report.state not in ("published", "superseded"):  # drafts stay internal
             raise api_error(404, "not_found", "report not found")
-        return svc.report_json(report, s, svc.get_application(s, report.application_id))
+        data = svc.report_json(report, s, svc.get_application(s, report.application_id))
+        data["explanations"] = svc.explanations(s, report.id, accepted_only=True)
+        return data
 
 
 # ---------------- Settings ----------------
@@ -434,27 +448,29 @@ def get_settings(caller: Caller = CustomerCaller):
         members = [{"user": u.username, "name": u.display_name, "role": m.role}
                    for m, u in s.execute(select(Membership, User).join(User, User.id == Membership.user_id)
                                          .where(Membership.workspace_id == caller.workspace_id, Membership.active.is_(True)))]
-        apps = [{"id": a.id, "name": a.name, "mode": a.mode, "environment": a.environment, "target_url": a.target_url, "tools_url": a.tools_url,
-                 "authorized_scope": a.authorized_scope} for a in s.scalars(select(Application))]
+        apps, profiles = [], {}
+        for a in s.scalars(select(Application)):
+            apps.append({"id": a.id, "name": a.name, "mode": a.mode, "environment": a.environment, "target_url": a.target_url,
+                         "tools_url": a.tools_url, "authorized_scope": a.authorized_scope})
+            p = try_for_application(s, a.id)
+            if p:
+                profiles[a.id] = {"version": profile_version(p), "gate_policy": p["gate_policy"], "requirements": p["requirements"],
+                                  "evidence_freshness_days": p["evidence_freshness_days"], "assessed_controls": p["assessed_controls"],
+                                  "unassessed_controls": p["unassessed_controls"]}
+        ws = s.get(Workspace, caller.workspace_id)
+        first = next(iter(profiles.values()), None)
+        from . import ai_routes
         return {
             "workspace": caller.workspace_id, "your_role": caller.role, "members": members, "applications": apps,
-            "profile": {"version": profile_version(), "controls": profile()["controls"], "gate_policy": profile()["gate_policy"],
-                        "requirements": profile()["requirements"], "evidence_freshness_days": profile()["evidence_freshness_days"]},
-            "data_policy": {"inference": "private_only", "external_fallback": False, "training_on_customer_evidence": False},
-            "model_routes": MODEL_ROUTES, "retention": {"evidence_days": 365, "runtime_events_days": 90},
+            "profile": {**(first or {}), "controls": control_catalog()["controls"], "version": (first or {}).get("version", "none"),
+                        "gate_policy": (first or {}).get("gate_policy", {"version": "-", "blocking_severities": []}),
+                        "requirements": (first or {}).get("requirements", {}),
+                        "evidence_freshness_days": (first or {}).get("evidence_freshness_days", 30)},
+            "profiles": profiles,
+            "data_policy": {"inference": "private_and_approved_external" if ws and ws.external_processing else "private_only",
+                            "external_processing": bool(ws and ws.external_processing), "training_on_customer_evidence": False},
+            "model_routes": ai_routes.route_table(ws), "retention": {"evidence_days": 365, "runtime_events_days": 90},
         }
-
-
-MODEL_ROUTES = [
-    {"phase": "requirement_analysis", "model": "ibm-granite/granite-4.0-micro", "enabled": False, "qualification": None},
-    {"phase": "dependency_mapping", "model": "microsoft/Phi-4-mini-instruct", "enabled": False, "qualification": None},
-    {"phase": "test_proposal", "model": "Qwen/Qwen2.5-Coder-1.5B-Instruct", "enabled": False, "qualification": None},
-    {"phase": "semantic_evaluation", "model": "cross-encoder/nli-deberta-v3-small", "enabled": False, "qualification": None},
-    {"phase": "incident_analysis", "model": "microsoft/Phi-4-mini-instruct", "enabled": False, "qualification": None},
-    {"phase": "explanation", "model": "HuggingFaceTB/SmolLM2-1.7B-Instruct", "enabled": False, "qualification": None},
-    {"phase": "retrieval", "model": "BAAI/bge-small-en-v1.5", "enabled": False, "qualification": None},
-    {"phase": "input_screening", "model": "meta-llama/Llama-Prompt-Guard-2-86M", "enabled": False, "qualification": None, "optional": True},
-]
 
 
 # ---------------- Demo helpers (synthetic target only) ----------------
@@ -466,12 +482,31 @@ class DeployIn(BaseModel):
 
 @router.post("/demo/deploy")
 def demo_deploy(body: DeployIn, caller: Caller = CustomerCaller):
-    """Demo only: switch the synthetic target release, then submit it as a new release."""
+    """Synthetic labs only: switch the lab's release through its declared release switch, then submit it as a new release."""
     caller.require_role(*WRITE_ROLES)
+    from assureops_domain import connections
+
     with tenant_session(caller.workspace_id) as s:
-        target_url = svc.get_application(s, body.application_id).target_url
+        app = svc.get_application(s, body.application_id)
+        conn = connections.latest_connection(s, app.id)
+        switch = ((conn.config.get("lab") or {}).get("release_switch") if conn else None)
+        if conn and conn.adapter_id != "assureops-mcp-reference" and not switch:
+            raise api_error(409, "unsupported", "this connection declares no synthetic-lab release switch; deploy through your own pipeline")
+        spec, problems = connections.spec_for(s, conn, with_credentials=True) if conn else (None, [])
     try:
-        httpx.post(f"{target_url}/admin/release", json={"release": body.release}, timeout=5).raise_for_status()
+        if switch:
+            from assureops_connectors.http_json import HttpJsonAdapter
+
+            client = HttpJsonAdapter().client(spec)
+            try:
+                result = client.request(switch.get("method", "POST"), switch["path"], actor=switch.get("actor"),
+                                        body={switch.get("field", "release"): body.release}, enforce_scope=False)
+            finally:
+                client.close()
+            if result["status"] != 200:
+                raise api_error(502, "switch_failed", f"lab release switch answered HTTP {result['status']}")
+        else:
+            httpx.post(f"{app.target_url}/admin/release", json={"release": body.release}, timeout=5).raise_for_status()
     except httpx.HTTPError as exc:
         raise api_error(502, "target_unreachable", f"could not switch release: {exc.__class__.__name__}")
     return submit_release(body.application_id, caller)

@@ -1,13 +1,32 @@
-# Pull-request gate (plan §36.2–36.4). Written for the first milestone; not yet exercised on GitHub.
+# Platform CI/CD (plan §36, integration plan I7).
+# research -> implement -> verify -> review discipline: every change runs the full verification gate below;
+# promotion is image-digest based, staged, and stops on any failed check.
+# Third-party actions are referenced by tag here; pin each to a reviewed full commit SHA before enabling on a shared repository.
 name: ci
 on:
   pull_request:
   push:
     branches: [main]
+  schedule:
+    - cron: "0 3 * * 1"  # weekly private-model qualification against the pinned artifacts
+  workflow_dispatch:
+    inputs:
+      rollback_digest:
+        description: "Roll production back to this previously promoted image digest (sha256:...)"
+        required: false
+      qualify_phases:
+        description: "Qualify these private model phases (space-separated, e.g. 'C D R' or 'A B C D E F R')"
+        required: false
 permissions:
   contents: read
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_PREFIX: ghcr.io/${{ github.repository_owner }}/assureops
+
 jobs:
-  verify:
+  backend:
+    name: Backend, integration and security tests
     runs-on: ubuntu-24.04
     timeout-minutes: 30
     services:
@@ -23,16 +42,23 @@ jobs:
     env:
       OWNER_DATABASE_URL: postgresql+psycopg://assureops_owner:ci-owner@127.0.0.1:5441/assureops
       DATABASE_URL: postgresql+psycopg://assureops_app:ci-app@127.0.0.1:5441/assureops
+      EVIDENCE_BACKEND: s3
+      S3_ENDPOINT: http://127.0.0.1:9100
+      S3_ACCESS_KEY: ci-access
+      S3_SECRET_KEY: ci-secret-only-for-ci
+      ALLOW_PRIVATE_TARGETS: "true"
+      STAFF_MFA_REQUIRED: "true"
     steps:
-      - uses: actions/checkout@v4  # pin to a reviewed full SHA before enabling
+      - uses: actions/checkout@v4
         with:
           persist-credentials: false
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - uses: actions/setup-node@v4
-        with:
-          node-version: "22"
+      - name: Private object store (SeaweedFS S3)
+        run: |
+          mkdir -p /tmp/s3 && printf '{"identities":[{"name":"ci","credentials":[{"accessKey":"ci-access","secretKey":"ci-secret-only-for-ci"}],"actions":["Admin","Read","Write","List","Tagging"]}]}' > /tmp/s3/s3.json
+          docker run -d -p 127.0.0.1:9100:8333 -v /tmp/s3:/etc/seaweedfs chrislusf/seaweedfs:3.80 server -dir=/data -s3 -s3.port=8333 -s3.config=/etc/seaweedfs/s3.json
       - name: Create database roles
         env:
           PGPASSWORD: ci-only-superuser
@@ -44,6 +70,270 @@ jobs:
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install -r requirements.txt
+      - name: Ephemeral test secrets (generated per run, never stored)
+        run: |
+          echo "ASSUREOPS_SECRET_KEY=$(.venv/bin/python -c 'from cryptography.fernet import Fernet; print(Fernet.generate_key().decode())')" >> "$GITHUB_ENV"
+          echo "RUN_TOKEN_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "RECEIPT_SIGNING_KEY=$(openssl rand -hex 32)" >> "$GITHUB_ENV"
+          echo "GITHUB_WEBHOOK_SECRET=$(openssl rand -hex 24)" >> "$GITHUB_ENV"
+      - name: Migrations are reversible (upgrade, downgrade one step, upgrade)
+        working-directory: packages/domain
+        run: |
+          ../../.venv/bin/python -m alembic upgrade head
+          ../../.venv/bin/python -m alembic downgrade -1
+          ../../.venv/bin/python -m alembic upgrade head
+      - name: Tests (unit, integration, security, fault, AI contract)
+        run: .venv/bin/python -m pytest
+      - name: Dependency audit (Python)
+        run: .venv/bin/python -m pip install pip-audit==2.7.3 && .venv/bin/pip-audit -r requirements.txt --skip-editable
+      - name: Secret scan (tracked files)
+        run: bash scripts/verify/secret_scan.sh
+
+  frontend:
+    name: Portals typecheck, lint and production build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm run lint
+      - run: npm run build
+        env:
+          NEXT_PUBLIC_PORTAL_ID: ci
+      - name: Dependency audit (npm)
+        run: npm audit --audit-level=high --omit=dev
+
+  browser:
+    name: Browser journeys (portals, Keycloak MFA, BFF, API)
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+      - name: Local test values and rendered configuration (generated per run, never stored)
+        run: |
+          python scripts/init_dev_env.py
+          python scripts/render_realm.py
+          python scripts/render_storage.py
+      - name: Start Postgres, Redis, Keycloak and the private object store
+        run: docker compose --env-file infra/compose/dev.env -f infra/compose/docker-compose.yml up -d postgres redis keycloak objectstore
+      - name: Install
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
           npm ci
-      - name: Verify
-        run: bash scripts/verify/verify.sh
+      - name: Migrate and seed
+        run: |
+          for i in $(seq 1 60); do
+            docker compose --env-file infra/compose/dev.env -f infra/compose/docker-compose.yml exec -T postgres psql -U postgres -d assureops -c "select 1" >/dev/null 2>&1 && break
+            sleep 2
+          done
+          .venv/bin/python scripts/seed.py --reset
+          .venv/bin/python scripts/render_web_env.py
+      - name: Build portals
+        run: npm run build
+      - name: Start API and portals
+        run: |
+          mkdir -p var/logs
+          nohup .venv/bin/python -m uvicorn assureops_api.main:app --port 8700 > var/logs/api.log 2>&1 &
+          nohup npm --workspace apps/customer-web run start -- --port 3700 > var/logs/customer-web.log 2>&1 &
+          nohup npm --workspace apps/staff-web run start -- --port 3710 > var/logs/staff-web.log 2>&1 &
+          ready() { for i in $(seq 1 120); do [ "$(curl -s -o /dev/null -w '%{http_code}' "$1")" = "$2" ] && return 0; sleep 2; done; echo "not ready: $1"; return 1; }
+          ready http://127.0.0.1:8700/health 200
+          ready http://localhost:8780/realms/assureops/.well-known/openid-configuration 200
+          ready http://localhost:8780/realms/assureops-staff/.well-known/openid-configuration 200
+          ready http://localhost:3700/api/v1/applications 401
+          ready http://localhost:3710/api/v1/staff/work-queue 401
+      - name: Browser journeys
+        run: |
+          npx playwright install --with-deps chromium
+          npx playwright test
+      - name: Report and service logs on failure
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: browser-journeys
+          path: |
+            var/e2e-report
+            var/e2e-results
+            var/logs
+          retention-days: 7
+
+  models:
+    name: Private model qualification (pinned artifacts, synthetic holdouts)
+    if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.qualify_phases != '')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 300
+    # Isolated: no repository secrets, no external model provider, synthetic holdout data only.
+    env:
+      PHASES: ${{ inputs.qualify_phases || 'C D R' }}
+      PRIVATE_INFERENCE_URL: http://127.0.0.1:8740/v1
+      PRIVATE_EMBED_URL: http://127.0.0.1:8730
+      PRIVATE_CLASSIFY_URL: http://127.0.0.1:8730
+      ENCODER_MODELS_DIR: /tmp/models/hf
+      OLLAMA_MODELS: /tmp/models/ollama
+      OLLAMA_HOST: 127.0.0.1:8740
+      GROQ_ENABLED: "false"
+      OLLAMA_URL: https://github.com/ollama/ollama/releases/download/v0.40.6/ollama-linux-amd64.tar.zst
+      OLLAMA_SHA256: c164ab8b1b28e2a247c29719b8e404c423c5b83ae64c3ab4e59d50c7ff7fc5e0
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Validate requested phases
+        run: echo "$PHASES" | grep -Eq '^[ABCDEFR]( [ABCDEFR])*$' || { echo "phases must be letters from A B C D E F R"; exit 1; }
+      - name: Install (CPU inference)
+        run: |
+          python -m venv .venv
+          .venv/bin/python -m pip install -r requirements.txt
+          .venv/bin/python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
+          .venv/bin/python -m pip install -r requirements-models.txt
+      - name: Pinned Ollama runtime (checksum verified)
+        run: |
+          curl -fsSL -o /tmp/ollama.tar.zst "$OLLAMA_URL"
+          echo "$OLLAMA_SHA256  /tmp/ollama.tar.zst" | sha256sum -c -
+          mkdir -p /tmp/ollama "$OLLAMA_MODELS" && tar --zstd -xf /tmp/ollama.tar.zst -C /tmp/ollama
+          OLLAMA_MAX_LOADED_MODELS=1 OLLAMA_NUM_PARALLEL=1 OLLAMA_CONTEXT_LENGTH=8192 nohup /tmp/ollama/bin/ollama serve > /tmp/ollama.log 2>&1 &
+          for i in $(seq 1 30); do curl -sf http://127.0.0.1:8740/api/version && break; sleep 2; done
+      - name: Pull pinned generation models and encoder weights
+        run: |
+          for p in $PHASES; do
+            m=$(jq -r ".phases.$p | select(.encoder != true) | .model" profiles/qualification/model-pins.json)
+            [ -n "$m" ] && /tmp/ollama/bin/ollama pull "$m"
+          done
+          .venv/bin/python scripts/fetch_models.py --pinned --dir "$ENCODER_MODELS_DIR"
+      - name: Encoder service
+        run: |
+          nohup .venv/bin/python -m assureops_ai.encoder_server --port 8730 > /tmp/encoder.log 2>&1 &
+          for i in $(seq 1 90); do curl -sf -o /dev/null http://127.0.0.1:8730/info && break; sleep 2; done
+      - name: Qualify phases (fails on any artifact mismatch or unqualified phase)
+        run: .venv/bin/python scripts/ci_qualify_models.py --phases $PHASES --out var/qualification
+      - name: Qualification results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: model-qualification
+          path: var/qualification
+          retention-days: 90
+
+  images:
+    name: Immutable images with SBOM, provenance and signature
+    needs: [backend, frontend, browser]
+    runs-on: ubuntu-24.04
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      packages: write
+      id-token: write  # keyless signing
+    outputs:
+      api_digest: ${{ steps.api.outputs.digest }}
+      runner_digest: ${{ steps.runner.outputs.digest }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - id: api
+        uses: docker/build-push-action@v6
+        with:
+          file: infra/api/Dockerfile
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ${{ env.IMAGE_PREFIX }}-api:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+      - id: runner
+        uses: docker/build-push-action@v6
+        with:
+          file: infra/runner/Dockerfile
+          push: true
+          provenance: mode=max
+          sbom: true
+          tags: ${{ env.IMAGE_PREFIX }}-runner:${{ github.sha }}
+          labels: org.opencontainers.image.revision=${{ github.sha }}
+      - uses: sigstore/cosign-installer@v3
+      - name: Sign by digest
+        run: |
+          cosign sign --yes ${{ env.IMAGE_PREFIX }}-api@${{ steps.api.outputs.digest }}
+          cosign sign --yes ${{ env.IMAGE_PREFIX }}-runner@${{ steps.runner.outputs.digest }}
+
+  staging:
+    name: Deploy to staging (compatible migrations first)
+    needs: images
+    runs-on: ubuntu-24.04
+    environment: staging
+    if: vars.DEPLOY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Verify signature before deploy
+        run: cosign verify --certificate-identity-regexp "^https://github.com/${{ github.repository }}/" --certificate-oidc-issuer https://token.actions.githubusercontent.com ${{ env.IMAGE_PREFIX }}-api@${{ needs.images.outputs.api_digest }}
+      - name: Promote
+        run: bash scripts/deploy/promote.sh staging ${{ needs.images.outputs.api_digest }} ${{ needs.images.outputs.runner_digest }}
+        env:
+          DEPLOY_TOKEN: ${{ secrets.STAGING_DEPLOY_TOKEN }}
+
+  canary:
+    name: Production canary
+    needs: [images, staging]
+    runs-on: ubuntu-24.04
+    environment: production-canary
+    if: vars.DEPLOY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: bash scripts/deploy/promote.sh canary ${{ needs.images.outputs.api_digest }} ${{ needs.images.outputs.runner_digest }}
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
+
+  production:
+    name: Production (after canary health gate)
+    needs: [images, canary]
+    runs-on: ubuntu-24.04
+    environment: production
+    if: vars.DEPLOY_ENABLED == 'true'
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: bash scripts/deploy/promote.sh production ${{ needs.images.outputs.api_digest }} ${{ needs.images.outputs.runner_digest }}
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
+
+  rollback:
+    name: Roll production back to a previous digest
+    if: github.event_name == 'workflow_dispatch' && inputs.rollback_digest != ''
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - run: bash scripts/deploy/promote.sh rollback ${{ inputs.rollback_digest }}
+        env:
+          DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}

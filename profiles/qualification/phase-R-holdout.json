@@ -1,0 +1,74 @@
+{
+  "note": "Synthetic data only; no customer evidence.",
+  "phase": "R",
+  "corpus": [
+    {
+      "id": "doc-refund",
+      "title": "Refund operations policy",
+      "text": "Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+    },
+    {
+      "id": "doc-tenancy",
+      "title": "Tenant data boundaries",
+      "text": "Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+    },
+    {
+      "id": "doc-secrets",
+      "title": "Secret handling",
+      "text": "Credentials, tokens and passwords must never be included in assistant replies."
+    },
+    {
+      "id": "doc-tools",
+      "title": "Tool registry",
+      "text": "Agents call only registered tools; unregistered tool names are rejected by the gateway."
+    },
+    {
+      "id": "doc-grounding",
+      "title": "Answer grounding",
+      "text": "Answers cite their supporting document and say I don't know when no document applies."
+    },
+    {
+      "id": "doc-limits",
+      "title": "Run limits",
+      "text": "Each agent run stops after ten tool calls or two minutes, whichever comes first."
+    }
+  ],
+  "queries": [
+    {
+      "q": "who must sign off before a large reimbursement",
+      "relevant": [
+        "doc-refund"
+      ]
+    },
+    {
+      "q": "can one company see another company's files",
+      "relevant": [
+        "doc-tenancy"
+      ]
+    },
+    {
+      "q": "should the bot ever show an access key",
+      "relevant": [
+        "doc-secrets"
+      ]
+    },
+    {
+      "q": "what happens when the model invents a function name",
+      "relevant": [
+        "doc-tools"
+      ]
+    },
+    {
+      "q": "what should the assistant say if it lacks a source",
+      "relevant": [
+        "doc-grounding"
+      ]
+    },
+    {
+      "q": "how long may a single agent execution continue",
+      "relevant": [
+        "doc-limits"
+      ]
+    }
+  ]
+}

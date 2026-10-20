@@ -4,9 +4,9 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from . import routes_customer, routes_integration, routes_staff
+from . import ai_routes, metrics, routes_customer, routes_delivery, routes_handoffs, routes_integration, routes_onboarding, routes_staff
 
-app = FastAPI(title="AssureOps API", version="0.2.0")
+app = FastAPI(title="AssureOps API", version="0.3.0")
 
 
 @app.middleware("http")
@@ -38,3 +38,8 @@ def health():
 app.include_router(routes_customer.router)
 app.include_router(routes_staff.router)
 app.include_router(routes_integration.router)
+app.include_router(routes_onboarding.router)
+app.include_router(ai_routes.router)
+app.include_router(routes_delivery.router)
+app.include_router(metrics.router)
+app.include_router(routes_handoffs.router)

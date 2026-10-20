@@ -211,6 +211,17 @@ function ReportView({ caseId, caseData, reportId }: { caseId: string; caseData: 
               : <p className="text-sm text-muted">Only draft reports can be decided. This report is {report.state}.</p>}
           </Card>
 
+          {!!report.explanations?.length && (
+            <Card className="p-5">
+              <SectionTitle>Explanation drafts (phase F, advisory)</SectionTitle>
+              {report.explanations.map((x) => (
+                <div key={x.id} className="mb-3 rounded-lg border border-line p-3 text-sm">
+                  <p className="text-xs text-muted">{x.provider} · {x.model} · {x.status}{x.reviewer ? ` · reviewed by ${x.reviewer}` : ""}</p>
+                  {x.sections.map((sec, i) => <p key={i} className="mt-1"><b>{sec.heading}.</b> {sec.text} <span className="font-mono text-[10px] text-muted">{sec.fact_ids.join(", ")}</span></p>)}
+                </div>))}
+              <p className="text-xs text-muted">Drafts may only restate the frozen facts; verdicts and numbers come from the snapshot above.</p>
+            </Card>)}
+
           <Card className="p-5">
             <SectionTitle>Decision history</SectionTitle>
             {report.decisions.length === 0 ? <p className="text-sm text-muted">No decisions yet.</p> : (

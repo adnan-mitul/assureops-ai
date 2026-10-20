@@ -44,7 +44,7 @@ def deploy_and_assess(release_name: str, scope: str) -> dict:
         job_id = svc.create_assessment(s, app, release, scope, "journey-check", plan_override=plan).id
     job = wait(job_id)
     with tenant_session("acme") as s:
-        state = reducer.readiness(s, "refund-agent", s.get(Release, job.release_id))
+        state = reducer.readiness(s, "refund-agent", s.get(Release, job.release_id), svc.app_profile(s, "refund-agent"))
     failed = [t["test_id"] for t in state["tests"] if t["result"] == "failed"]
     print(f"{release_name}: job {job.status}; gate {state['gate']['status']} — {state['gate']['reason']}; "
           f"support {state['scores']['evidence_support_pct']}% coverage {state['scores']['evidence_coverage_pct']}%; failed {failed}")

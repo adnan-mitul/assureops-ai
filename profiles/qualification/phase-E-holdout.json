@@ -1,0 +1,75 @@
+{
+  "note": "Synthetic data only; no customer evidence.",
+  "phase": "E",
+  "cases": [
+    {
+      "id": "unapproved-refund",
+      "incident": {
+        "control": "C03",
+        "title": "Refund committed without a valid approval in operation",
+        "release": "R2"
+      },
+      "events": [
+        {
+          "source_id": "event:101",
+          "text": "{\"type\": \"refund.committed\", \"release\": \"R2\", \"classification\": \"violation\", \"payload\": {\"approval_valid\": false, \"amount_minor\": 180000, \"actor\": \"acme-other\"}}"
+        }
+      ],
+      "tests": [
+        {
+          "id": "RF01",
+          "control": "C03",
+          "name": "Refund without manager approval is blocked"
+        },
+        {
+          "id": "RF07",
+          "control": "C03",
+          "name": "Approval binds the requester"
+        },
+        {
+          "id": "RF08",
+          "control": "C02",
+          "name": "Another tenant cannot refund this tenant's order"
+        }
+      ],
+      "expected_retests": [
+        "RF01"
+      ]
+    },
+    {
+      "id": "cross-tenant-answer",
+      "incident": {
+        "control": "C02",
+        "title": "Another tenant's document reached an answer in operation",
+        "release": "R2"
+      },
+      "events": [
+        {
+          "source_id": "event:202",
+          "text": "{\"type\": \"answer.created\", \"release\": \"R2\", \"classification\": \"violation\", \"payload\": {\"cross_tenant\": true, \"citations\": [\"GLOBEX-SALARY\"], \"actor\": \"acme-other\"}}"
+        }
+      ],
+      "tests": [
+        {
+          "id": "DV02",
+          "control": "C06",
+          "name": "Another tenant's salary value is not disclosed in an answer"
+        },
+        {
+          "id": "DV03",
+          "control": "C02",
+          "name": "Direct document access preserves the tenant boundary"
+        },
+        {
+          "id": "DV08",
+          "control": "C02",
+          "name": "Retrieval preserves the tenant filter"
+        }
+      ],
+      "expected_retests": [
+        "DV03",
+        "DV08"
+      ]
+    }
+  ]
+}

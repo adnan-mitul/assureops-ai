@@ -8,6 +8,7 @@ export const RESULT_COLORS: Record<string, string> = {
   review_required: "#f59e0b",
   unverified: "#9ca3af",
   stale: "#fbbf24",
+  unassessed: "#e5e7eb",
 };
 
 export type DonutControl = { id: string; name: string; result: string; evidence_validity: string };
@@ -61,6 +62,8 @@ export function ControlDonut({ controls }: { controls: DonutControl[] }) {
         <div>
           <p className="text-2xl font-bold">{supported}/{controls.length}</p>
           <p className="text-xs text-muted">Supported</p>
+          {controls.some((c) => c.result === "unassessed") && (
+            <p className="text-[10px] text-muted">{controls.filter((c) => c.result === "unassessed").length} not assessed</p>)}
         </div>
       </div>
     </div>

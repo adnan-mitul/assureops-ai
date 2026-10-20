@@ -9,7 +9,7 @@ import { EvidenceDrawer } from "@assureops/ui/evidence-drawer";
 import { formatTime, pct, shortHash, timeAgo } from "@assureops/ui/format";
 import clsx from "clsx";
 import {
-  ArrowRight, Bot, CircleAlert, CircleCheck, CircleHelp, CircleX, ClipboardList, FileDiff, HeartPulse, Lock, LockOpen, RefreshCw, ShieldCheck,
+  ArrowRight, Bot, CircleAlert, CircleCheck, CircleDashed, CircleHelp, CircleX, ClipboardList, FileDiff, HeartPulse, Lock, LockOpen, RefreshCw, ShieldCheck,
 } from "lucide-react";
 import Link from "next/link";
 import { useState } from "react";
@@ -57,8 +57,18 @@ export default function OverviewPage() {
       <div className="mx-auto max-w-[1400px]">
         {header}
         <Card>
-          <EmptyState title="No release submitted yet" body="Submit the running release to collect its manifest, then run a full assessment." />
-          <div className="flex justify-center pb-8"><ReleaseActions applicationId={applicationId} running={!!running} onChange={refresh} /></div>
+          {data.onboarding && !data.onboarding.steps.slice(0, 3).every((s) => s.done) ? (
+            <>
+              <EmptyState title="Finish connecting this application" body={`Next: ${data.onboarding.steps.find((s) => !s.done)?.label ?? ""}. Releases can be collected once the connection is verified and a reviewed profile is active.`} />
+              <div className="flex justify-center pb-8"><Link href={`/applications/${encodeURIComponent(applicationId)}/connect`}
+                className="inline-flex items-center gap-2 rounded-lg bg-brand-700 px-3.5 py-2 text-sm font-medium text-white hover:bg-brand-800">Open connection setup</Link></div>
+            </>
+          ) : (
+            <>
+              <EmptyState title="No release submitted yet" body="Submit the running release to collect its manifest, then run a full assessment." />
+              <div className="flex justify-center pb-8"><ReleaseActions applicationId={applicationId} running={!!running} onChange={refresh} /></div>
+            </>
+          )}
         </Card>
       </div>
     );
@@ -92,7 +102,8 @@ export default function OverviewPage() {
           <div className="mt-4 h-2 rounded-full bg-gray-100" role="progressbar" aria-label="Evidence support" aria-valuenow={r.scores.evidence_support_pct ?? 0} aria-valuemin={0} aria-valuemax={100}>
             <div className="h-2 rounded-full bg-brand-600" style={{ width: `${r.scores.evidence_support_pct ?? 0}%` }} />
           </div>
-          <p className="mt-2 text-xs text-muted">{r.scores.controls_supported}/{r.scores.controls_total} controls supported · coverage {pct(r.scores.evidence_coverage_pct)}</p>
+          <p className="mt-2 text-xs text-muted">{r.scores.controls_supported}/{r.scores.controls_total} controls supported · coverage {pct(r.scores.evidence_coverage_pct)}
+            {r.scores.controls_unassessed ? ` · ${r.scores.controls_unassessed} not assessed by this profile` : ""}</p>
         </Card>
 
         <Card className="p-5">
@@ -189,7 +200,7 @@ export default function OverviewPage() {
                 {r.controls.map((c) => (
                   <li key={c.id} className="flex items-center justify-between gap-3" title={`${c.id} · ${c.family}`}>
                     <span className="flex items-center gap-2"><span className="size-2.5 rounded-sm" style={{ background: colorFor(c) }} aria-hidden />{c.name}</span>
-                    <span className="flex items-center gap-2 text-muted"><span className="sr-only">{c.result}, {c.evidence_validity}</span>{c.passed}/{c.total}</span>
+                    <span className="flex items-center gap-2 text-muted"><span className="sr-only">{c.result}, {c.evidence_validity}</span>{c.result === "unassessed" ? "not assessed" : `${c.passed}/${c.total}`}</span>
                   </li>
                 ))}
               </ul>
@@ -283,7 +294,8 @@ export default function OverviewPage() {
               <li key={c.id} className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2">
                   {c.result === "failed" ? <CircleX className="size-4 text-red-600" aria-hidden /> : c.result === "supported" && c.evidence_validity === "current"
-                    ? <CircleCheck className="size-4 text-brand-600" aria-hidden /> : <CircleAlert className="size-4 text-amber-500" aria-hidden />}
+                    ? <CircleCheck className="size-4 text-brand-600" aria-hidden /> : c.result === "unassessed"
+                      ? <CircleDashed className="size-4 text-gray-400" aria-hidden /> : <CircleAlert className="size-4 text-amber-500" aria-hidden />}
                   {c.id} {c.name}
                 </span>
                 <ControlStateBadges result={c.result} validity={c.evidence_validity} />

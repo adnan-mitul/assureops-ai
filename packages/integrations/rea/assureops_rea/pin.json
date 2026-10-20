@@ -1,0 +1,14 @@
+{
+  "tool": "REA (Reverse Engineering Assistant)",
+  "repository": "https://github.com/morluto/rea",
+  "license": "MIT (upstream); external engines keep their own terms",
+  "commit": "559af3d3ff4b0236d468e80788c82d5a85b102da",
+  "package": "rea-agents@6.7.0",
+  "npm_integrity": "sha512-yhIx2ioJYYT1C/tONfYeitC6LhnKmCh+ZwRUOgYuhSc733lGhkkt73zhug9WmLgxoMdKuqIYGCoBfD4fXkOhFw==",
+  "entry": "node_modules/rea-agents/scripts/rea.mjs",
+  "entry_sha256": "ed06cee49505b95a3cc5fceb1b4b279167e26df86227c644bb366ffffdbaf738",
+  "operation": "analyze-javascript-application",
+  "reviewed_by": "AssureOps integration review 2026-10-19 (entrypoints, CLI contract, Evidence schema)",
+  "install": "npm install rea-agents@6.7.0 --ignore-scripts into REA_HOME; no install scripts run",
+  "status": "adopted"
+}
