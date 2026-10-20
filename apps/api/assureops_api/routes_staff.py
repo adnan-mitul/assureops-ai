@@ -405,6 +405,7 @@ def get_report(case_id: str, report_id: str, caller: Caller = StaffCaller):
         if report is None or report.case_id != case_id:
             raise api_error(404, "not_found", "report not found")
         data = svc.report_json(report, s, svc.get_application(s, report.application_id))
+        data["explanations"] = svc.explanations(s, report.id, accepted_only=False)
         data["decisions"] = [{"reviewer": d.reviewer, "decision": d.decision, "reason": d.reason, "at": svc.ts(d.created_at)}
                              for d in s.scalars(select(ReviewDecision).where(ReviewDecision.report_id == report.id).order_by(ReviewDecision.created_at))]
         return data

@@ -1,0 +1,44 @@
+# Alert rules for the AssureOps platform metrics (counts only; no customer content).
+groups:
+  - name: assureops
+    rules:
+      - alert: AssessmentLeaseExpired
+        expr: assureops_job_steps_expired_leases > 0
+        for: 2m
+        labels: {severity: warning}
+        annotations:
+          summary: "Running assessment steps lost their worker lease"
+          runbook: docs/runbooks/assessments.md
+      - alert: OutboxBacklog
+        expr: assureops_outbox_oldest_age_seconds > 120
+        for: 2m
+        labels: {severity: critical}
+        annotations:
+          summary: "Dispatch intents are not being delivered (dispatcher or broker down)"
+          runbook: docs/runbooks/assessments.md
+      - alert: OpenRuntimeIncident
+        expr: assureops_incidents{state="open"} > 0
+        labels: {severity: critical}
+        annotations:
+          summary: "A verified runtime violation is open"
+          runbook: docs/runbooks/runtime-incident.md
+      - alert: ModelCallFailures
+        expr: sum(assureops_model_calls{status!="succeeded"}) > 5
+        for: 5m
+        labels: {severity: warning}
+        annotations:
+          summary: "Model calls are failing or returning invalid output"
+          runbook: docs/runbooks/model-routes.md
+      - alert: RuntimeEventsSilent
+        expr: assureops_runtime_events_last_5m == 0
+        for: 10m
+        labels: {severity: warning}
+        annotations:
+          summary: "No runtime events or heartbeats were ingested for ten minutes"
+          runbook: docs/runbooks/runtime-incident.md
+      - alert: MetricsScrapeDown
+        expr: up{job="assureops-api"} == 0
+        for: 1m
+        labels: {severity: critical}
+        annotations:
+          summary: "The AssureOps API metrics endpoint is unreachable"

@@ -1,7 +1,13 @@
 node_modules
+**/node_modules
 .venv
 var
-apps
+apps/customer-web
+apps/staff-web
 **/__pycache__
 **/*.egg-info
 .git
+.next
+infra/compose/dev.env
+**/*.rendered*
+**/.env.local

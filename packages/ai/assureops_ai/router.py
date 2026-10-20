@@ -7,6 +7,7 @@ external call: unavailability is reported as such.
 """
 
 import os
+import re
 from dataclasses import dataclass
 
 from sqlalchemy import select
@@ -52,35 +53,54 @@ def qualification(phase: str, provider: str, model: str) -> dict | None:
 def groq_size_ok(model: str) -> bool:
     limit = float(env("GROQ_MAX_PARAMS_B", "3.8"))
     exception = env("GROQ_SIZE_EXCEPTION_MODEL")  # explicit operator decision, recorded with the qualification
-    return fits_constraint(model, limit) or (exception and exception == model)
+    small_named = re.search(r"-(\d+)m$", model)  # sub-billion models such as llama-prompt-guard-2-86m
+    return fits_constraint(model, limit) or bool(small_named) or (bool(exception) and exception == model)
+
+
+def groq_model(phase_id: str) -> str:
+    return settings().groq_model_f if phase_id == "F" and settings().groq_model_f else env(f"GROQ_MODEL_{phase_id}")
 
 
 def resolve(phase_id: str, external_allowed: bool) -> Route:
+    """Qualified private route first; an approved external route only for workspaces that allow it.
+
+    Choosing a provider happens here, from qualification and policy. A private route that is qualified but down
+    at call time fails as unavailable; it is never swapped for an external call.
+    """
     phase = PHASES[phase_id]
     cfg = settings()
     url_key = {"generate": "PRIVATE_INFERENCE_URL", "embed": "PRIVATE_EMBED_URL", "classify": "PRIVATE_CLASSIFY_URL"}[phase.kind]
     private_url, model = env(url_key), private_model(phase_id)
+    private = None
     if private_url and model:
         q = qualification(phase_id, "private", model)
         if q and q["status"] == "qualified" and q["prompt_version"] == phase.prompt_version and q["schema_version"] == phase.schema_version:
             return Route(phase_id, "private", model, True, "private route qualified", qualification=q)
-        return Route(phase_id, "private", model, False, "not_qualified: private model has no current qualification record", qualification=q)
+        private = Route(phase_id, "private", model, False,
+                        "not_qualified: private model failed or lacks a current qualification record" if q else
+                        "not_qualified: private model has no qualification record", qualification=q)
     if "groq" in phase.external_approved:
+        gm = groq_model(phase_id)
+        external = None
         if not cfg.groq_enabled:
-            return Route(phase_id, "groq", cfg.groq_model_f or None, False, "provider_disabled: GROQ_ENABLED is false", external=True)
-        if not cfg.groq_api_key:
-            return Route(phase_id, "groq", cfg.groq_model_f or None, False, "key_missing: no server-side GROQ_API_KEY", external=True)
-        if not cfg.groq_model_f:
-            return Route(phase_id, "groq", None, False, "model_not_pinned: GROQ_MODEL_F is empty", external=True)
-        if not groq_size_ok(cfg.groq_model_f):
-            return Route(phase_id, "groq", cfg.groq_model_f, False, "constraint_exceeded: pinned model is larger than the project's model-size "
-                                                                   "constraint and no operator exception is recorded", external=True)
-        if not external_allowed:
-            return Route(phase_id, "groq", cfg.groq_model_f, False, "external_processing_not_allowed: workspace is private-only", external=True)
-        q = qualification(phase_id, "groq", cfg.groq_model_f)
-        if not (q and q["status"] == "qualified" and q["prompt_version"] == phase.prompt_version):
-            return Route(phase_id, "groq", cfg.groq_model_f, False, "not_qualified: run the phase qualification suite first", external=True, qualification=q)
-        return Route(phase_id, "groq", cfg.groq_model_f, True, "groq route qualified", external=True, qualification=q)
+            external = Route(phase_id, "groq", gm or None, False, "provider_disabled: GROQ_ENABLED is false", external=True)
+        elif not cfg.groq_api_key:
+            external = Route(phase_id, "groq", gm or None, False, "key_missing: no server-side GROQ_API_KEY", external=True)
+        elif not gm:
+            external = Route(phase_id, "groq", None, False, f"model_not_pinned: GROQ_MODEL_{phase_id} is empty", external=True)
+        elif not groq_size_ok(gm):
+            external = Route(phase_id, "groq", gm, False, "constraint_exceeded: pinned model is larger than the project's model-size "
+                                                         "constraint and no operator exception is recorded", external=True)
+        elif not external_allowed:
+            external = Route(phase_id, "groq", gm, False, "external_processing_not_allowed: workspace is private-only", external=True)
+        else:
+            q = qualification(phase_id, "groq", gm)
+            if q and q["status"] == "qualified" and q["prompt_version"] == phase.prompt_version:
+                return Route(phase_id, "groq", gm, True, "groq route qualified", external=True, qualification=q)
+            external = Route(phase_id, "groq", gm, False, "not_qualified: run the phase qualification suite first", external=True, qualification=q)
+        return private if private is not None else external
+    if private is not None:
+        return private
     return Route(phase_id, None, None, False, f"no_route_configured: set {url_key} and PRIVATE_MODEL_{phase_id} on the inference host")
 
 
@@ -88,9 +108,14 @@ def generation_client(route: Route):
     cfg = settings()
     if route.provider == "groq":
         return GroqProvider(cfg.groq_base_url, cfg.groq_api_key, timeout=cfg.groq_timeout_seconds)
-    return PrivateGeneration(env("PRIVATE_INFERENCE_URL"), env("PRIVATE_INFERENCE_KEY") or None, timeout=60)
+    # CPU inference hosts are slow: generous timeout, no retry storms (one active request per instance).
+    return PrivateGeneration(env("PRIVATE_INFERENCE_URL"), env("PRIVATE_INFERENCE_KEY") or None, timeout=float(env("PRIVATE_TIMEOUT_SECONDS", "600")),
+                             max_retries=1)
 
 
 def encoder_client(route: Route):
     phase = PHASES[route.phase]
-    return PrivateEncoder(env("PRIVATE_EMBED_URL" if phase.kind == "embed" else "PRIVATE_CLASSIFY_URL"))
+    if route.provider == "groq":
+        cfg = settings()
+        return GroqProvider(cfg.groq_base_url, cfg.groq_api_key, timeout=cfg.groq_timeout_seconds)
+    return PrivateEncoder(env("PRIVATE_EMBED_URL" if phase.kind == "embed" else "PRIVATE_CLASSIFY_URL"), timeout=120)

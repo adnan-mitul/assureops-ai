@@ -20,6 +20,8 @@ The execution specification is `AssureOps-AI-Production-Execution-Plan-v5.md` (k
 - Checks: `bash scripts/verify/verify.sh`
 - Lab journeys: `.venv/Scripts/python scripts/lab_journey.py --app <app> --name <Name> --lab-readme <lab>/README.md`
 - Drills: `scripts/backup_restore_check.py`, `scripts/change_benchmark.py --app <app> --full-check`; staff OTP for local sign-in: `scripts/staff_otp.py <user>`
+- Models: `bash scripts/start_models.sh` (Ollama :8740, encoders :8730; started by start_services.sh), qualify with `scripts/qualify_phase.py --phase X --provider private|groq --model <id> --record`, run phases with `scripts/run_ai_phases.py`
+- Isolation, limits, delivery: `scripts/container_runner_check.py`, `scripts/load_recovery_check.py load|recovery`, `scripts/deploy/local_promote.py promote|rollback`; monitoring config `scripts/render_monitoring.py`
 
 ## Rules that must not regress
 - No model decides pass/fail, evidence validity, approvals or release gates (§13.1). Model routes stay disabled until qualified.

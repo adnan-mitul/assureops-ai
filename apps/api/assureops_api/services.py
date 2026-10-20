@@ -436,6 +436,22 @@ def publication_drift(s: Session, report: Report) -> list[str]:
     return reasons
 
 
+def explanations(s: Session, report_id: str, *, accepted_only: bool) -> list[dict]:
+    """Phase F drafts for one frozen report. They explain; the snapshot's verdicts and numbers stay authoritative."""
+    from assureops_domain.models import AiResult
+
+    rows = s.scalars(select(AiResult).where(AiResult.phase == "F").order_by(AiResult.created_at.desc())).all()
+    out = []
+    for r in rows:
+        if (r.request.get("refs") or {}).get("report_id") != report_id:
+            continue
+        if accepted_only and r.status != "accepted":
+            continue
+        out.append({"id": r.id, "status": r.status, "sections": (r.output or {}).get("sections", []), "provider": r.versions.get("provider"),
+                    "model": r.versions.get("model"), "reviewer": r.reviewer, "at": ts(r.updated_at)})
+    return out
+
+
 def report_json(r: Report, s: Session, app: Application) -> dict:
     intact = canonical_hash(r.snapshot) == r.sha256
     current_release = latest_release(s, app.id)

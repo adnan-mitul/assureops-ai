@@ -31,6 +31,17 @@ class GroqProvider(OpenAICompatible):
         return {}
 
 
+    def screen(self, text: str, model: str) -> tuple[str, float | None]:
+        """Prompt Guard models return the probability that the text is a jailbreak/injection attempt."""
+        result = self._once(model, {"model": model, "messages": [{"role": "user", "content": text[:2000]}]}, expect_json=False)
+        if not result.ok:
+            return result.status, None
+        try:
+            return "succeeded", float(result.content.strip())
+        except (TypeError, ValueError):
+            return "invalid_output", None
+
+
 def parameters_billion(model_id: str) -> float | None:
     """Best-effort size from the model ID (e.g. llama-3.1-8b-instant -> 8). Mixture-of-experts names count total experts' base."""
     match = re.search(r"(\d+(?:\.\d+)?)\s*b(?![a-z])", model_id.lower())

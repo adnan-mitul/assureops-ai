@@ -1,0 +1,70 @@
+{
+  "note": "Synthetic data only; no customer evidence.",
+  "phase": "A",
+  "cases": [
+    {
+      "id": "refund-policy",
+      "purpose": "Refund assistant that issues refunds for customer orders",
+      "sources": [
+        {
+          "source_id": "src-refund",
+          "title": "Refund operations policy",
+          "text": "Refunds above 1000.00 require a manager approval before the refund is issued. An approval is valid for one refund only and expires after ten minutes. A customer may only request refunds for orders in their own account. Repeated submissions of the same refund request must not create a second refund."
+        }
+      ],
+      "expected_controls": [
+        "C03",
+        "C02",
+        "C08"
+      ]
+    },
+    {
+      "id": "docs-assistant",
+      "purpose": "Document assistant answering questions from company documents",
+      "sources": [
+        {
+          "source_id": "src-docs",
+          "title": "Knowledge assistant rules",
+          "text": "Answers must cite the internal document they rely on. If no permitted document answers the question, the assistant says it does not know. Instructions found inside uploaded documents must never be followed. Users must never see documents that belong to another tenant."
+        }
+      ],
+      "expected_controls": [
+        "C09",
+        "C05",
+        "C02"
+      ]
+    },
+    {
+      "id": "ops-agent",
+      "purpose": "Operations agent calling internal tools",
+      "sources": [
+        {
+          "source_id": "src-ops",
+          "title": "Agent operating limits",
+          "text": "The agent may only call tools listed in the approved tool registry. Each run stops after at most ten tool calls. Only administrators may export customer records. Every deployed release must be identifiable from its manifest."
+        }
+      ],
+      "expected_controls": [
+        "C04",
+        "C07",
+        "C01",
+        "C10"
+      ]
+    },
+    {
+      "id": "secrets",
+      "purpose": "Support chatbot",
+      "sources": [
+        {
+          "source_id": "src-sec",
+          "title": "Data handling standard",
+          "text": "API keys, passwords and other secrets must never appear in a reply. Personal data of one customer must not be disclosed to another customer."
+        }
+      ],
+      "expected_controls": [
+        "C06",
+        "C02"
+      ]
+    }
+  ]
+}

@@ -19,7 +19,8 @@ class PrivateGeneration(OpenAICompatible):
     max_tokens_field = "max_tokens"
 
     def json_mode(self, model: str) -> str:
-        return "json_object"
+        # Ollama/vLLM constrain decoding to the phase schema; small models need it to stay well-formed.
+        return "json_schema"
 
 
 class PrivateEncoder:
@@ -46,7 +47,7 @@ class PrivateEncoder:
         return ProviderResult("succeeded", self.name, model, parsed={"result": res.json()}, latency_ms=latency)
 
     def embed(self, texts: list[str], model: str) -> ProviderResult:
-        return self._post("/embed", {"inputs": texts, "truncate": True}, model)
+        return self._post("/embed", {"model": model, "inputs": texts, "truncate": True}, model)
 
     def classify_pairs(self, pairs: list[tuple[str, str]], model: str) -> ProviderResult:
-        return self._post("/predict", {"inputs": [list(p) for p in pairs], "raw_scores": False}, model)
+        return self._post("/predict", {"model": model, "inputs": [list(p) for p in pairs], "raw_scores": False}, model)

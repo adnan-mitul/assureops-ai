@@ -103,7 +103,7 @@ class OpenAICompatible:
             time.sleep(min(2 ** attempt, 8))
         return last
 
-    def _once(self, model: str, body: dict) -> ProviderResult:
+    def _once(self, model: str, body: dict, expect_json: bool = True) -> ProviderResult:
         started = time.perf_counter()
         try:
             with self._client() as http:
@@ -132,6 +132,8 @@ class OpenAICompatible:
             return ProviderResult("invalid_output", self.name, model, request_id=request_id, latency_ms=latency, error="unexpected response shape")
         if choice.get("finish_reason") == "content_filter" or choice["message"].get("refusal"):
             return ProviderResult("refused", self.name, model, usage=usage, request_id=request_id, latency_ms=latency, error="provider refused")
+        if not expect_json:
+            return ProviderResult("succeeded", self.name, model, content=content, usage=usage, request_id=request_id, latency_ms=latency)
         if choice.get("finish_reason") == "length":
             return ProviderResult("invalid_output", self.name, model, content=content, usage=usage, request_id=request_id, latency_ms=latency,
                                   error="output truncated at the token budget")

@@ -435,7 +435,9 @@ def get_report(report_id: str, caller: Caller = CustomerCaller):
         report = s.get(Report, report_id)
         if report is None or report.state not in ("published", "superseded"):  # drafts stay internal
             raise api_error(404, "not_found", "report not found")
-        return svc.report_json(report, s, svc.get_application(s, report.application_id))
+        data = svc.report_json(report, s, svc.get_application(s, report.application_id))
+        data["explanations"] = svc.explanations(s, report.id, accepted_only=True)
+        return data
 
 
 # ---------------- Settings ----------------

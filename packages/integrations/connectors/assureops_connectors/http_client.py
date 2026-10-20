@@ -51,11 +51,13 @@ class Actors:
 
 class TargetClient:
     def __init__(self, origin: str, scope: dict, actors: Actors, *, marker_header: str | None = None, marker_value: str | None = None,
-                 timeout: float = 15.0):
+                 timeout: float = 15.0, host_header: str | None = None):
         self.origin = origin
         self.scope = scope
         self.actors = actors
         self.base_headers = {"Accept": "application/json", "User-Agent": "AssureOps-Runner/1.0"}
+        if host_header:  # private-network targets reached by address but expecting their own host name
+            self.base_headers["Host"] = host_header
         if marker_header and marker_value:
             self.base_headers[marker_header] = marker_value
         self.http = httpx.Client(base_url=origin, follow_redirects=False, trust_env=False, timeout=timeout,

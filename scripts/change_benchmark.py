@@ -53,6 +53,20 @@ def main():
                                       "selective_tests": len(r["retest"]), "full_tests": total, "reused": r["reusable"],
                                       "conservative_fallback": r["conservative_fallback"],
                                       "selective_step_seconds": step_seconds(s, job.id) if job else None})
+        truth = json.loads((ROOT / "profiles" / "qualification" / "lab-ground-truth.json").read_text()).get(args.app)
+        if truth:
+            releases = {r.id: r.version for r in s.scalars(select(Release).where(Release.application_id == args.app))}
+            false_alarms, misses, judged = [], [], 0
+            for run in s.scalars(select(TestRun).where(TestRun.application_id == args.app)):
+                expected_fail = run.test_id in truth.get(releases[run.release_id], [])
+                if run.outcome == "error":
+                    continue
+                judged += 1
+                if run.outcome == "failed" and not expected_fail:
+                    false_alarms.append(f"{run.test_id}@{releases[run.release_id]}")
+                if run.outcome == "passed" and expected_fail:
+                    misses.append(f"{run.test_id}@{releases[run.release_id]}")
+            report["ground_truth"] = {"runs_judged": judged, "false_alarms": false_alarms, "missed_faults": misses}
         reviews = s.scalars(select(EvidenceReview).join(TestRun, TestRun.id == EvidenceReview.run_id).where(TestRun.application_id == args.app)).all()
         report["reviewer_items"] = len(reviews)
         report["model_tokens"] = sum((m.usage or {}).get("total_tokens") or 0 for m in s.scalars(select(ModelCall).where(ModelCall.application_id == args.app)))
@@ -88,6 +102,10 @@ def main():
         fc = report["full_check"]
         print(f"full re-run on {fc['release']}: {fc['full_tests']} tests, step time {fc['full_step_seconds']}s, "
               f"critical misses among reused evidence: {len(fc['critical_misses'])} {fc['critical_misses']}")
+    if "ground_truth" in report:
+        gt = report["ground_truth"]
+        print(f"against lab ground truth: {gt['runs_judged']} runs judged, false alarms {len(gt['false_alarms'])} {gt['false_alarms']}, "
+              f"missed seeded faults {len(gt['missed_faults'])} {gt['missed_faults']}")
     print(f"reviewer items: {report['reviewer_items']}; model tokens: {report['model_tokens']}")
 
 

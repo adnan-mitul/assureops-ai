@@ -79,7 +79,7 @@ def groq_cfg(monkeypatch):
     monkeypatch.setattr(cfg, "groq_enabled", True)
     monkeypatch.setattr(cfg, "groq_api_key", "test-key-not-real")
     monkeypatch.setattr(cfg, "groq_model_f", "tiny-3b-test")
-    monkeypatch.delenv("PRIVATE_INFERENCE_URL", raising=False)
+    monkeypatch.setattr(router, "private_model", lambda phase: "")  # isolate the external route from any configured private model
     yield cfg
     with platform_session() as s:
         s.execute(delete(ModelQualification).where(ModelQualification.model == "tiny-3b-test"))
@@ -89,7 +89,7 @@ def test_routing_requires_policy_and_qualification(groq_cfg, monkeypatch):
     assert router.resolve("F", external_allowed=False).reason.startswith("external_processing_not_allowed")
     assert router.resolve("F", external_allowed=True).reason.startswith("not_qualified")
     with platform_session() as s:
-        s.add(ModelQualification(phase="F", provider="groq", model="tiny-3b-test", artifact_digest="x", prompt_version="F-2", schema_version="F-2",
+        s.add(ModelQualification(phase="F", provider="groq", model="tiny-3b-test", artifact_digest="x", prompt_version="F-3", schema_version="F-3",
                                  dataset="holdout", metrics={}, status="qualified", recorded_by="test"))
     route = router.resolve("F", external_allowed=True)
     assert route.available and route.provider == "groq" and route.external
@@ -130,3 +130,15 @@ def test_redaction_before_external_dispatch():
     text = "contact ops@acme.test with key sk-live-ABCDEFGH1234 and gsk_abcdefgh12345"
     red = validation.minimize(text)
     assert "ops@acme.test" not in red and "sk-live" not in red and "gsk_" not in red
+
+
+def test_qualified_private_route_wins_and_outage_never_turns_external(monkeypatch):
+    monkeypatch.setattr(router, "env", lambda name, default="": {"PRIVATE_INFERENCE_URL": "http://127.0.0.1:1/v1"}.get(name, default))
+    monkeypatch.setattr(router, "private_model", lambda phase: "local-model")
+    monkeypatch.setattr(router, "qualification", lambda phase, provider, model: {"status": "qualified", "prompt_version": "F-3", "schema_version": "F-3",
+                                                                                  "id": "q", "dataset": "d", "metrics": {}, "at": 0})
+    route = router.resolve("F", external_allowed=True)
+    assert route.available and route.provider == "private" and not route.external
+    # The private host is unreachable (port 1): the call fails as unavailable instead of switching to Groq.
+    result = router.generation_client(route).generate(model=route.model, system="s", user="u", max_tokens=10, json_mode="json_object")
+    assert result.status in ("unavailable", "timeout") and result.provider == "private"

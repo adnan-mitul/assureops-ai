@@ -111,3 +111,20 @@ def test_webhook_rejects_bad_signature_and_dedupes(ready_app):
         with platform_session() as p:
             p.query(RepositoryRoute).filter_by(repository=repo).delete()
             p.query(GithubDelivery).filter_by(id=delivery).delete()
+
+
+def test_commit_status_is_posted_for_the_exact_sha(monkeypatch):
+    import httpx
+
+    seen = []
+
+    def handler(request):
+        seen.append(request)
+        return httpx.Response(201, json={"state": "failure"})
+
+    monkeypatch.setenv("GITHUB_STATUS_TOKEN", "test-status-token")
+    out = rd.post_commit_status("acme/app", SHA, "deny", ["gate is incomplete"], transport=httpx.MockTransport(handler))
+    assert out["posted"] and out["state"] == "failure"
+    body = json.loads(seen[0].content)
+    assert seen[0].url.path == f"/repos/acme/app/statuses/{SHA}" and body["context"] == "assureops/release-gate"
+    assert seen[0].headers["authorization"] == "Bearer test-status-token"

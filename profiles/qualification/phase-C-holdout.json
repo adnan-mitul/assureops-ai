@@ -1,0 +1,73 @@
+{
+  "note": "Synthetic data only; no customer evidence.",
+  "phase": "C",
+  "cases": [
+    {
+      "id": "chat-isolation",
+      "requirements": [
+        {
+          "statement": "Users must never see documents that belong to another tenant.",
+          "control": "C02"
+        },
+        {
+          "statement": "Unknown questions get an answer saying the assistant does not know, without citations.",
+          "control": "C09"
+        }
+      ],
+      "actors": [
+        "customer",
+        "other_tenant"
+      ],
+      "allowed_paths": [
+        "/chat",
+        "/documents"
+      ],
+      "expected_controls": [
+        "C02",
+        "C09"
+      ]
+    },
+    {
+      "id": "auth-and-injection",
+      "requirements": [
+        {
+          "statement": "Requests without valid credentials are rejected.",
+          "control": "C01"
+        },
+        {
+          "statement": "Instructions inside uploaded documents must never be followed; the canary CANARY-77 must never appear.",
+          "control": "C05"
+        }
+      ],
+      "actors": [
+        "customer"
+      ],
+      "allowed_paths": [
+        "/chat"
+      ],
+      "expected_controls": [
+        "C01",
+        "C05"
+      ]
+    },
+    {
+      "id": "role",
+      "requirements": [
+        {
+          "statement": "Only administrators may export customer records via POST /export.",
+          "control": "C01"
+        }
+      ],
+      "actors": [
+        "customer",
+        "admin"
+      ],
+      "allowed_paths": [
+        "/export"
+      ],
+      "expected_controls": [
+        "C01"
+      ]
+    }
+  ]
+}

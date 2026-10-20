@@ -28,6 +28,14 @@ class ScenarioError(Exception):
     """The scenario definition is invalid (a profile problem, not an application defect)."""
 
 
+class AmbiguousOutcome(TargetError):
+    """The outcome of a write is unknown (timeout after sending). It is reconciled from the system of record, never re-sent."""
+
+    def __init__(self, message: str, record: dict):
+        super().__init__(message)
+        self.record = record
+
+
 class PreconditionFailed(TargetError):
     """A setup step did not produce what later steps need; the check could not be completed."""
 
@@ -108,7 +116,8 @@ def validate(scenario: dict, actor_names: set[str]) -> None:
                 raise ScenarioError(f"unsupported operator {item.get('op')}")
 
 
-def run(scenario: dict, client: TargetClient, *, release: str, manifest_fetch=None, base_vars: dict | None = None) -> tuple[bool, dict]:
+def run(scenario: dict, client: TargetClient, *, release: str, manifest_fetch=None, base_vars: dict | None = None,
+        reconcile=None) -> tuple[bool, dict]:
     """Execute one trial. Returns (passed, evidence record). Raises TargetError for transport problems."""
     validate(scenario, client.actors.names())
     ctx = {"run": "ao-" + secrets.token_hex(5), "release": release, **(base_vars or {}), **(scenario.get("vars") or {})}
@@ -126,7 +135,16 @@ def run(scenario: dict, client: TargetClient, *, release: str, manifest_fetch=No
         parallel, repeat = int(step.get("parallel", 1)), int(step.get("repeat", 1))
 
         def send():
-            return client.request(method, path, actor=actor, body=body, headers=headers)
+            try:
+                return client.request(method, path, actor=actor, body=body, headers=headers)
+            except TargetError as exc:
+                if method.upper() == "GET" or "timeout" not in str(exc):
+                    raise
+                action = body.get("action_id") if isinstance(body, dict) else None
+                outcome_check = reconcile({"action_id": action}) if (reconcile and action) else {"status": "not_reconcilable"}
+                raise AmbiguousOutcome(f"step {step['name']}: write outcome unknown ({exc}); reconciliation: {outcome_check['status']}",
+                                       {"run": ctx["run"], "transcript": transcript, "assertions": [],
+                                        "ambiguous_write": {"step": step["name"], "action_id": action, "reconciliation": outcome_check}})
 
         if parallel > 1:
             with concurrent.futures.ThreadPoolExecutor(max_workers=parallel) as pool:
@@ -153,4 +171,4 @@ def run(scenario: dict, client: TargetClient, *, release: str, manifest_fetch=No
     return passed, {"run": ctx["run"], "transcript": transcript, "assertions": checks}
 
 
-__all__ = ["run", "validate", "interpolate", "ScenarioError", "TargetError", "PreconditionFailed"]
+__all__ = ["run", "validate", "interpolate", "ScenarioError", "TargetError", "PreconditionFailed", "AmbiguousOutcome"]

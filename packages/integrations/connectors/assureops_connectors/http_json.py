@@ -19,7 +19,8 @@ from .http_client import Actors, TargetClient, TargetError, evidence_view
 
 DEFAULT_SCOPE = {"allowed_paths": [], "allowed_methods": ["GET", "POST"], "max_requests_per_test": 60}
 CONFIG_KEYS = {"base_url", "environment", "manifest_path", "health_path", "auth", "actors", "scope", "test_marker_header",
-               "ownership", "events", "credential_probe", "action_evidence", "actor_identities", "lab"}
+               "ownership", "events", "credential_probe", "action_evidence", "actor_identities", "lab",
+               "host_header", "runner_network", "request_timeout_seconds"}
 
 
 def _check(cid: str, status: str, detail: str) -> dict:
@@ -37,7 +38,8 @@ class HttpJsonAdapter(Adapter):
         target = check_target(spec.base_url, allow_private=spec.allow_private)
         scope = {**DEFAULT_SCOPE, **(spec.config.get("scope") or {})}
         return TargetClient(target["origin"], scope, Actors(spec.config.get("auth"), spec.credentials),
-                            marker_header=spec.config.get("test_marker_header", "X-AssureOps-Test"), marker_value=marker)
+                            marker_header=spec.config.get("test_marker_header", "X-AssureOps-Test"), marker_value=marker,
+                            timeout=float(spec.config.get("request_timeout_seconds", 15)), host_header=spec.config.get("host_header"))
 
     @staticmethod
     def validate_config(config: dict) -> list[str]:
@@ -213,8 +215,16 @@ class HttpJsonAdapter(Adapter):
                               "mismatched_components": mismatched}
             run_token = ctx.run_tokens[trial] if trial < len(ctx.run_tokens) else None
             base_vars = {"run": run_token} if run_token else {}
+            reconcile = None
+            if spec.config.get("action_evidence"):
+                def reconcile(where: dict) -> dict:  # read the system of record; the ambiguous write is never re-sent
+                    try:
+                        return self.read_action_evidence(spec, {"where": where})
+                    except (TargetError, EgressDenied, AdapterError) as exc:
+                        return {"status": "unavailable", "error": str(exc), "matches": []}
             passed, record = scenario_engine.run(expanded, client, release=ctx.release_version,
-                                                 manifest_fetch=lambda: self.collect_manifest(spec)["manifest"], base_vars=base_vars)
+                                                 manifest_fetch=lambda: self.collect_manifest(spec)["manifest"], base_vars=base_vars,
+                                                 reconcile=reconcile)
             record.update(template=test["template"], requests_made=client.requests_made)
             return passed, record
         finally:

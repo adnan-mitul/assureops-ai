@@ -1,0 +1,16 @@
+{
+  "cross-encoder/nli-deberta-v3-small": {
+    "phase": "D",
+    "kind": "classify",
+    "license": "Apache-2.0",
+    "revision": "fa2804872c3b4bd748f38c0185cc85775361e735",
+    "artifact_digest": "28e8f407b3633d1dac3c2332dc5518029ee89effc8d9a6f16e2009a7caee888a"
+  },
+  "BAAI/bge-small-en-v1.5": {
+    "phase": "R",
+    "kind": "embed",
+    "license": "MIT",
+    "revision": "5c38ec7c405ec4b44b94cc5a9bb96e735b38267a",
+    "artifact_digest": "749a1a4c9d436728b3b2a706847801bb89c2c50cf606712b387859d15055b701"
+  }
+}

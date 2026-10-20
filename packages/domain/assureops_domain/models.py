@@ -799,6 +799,53 @@ class RepositoryRoute(Base):
     application_id: Mapped[str] = mapped_column(String)
 
 
+class Inquiry(Base):
+    """Public contact request; staff convert it into a verified workspace. Platform table (no evidence)."""
+
+    __tablename__ = "inquiries"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("inq"))
+    company: Mapped[str] = mapped_column(String)
+    contact_email: Mapped[str] = mapped_column(String)
+    message: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String, default="new")  # new | converted | declined
+    workspace_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    decided_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    created_at: Mapped[float] = mapped_column(Float, default=now)
+
+
+class Invitation(Base):
+    """Single-use, expiring workspace invitation. Only the token hash is stored."""
+
+    __tablename__ = "invitations"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("inv"))
+    workspace_id: Mapped[str] = mapped_column(String)
+    email: Mapped[str] = mapped_column(String)
+    role: Mapped[str] = mapped_column(String)
+    token_hash: Mapped[str] = mapped_column(String, unique=True)
+    invited_by: Mapped[str] = mapped_column(String)
+    expires_at: Mapped[float] = mapped_column(Float)
+    accepted_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    revoked_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    created_at: Mapped[float] = mapped_column(Float, default=now)
+
+
+class Notification(Base):
+    """Notification outbox: committed with the change that caused it, delivered by the dispatcher."""
+
+    __tablename__ = "notifications"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("ntf"))
+    workspace_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    recipient: Mapped[str] = mapped_column(String)
+    kind: Mapped[str] = mapped_column(String)
+    subject: Mapped[str] = mapped_column(String)
+    body: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String, default="pending")  # pending | delivered | failed
+    attempts: Mapped[int] = mapped_column(Integer, default=0)
+    last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[float] = mapped_column(Float, default=now)
+    delivered_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
 class GithubDelivery(Base):
     """Platform-side webhook dedupe (delivery IDs only)."""
 

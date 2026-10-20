@@ -1,9 +1,11 @@
 # Adoption register (plan §30.3). Pins stay empty until an actual reviewed acquisition.
 - name: REA
   repository: https://github.com/morluto/rea
-  reviewed_commit: null
-  status: adapter_ready_not_installed
-  note: packages/integrations/rea runs a pinned REA only when REA_COMMAND and pin.json (commit, entry SHA-256) are set; until then the AssureOps-owned built-in static collector is used and REA is reported as a capability gap. No REA code copied.
+  reviewed_commit: 559af3d3ff4b0236d468e80788c82d5a85b102da
+  package: rea-agents@6.7.0 (npm integrity pinned in packages/integrations/rea/assureops_rea/pin.json)
+  license: MIT
+  status: adopted
+  note: Installed outside the repository with install scripts disabled; run as a separate Node process on extracted snapshots (analyze-javascript-application). Its Evidence (id, subject digest, artifacts, coverage, limitations) is merged with the built-in collector, which covers Python. No REA code copied.
 - name: ECC
   repository: https://github.com/affaan-m/ECC
   reviewed_commit: null
@@ -45,8 +47,26 @@
   used_in: packages/ui/src/server/session.ts (portal sessions, AES-256-GCM sealed)
 - name: Groq API
   endpoint: https://api.groq.com/openai/v1
-  status: integrated_disabled
-  note: Phase F only, server-side key, workspace opt-in, pinned and qualified model required; GROQ_ENABLED=false by default.
-- name: Candidate small models (A Granite-4.0-micro, B/E Phi-4-mini, C Qwen2.5-Coder-1.5B, D DeBERTa NLI, F SmolLM2-1.7B, R BGE-small, G Prompt Guard 2)
-  status: registered_not_served
-  note: Registry, prompts, schemas and adapters exist; no private inference endpoint is configured on this machine, so every private route reports no_route_configured.
+  status: adopted (enabled locally for phases F and G)
+  note: Server-side key, workspace opt-in, pinned and qualified model per phase; F uses openai/gpt-oss-20b under a recorded size exception, G uses Prompt Guard 2 (86M).
+- name: Ollama
+  version: 0.40.x
+  license: MIT
+  status: adopted (local generation server, 127.0.0.1:8740, one loaded model, one request at a time)
+- name: Generation models via Ollama (granite4:micro, phi4-mini, qwen2.5-coder:1.5b, smollm2:1.7b)
+  licenses: Apache-2.0 (Granite, Qwen2.5-Coder, SmolLM2), MIT (Phi-4-mini)
+  status: served and qualified per phase (records in model_qualifications with the Ollama digest)
+- name: Encoder models (cross-encoder/nli-deberta-v3-small, BAAI/bge-small-en-v1.5)
+  licenses: Apache-2.0, MIT
+  status: served by assureops_ai.encoder_server from pinned revisions (encoder_pins.json) and qualified
+- name: PyTorch (CPU) and Transformers
+  packages: torch==2.5.1, transformers==4.46.3 (requirements-models.txt)
+  license: BSD-3-Clause, Apache-2.0
+  status: adopted for the encoder service only (not in the API image)
+- name: Llama Prompt Guard 2 (86M) via Groq
+  license: Llama 4 Community License (served by Groq)
+  status: qualified for phase G (advisory screening), external phase approved per workspace
+- name: Prometheus
+  image: prom/prometheus:v2.55.1
+  license: Apache-2.0
+  status: adopted (local metrics and alert rules)

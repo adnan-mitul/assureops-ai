@@ -62,24 +62,53 @@ class Phase:
 
 PHASES: dict[str, Phase] = {p.id: p for p in [
     Phase("A", "requirement_analysis", "generate", "ibm-granite/granite-4.0-micro", "3B",
-          "Approved references and scope -> proposed requirements with source spans and applicability questions", "A-1", "A-1"),
+          "Approved references and scope -> proposed requirements with source spans and applicability questions", "A-2", "A-2"),
     Phase("B", "dependency_mapping", "generate", "microsoft/Phi-4-mini-instruct", "3.8B",
-          "Requirements, collected manifest components and observations -> proposed component links and explicit gaps", "B-1", "B-1"),
+          "Requirements, collected manifest components and observations -> proposed component links and explicit gaps", "B-2", "B-2"),
     Phase("C", "test_proposal", "generate", "Qwen/Qwen2.5-Coder-1.5B-Instruct", "1.54B",
-          "Reviewed requirements and the permitted catalogue -> template IDs with typed arguments", "C-1", "C-1"),
+          "Reviewed requirements and the permitted catalogue -> template IDs with typed arguments", "C-2", "C-2"),
     Phase("D", "semantic_evaluation", "classify", "cross-encoder/nli-deberta-v3-small", "~0.1B",
           "Atomic claim/premise pairs -> entailment/contradiction/neutral signals beside actual test outcomes", "D-1", "D-1"),
     Phase("E", "incident_analysis", "generate", "microsoft/Phi-4-mini-instruct", "3.8B",
-          "Verified events and release changes -> cited summary, hypotheses and approved retest suggestions", "E-1", "E-1"),
+          "Verified events and release changes -> cited summary, hypotheses and approved retest suggestions", "E-2", "E-2"),
     Phase("F", "explanation", "generate", "HuggingFaceTB/SmolLM2-1.7B-Instruct", "1.7B",
-          "Frozen evidence facts -> readable report draft; the backend renders verdicts and numbers", "F-2", "F-2",
+          "Frozen evidence facts -> readable report draft; the backend renders verdicts and numbers", "F-3", "F-3",
           external_approved=("groq",)),
     Phase("R", "retrieval", "embed", "BAAI/bge-small-en-v1.5", "33.4M",
           "Authorized English sources -> embeddings; hybrid retrieval only after comparison with lexical search", "R-1", "R-1"),
     Phase("G", "input_screening", "classify", "meta-llama/Llama-Prompt-Guard-2-86M", "86M",
-          "Bounded untrusted text -> screening signal; never authorizes an action", "G-1", "G-1", optional=True),
+          "Bounded untrusted text -> screening signal; never authorizes an action", "G-1", "G-1", external_approved=("groq",), optional=True),
 ]}
 
 
 def schema(phase_id: str) -> dict | None:
     return SCHEMAS.get(phase_id)
+
+
+def constrained(phase_id: str, ctx: dict) -> dict | None:
+    """The phase schema narrowed to the identifiers this request may use, so constrained decoding cannot invent them.
+
+    Validation still runs on the output; this only removes a class of errors small models make."""
+    import copy
+
+    base = SCHEMAS.get(phase_id)
+    if base is None:
+        return None
+    s = copy.deepcopy(base)
+    props = s["properties"]
+    if phase_id == "A" and ctx.get("sources"):
+        props["requirements"]["items"]["properties"]["spans"]["items"]["properties"]["source_id"] = {"enum": sorted(ctx["sources"])}
+    if phase_id == "B":
+        item = props["links"]["items"]["properties"]
+        item["test_id"] = {"enum": ctx["test_ids"]} if ctx.get("test_ids") else item["test_id"]
+        item["component_id"] = {"enum": ctx["component_ids"]} if ctx.get("component_ids") else item["component_id"]
+    if phase_id == "C" and ctx.get("templates"):
+        props["tests"]["items"]["properties"]["template"] = {"enum": ctx["templates"]}
+    if phase_id == "E":
+        if ctx.get("test_ids"):
+            props["retest_suggestions"]["items"] = {"enum": ctx["test_ids"]}
+        if ctx.get("sources"):
+            props["spans"]["items"]["properties"]["source_id"] = {"enum": sorted(ctx["sources"])}
+    if phase_id == "F" and ctx.get("facts"):
+        props["sections"]["items"]["properties"]["fact_ids"]["items"] = {"enum": sorted(ctx["facts"])}
+    return s

@@ -29,10 +29,13 @@ def scrubbed_env() -> dict:
     return env
 
 
-def command() -> list[str]:
+def command(network: str | None = None) -> list[str]:
     cfg = settings()
     if cfg.runner_mode == "container":
-        return ["docker", "run", "--rm", "-i", "--network", "assureops-runner", "--memory", "256m", "--cpus", "0.5",
+        network = network or "assureops-runner"
+        if not network.startswith("assureops-"):
+            raise RunnerFailure(f"runner network {network!r} is not an AssureOps runner network")
+        return ["docker", "run", "--rm", "-i", "--network", network, "--memory", "256m", "--cpus", "0.5",
                 "--pids-limit", "64", "--read-only", "--tmpfs", "/tmp:rw,size=16m", "--cap-drop", "ALL",
                 "--security-opt", "no-new-privileges", "--user", "65534:65534", cfg.runner_image]
     return [sys.executable, "-I", "-m", "assureops_connectors.sandbox"]
@@ -40,7 +43,7 @@ def command() -> list[str]:
 
 def run_capsule(capsule: dict, *, timeout: float, on_tick=None) -> dict:
     """Run one capsule; `on_tick` is called about every 10 s (lease renewal) and may raise to abort."""
-    proc = subprocess.Popen(command(), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
+    proc = subprocess.Popen(command((capsule.get("config") or {}).get("runner_network")), stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.DEVNULL,
                             env=scrubbed_env(), cwd=os.path.dirname(sys.executable))
     data = json.dumps(capsule).encode()
     elapsed, slice_, pending_input = 0.0, 10.0, data

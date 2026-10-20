@@ -20,7 +20,7 @@ def execute(capsule: dict) -> dict:
     from .base import AdapterError, ConnectionSpec, TestContext, get
     from .egress import EgressDenied
     from .http_client import TargetError
-    from .scenario import PreconditionFailed, ScenarioError
+    from .scenario import AmbiguousOutcome, PreconditionFailed, ScenarioError
     from .templates import TemplateError
 
     spec = ConnectionSpec(adapter_id=capsule["adapter_id"], revision=capsule["connection_revision"], config=capsule["config"],
@@ -44,6 +44,8 @@ def execute(capsule: dict) -> dict:
             trials.append({"passed": bool(ok), "record": record})
         return {"status": "completed", "trials": trials, "adapter": adapter.adapter_id, "adapter_version": adapter.version,
                 "evaluator_version": adapter.evaluator_version}
+    except AmbiguousOutcome as exc:
+        return {"status": "error", "error": f"AmbiguousOutcome: {exc}", "trials": trials, "partial_record": exc.record}
     except PreconditionFailed as exc:
         return {"status": "error", "error": f"PreconditionFailed: {exc}", "trials": trials, "partial_record": exc.record}
     except AdapterError as exc:

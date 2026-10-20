@@ -78,3 +78,38 @@ class BM25:
 def index(sources: list[dict]) -> BM25:
     chunks = [c for s in sources for c in chunk(s["id"], s["title"], s["text"])]
     return BM25(chunks)
+
+
+def hybrid_search(sources: list[dict], query: str, k: int = 5) -> tuple[str, list[tuple[float, Chunk]]]:
+    """BM25 plus BGE dense retrieval fused by reciprocal rank, used only while phase R is qualified; otherwise BM25 alone."""
+    idx = index(sources)
+    lexical = idx.search(query, k=max(k, 10))
+    try:
+        from . import router
+
+        route = router.resolve("R", external_allowed=False)
+    except Exception:  # registry or database unavailable: stay with the lexical baseline
+        route = None
+    if route is None or not route.available or not idx.chunks:
+        return "bm25", lexical[:k]
+    client = router.encoder_client(route)
+    texts = [f"{c.title}. {c.text}"[:2000] for c in idx.chunks]
+    vectors = []
+    for start in range(0, len(texts), 32):  # the encoder accepts bounded batches
+        batch = client.embed(texts[start:start + 32], route.model)
+        if not batch.ok:
+            return "bm25 (embedding service unavailable)", lexical[:k]
+        vectors += batch.parsed["result"]
+    qv = client.embed([f"Represent this sentence for searching relevant passages: {query}"], route.model)
+    if not qv.ok:
+        return "bm25 (embedding service unavailable)", lexical[:k]
+    q = qv.parsed["result"][0]
+    dense = sorted(((sum(a * b for a, b in zip(q, d)), i) for i, d in enumerate(vectors)), reverse=True)
+    fused: dict[int, float] = {}
+    positions = {id(c): i for i, c in enumerate(idx.chunks)}
+    for rank, (_, chunk) in enumerate(lexical):
+        fused[positions[id(chunk)]] = fused.get(positions[id(chunk)], 0) + 1 / (60 + rank)
+    for rank, (_, i) in enumerate(dense):
+        fused[i] = fused.get(i, 0) + 1 / (60 + rank)
+    ranked = sorted(fused.items(), key=lambda x: -x[1])[:k]
+    return f"hybrid bm25+{route.model}", [(round(score, 5), idx.chunks[i]) for i, score in ranked]

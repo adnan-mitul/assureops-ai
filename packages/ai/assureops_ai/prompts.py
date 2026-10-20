@@ -7,8 +7,9 @@ COMMON = ("You assist an evidence-based AI application readiness review. You onl
           "object matching the requested schema and nothing else. If information is missing, say so in `unknowns` instead of guessing.")
 
 SYSTEM = {
-    "A": COMMON + " Task: extract testable requirements from the approved reference sources. Each requirement must map to one control ID "
-                  "and quote, verbatim, the source sentence(s) that support it.",
+    "A": COMMON + " Task: extract testable requirements from the approved reference sources. Map each requirement to the one control "
+                  "whose description fits it best (the data lists every control's meaning). Each span must copy exactly one contiguous "
+                  "sentence character for character from the source; use several spans for several sentences and never join sentences.",
     "B": COMMON + " Task: propose which collected components each approved test depends on. Only use test IDs and component IDs that "
                   "appear in the data. List components you cannot place as gaps.",
     "C": COMMON + " Task: propose catalogue tests (template ID plus typed arguments) for the reviewed requirements. Use only templates, "

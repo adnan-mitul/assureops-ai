@@ -58,7 +58,19 @@ It connects, verifies, has a developer propose and a reviewer activate the profi
 
 ## Models and Groq
 
-Models only propose (requirements, dependency links, catalogue tests, incident summaries, explanation drafts); rules and reviewers decide. Every phase is disabled until its exact model has a qualification record. Phase F (explanation) may use Groq when `GROQ_ENABLED=true`, `GROQ_API_KEY` is set server-side, `GROQ_MODEL_F` is pinned, the workspace owner allows external processing, and `scripts/qualify_phase.py --phase F --provider groq --model <id> --record` qualified that model. `scripts/groq_models.py` lists account models against the project's ≤3.8B constraint; a larger model needs an explicit operator exception (`GROQ_SIZE_EXCEPTION_MODEL`).
+Models only propose (requirements, dependency links, catalogue tests, semantic signals, incident summaries, explanation drafts, screening scores); rules and reviewers decide. Every phase stays disabled until its exact model artifact has a qualification record for the current prompt and schema version.
+
+| Phase | Model (as planned) | Served by |
+|---|---|---|
+| A requirements | Granite-4.0-micro (3B) | local Ollama `granite4:micro` |
+| B dependencies, E incidents | Phi-4-mini (3.8B) | local Ollama `phi4-mini` |
+| C tests | Qwen2.5-Coder-1.5B | local Ollama `qwen2.5-coder:1.5b` |
+| D evidence | DeBERTa-v3-small NLI | local encoder service (pinned revision) |
+| F explanation | SmolLM2-1.7B | local Ollama `smollm2:1.7b` (Groq `openai/gpt-oss-20b` qualified as an approved external route) |
+| R retrieval | BGE-small-en-v1.5 | local encoder service; hybrid with BM25 |
+| G screening | Llama Prompt Guard 2 (86M) | Groq (approved external phase) |
+
+Setup on a CPU host: install Ollama, `bash scripts/start_models.sh` (Ollama on :8740 with models on `OLLAMA_MODELS`, encoder service on :8730), `ollama pull` the four generation models, `python scripts/fetch_models.py` for the pinned encoders, then `python scripts/qualify_phase.py --phase <X> --provider private --model <id> --record` for each phase. Groq needs `GROQ_ENABLED=true`, a server-side `GROQ_API_KEY`, a pinned model per phase and a workspace that allows external processing; `scripts/groq_models.py` lists account models against the ≤3.8B constraint, and a larger model needs an explicit operator exception (`GROQ_SIZE_EXCEPTION_MODEL`). A qualified private route always wins, and a private outage never turns into an external call.
 
 ## Checks
 
@@ -66,6 +78,12 @@ Models only propose (requirements, dependency links, catalogue tests, incident s
 bash scripts/verify/verify.sh
 .venv/Scripts/python scripts/backup_restore_check.py
 .venv/Scripts/python scripts/change_benchmark.py --app refunddesk-demo --full-check
+.venv/Scripts/python scripts/container_runner_check.py --app refunddesk-demo --lab-dir <lab folder>
+.venv/Scripts/python scripts/load_recovery_check.py load
+.venv/Scripts/python scripts/deploy/local_promote.py promote <image>
+.venv/Scripts/python scripts/run_ai_phases.py --app refunddesk-demo --lab-dir <lab folder>
 ```
+
+Prometheus (`127.0.0.1:9190`) scrapes `/metrics` with a scoped metrics credential (`scripts/render_monitoring.py`) and evaluates `infra/compose/prometheus/alerts.yml`.
 
 Runbooks: `docs/runbooks/`. Customer pipeline example: `docs/integrations/customer-release-gate.yml`.

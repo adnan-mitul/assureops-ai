@@ -120,34 +120,61 @@ def builtin(files: dict[str, bytes]) -> dict:
             "gaps": gaps}
 
 
+def rea_home() -> Path:
+    return Path(os.environ.get("REA_HOME", "D:/AssureOpsModels/rea-pkg"))
+
+
 def rea_status() -> dict:
+    """REA is used only when the installed package matches the reviewed pin (npm integrity and entry hash)."""
     pin = json.loads(PIN.read_text(encoding="utf-8"))
-    command = os.environ.get("REA_COMMAND", "")
-    if not command or not pin.get("commit") or not pin.get("entry_sha256"):
-        return {"available": False, "reason": "not_installed: REA is not pinned and installed on this host", "pin": pin}
-    entry = Path(command.split()[-1])
-    if not entry.exists() or hashlib.sha256(entry.read_bytes()).hexdigest() != pin["entry_sha256"]:
-        return {"available": False, "reason": "pin_mismatch: installed REA entry does not match the reviewed pin", "pin": pin}
+    home = rea_home()
+    entry = home / pin["entry"]
+    if not entry.exists():
+        return {"available": False, "reason": f"not_installed: no REA entry at {entry}", "pin": pin}
+    try:
+        lock = json.loads((home / "package-lock.json").read_text(encoding="utf-8"))
+        integrity = lock["packages"]["node_modules/rea-agents"]["integrity"]
+    except (OSError, KeyError, ValueError):
+        integrity = None
+    if integrity != pin["npm_integrity"] or hashlib.sha256(entry.read_bytes()).hexdigest() != pin["entry_sha256"]:
+        return {"available": False, "reason": "pin_mismatch: installed REA does not match the reviewed pin", "pin": pin}
     return {"available": True, "reason": "pinned", "pin": pin}
 
 
-def run_rea(snapshot_dir: Path, timeout: int = 120) -> dict:
+def run_rea(snapshot_dir: Path, timeout: int = 300) -> dict:
+    """Run pinned REA on an extracted snapshot directory in a scrubbed, time-limited process; normalize its Evidence."""
     status = rea_status()
     if not status["available"]:
         raise AnalysisError(status["reason"])
-    env = {k: os.environ[k] for k in ("PATH", "SYSTEMROOT", "TEMP", "TMP") if k in os.environ}
-    proc = subprocess.run([*os.environ["REA_COMMAND"].split(), "analyze", "--json", str(snapshot_dir)], capture_output=True, timeout=timeout,
-                          env=env, cwd=snapshot_dir)
+    pin = status["pin"]
+    env = {k: os.environ[k] for k in ("PATH", "SYSTEMROOT", "TEMP", "TMP", "USERPROFILE", "APPDATA", "LOCALAPPDATA") if k in os.environ}
+    try:
+        proc = subprocess.run(["node", str(rea_home() / pin["entry"]), pin["operation"], str(snapshot_dir), "--json"], capture_output=True,
+                              timeout=timeout, env=env, cwd=str(snapshot_dir))
+    except subprocess.TimeoutExpired:
+        raise AnalysisError(f"REA exceeded its {timeout} s limit")
     if proc.returncode != 0:
         raise AnalysisError(f"REA exited with {proc.returncode}")
     try:
         raw = json.loads(proc.stdout)
-    except ValueError:
-        raise AnalysisError("REA result schema unreadable: quarantined, no parser fallback")
-    if not isinstance(raw, dict) or "evidence" not in raw:
-        raise AnalysisError("unsupported REA result schema: quarantined")
-    return {"analyzer": f"rea@{status['pin']['commit'][:12]}", "observations": raw["evidence"], "coverage": raw.get("coverage", {}),
-            "gaps": raw.get("gaps", []), "file_hashes": {}}
+        graph = raw["normalized_result"]["graph"]
+        nodes = graph["nodes"]
+    except (ValueError, KeyError, TypeError):
+        raise AnalysisError("unsupported REA result schema: quarantined, no parser fallback")
+    observations = []
+    for node in nodes:
+        for obs in node.get("observations", []):
+            props = obs.get("properties") or {}
+            if node["kind"] == "artifact" and props.get("path"):
+                observations.append({"kind": "rea_artifact", "id": f"file:{props['path']}", "location": props["path"],
+                                     "evidence": (node.get("identity") or {}).get("sha256")})
+            elif node["kind"] != "artifact":
+                observations.append({"kind": f"rea_{node['kind']}", "id": obs.get("label"), "location": props.get("path"), "evidence": "structural"})
+    stats = raw["normalized_result"].get("statistics", {})
+    return {"analyzer": f"rea@{pin['package'].split('@')[1]}+{pin['commit'][:8]}", "evidence_id": raw.get("evidence_id"),
+            "subject_sha256": ((raw.get("subject") or {}).get("digest") or {}).get("sha256"),
+            "observations": observations, "coverage": {**graph.get("coverage", {}), "statistics": stats},
+            "gaps": [f"REA: {limit}" for limit in raw.get("limitations", [])], "file_hashes": {}}
 
 
 def compare_with_manifest(result: dict, manifest: dict, code_map: dict[str, str]) -> dict:

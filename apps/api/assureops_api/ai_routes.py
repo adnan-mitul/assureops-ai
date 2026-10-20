@@ -94,16 +94,18 @@ def search_sources(application_id: str, body: SearchIn, caller: Caller = Custome
     with tenant_session(caller.workspace_id) as s:
         svc.get_application(s, application_id)
         docs = s.scalars(select(SourceDocument).where(SourceDocument.application_id == application_id)).all()
-        idx = retrieval.index([{"id": d.id, "title": d.title, "text": d.text} for d in docs])
-        return {"method": "bm25 lexical (hybrid retrieval disabled until compared)",
+        method, hits = retrieval.hybrid_search([{"id": d.id, "title": d.title, "text": d.text} for d in docs], body.query, body.k)
+        return {"method": method,
                 "results": [{"score": score, "source_id": c.source_id, "title": c.title, "start": c.start, "text": c.text[:600]}
-                            for score, c in idx.search(body.query, body.k)]}
+                            for score, c in hits]}
 
 
 # ---------------- Phase requests ----------------
 
 class PhaseIn(BaseModel):
     run_id: str | None = None
+    claims: list[str] | None = Field(default=None, max_length=4)
+    texts: list[str] | None = Field(default=None, max_length=10)
     release_id: str | None = None
     report_id: str | None = None
     incident_id: str | None = None

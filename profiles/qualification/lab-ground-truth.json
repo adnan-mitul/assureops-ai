@@ -1,0 +1,5 @@
+{
+  "note": "Ground truth from each lab verify.py: the tests that must fail per release (seeded faults). Every other test must pass.",
+  "refunddesk-demo": {"R1": [], "R2": ["RF01", "RF05", "RF06", "RF07", "RF11"], "R3": []},
+  "docvault-demo": {"R1": [], "R2": ["DV02", "DV03", "DV04", "DV06", "DV08"], "R3": []}
+}

@@ -19,6 +19,7 @@ next-env.d.ts
 infra/compose/dev.env
 infra/compose/keycloak/*.rendered.json
 infra/compose/seaweedfs/*.rendered.json
+infra/compose/prometheus/*.rendered*
 
 # Local runtime data: evidence store, tool ledger, agent release, logs
 var/

@@ -23,12 +23,12 @@ from assureops_domain.profile import canonical_hash, control_catalog, try_for_ap
 
 from . import prompts, retrieval, router, validation
 from .registry import PHASES
-from .registry import schema as registry_schema
+from .registry import constrained as registry_constrained
 
 WORKER_ID = f"{socket.gethostname()}:{os.getpid()}"
 LEASE_SECONDS = 180
 MAX_ATTEMPTS = 3
-BUDGET = {"A": 1500, "B": 1500, "C": 1500, "E": 1000, "F": 1500}
+BUDGET = {"A": 1500, "B": 1500, "C": 3000, "E": 1200, "F": 1500}
 
 
 class AiError(Exception):
@@ -59,7 +59,7 @@ def route_table(workspace) -> list[dict]:
 # ---------------- requests ----------------
 
 def request(s, app: Application, phase: str, refs: dict, actor: str) -> AiResult:
-    if phase not in PHASES or phase in ("R", "G"):
+    if phase not in PHASES or phase == "R":
         raise AiError("unsupported_phase", f"phase {phase} cannot be requested directly")
     p = PHASES[phase]
     row = AiResult(workspace_id=app.workspace_id, application_id=app.id, release_id=refs.get("release_id"), phase=phase, status="pending",
@@ -99,9 +99,10 @@ def build_input(s, row: AiResult) -> tuple[dict, dict]:
             raise AiError("no_sources", "no approved reference sources for this application")
         ids = set(refs.get("source_ids") or [d.id for d in docs])
         docs = [d for d in docs if d.id in ids]
-        idx = retrieval.index([{"id": d.id, "title": d.title, "text": d.text} for d in docs])
-        hits = idx.search(refs.get("query") or app.purpose or "requirements", k=8)
-        data = {"application_purpose": app.purpose, "controls": {k: v["name"] for k, v in control_catalog()["controls"].items()},
+        method, hits = retrieval.hybrid_search([{"id": d.id, "title": d.title, "text": d.text} for d in docs],
+                                               refs.get("query") or app.purpose or "requirements", k=8)
+        data = {"application_purpose": app.purpose,
+                "controls": {k: f"{v['name']}: {v['description']}" for k, v in control_catalog()["controls"].items()},
                 "sources": [{"source_id": c.source_id, "title": c.title, "text": c.text} for _, c in hits]}
         return data, {"sources": {d.id: d.text for d in docs}}
     if row.phase in ("B", "C"):
@@ -121,7 +122,7 @@ def build_input(s, row: AiResult) -> tuple[dict, dict]:
         actors = sorted((conn.config.get("actors") or {}) if conn else {})
         data = {"requirements": requirements, "templates": templates.catalogue(), "actors": actors,
                 "allowed_paths": (conn.config.get("scope") or {}).get("allowed_paths", []) if conn else []}
-        return data, {"actors": actors}
+        return data, {"actors": actors, "templates": [t["id"] for t in data["templates"]]}
     if row.phase == "E":
         incident = s.get(Incident, refs["incident_id"])
         events = s.scalars(select(RuntimeEvent).where(RuntimeEvent.revision.in_(incident.event_revisions))).all()
@@ -132,6 +133,13 @@ def build_input(s, row: AiResult) -> tuple[dict, dict]:
                 "events": [{"source_id": k, "text": v} for k, v in sources.items()],
                 "tests": [{"id": t["id"], "control": t["control"], "name": t["name"]} for t in (p or {"tests": []})["tests"]]}
         return data, {"sources": sources, "test_ids": [t["id"] for t in data["tests"]]}
+    if row.phase == "G":
+        texts = list(refs.get("texts") or [])
+        if refs.get("source_ids"):
+            texts += [d.text[:2000] for d in s.scalars(select(SourceDocument).where(SourceDocument.id.in_(refs["source_ids"])))]
+        if not texts:
+            raise AiError("no_text", "phase G screens supplied texts or approved sources")
+        return {"texts": texts[:10]}, {}
     if row.phase == "D":
         from assureops_domain import evidence_store
         from assureops_domain.models import Artifact, TestRun
@@ -139,15 +147,27 @@ def build_input(s, row: AiResult) -> tuple[dict, dict]:
         run = s.get(TestRun, refs["run_id"])
         record = evidence_store.read_json(s.get(Artifact, run.artifact_id))
         premises = []
+
+        def strings(value):
+            if isinstance(value, str):
+                yield value
+            elif isinstance(value, dict):
+                for v in value.values():
+                    yield from strings(v)
+            elif isinstance(value, list):
+                for v in value:
+                    yield from strings(v)
+
         for trial in record.get("trials", []):
             for entry in (trial.get("record") or {}).get("transcript", []):
                 resp = entry.get("response")
                 for r in resp if isinstance(resp, list) else [resp]:
                     if isinstance(r, dict) and r.get("body") is not None:
-                        premises.append(json.dumps(r["body"], sort_keys=True)[:1500])
-        if not premises:
-            raise AiError("no_premise", "the run recorded no response text to evaluate")
-        return {"pairs": [[p, run.expected] for p in premises[:6]]}, {"outcome": run.outcome}
+                        text = " ".join(t for t in strings(r["body"]) if len(t) > 2)[:1500]
+                        if text:
+                            premises.append(text)
+        claims = refs.get("claims") or [run.expected]  # atomic claims from the reviewer, else the test's expectation
+        return {"pairs": [[p, c] for p in premises[:4] for c in claims[:4]]}, {"outcome": run.outcome}
     if row.phase == "F":
         report = s.get(Report, refs["report_id"])
         facts = _facts_from_snapshot(report.snapshot)
@@ -189,6 +209,8 @@ def execute(workspace_id: str, result_id: str) -> str:
         used_today = _usage_today(s, workspace_id) if route.provider == "groq" else 0
     if not route.available:
         return _finish(workspace_id, result_id, token, "unavailable", error=route.reason, route=route)
+    if row.phase == "G":
+        return _screen(workspace_id, result_id, token, route, data)
     if phase.kind == "classify":
         return _classify(workspace_id, result_id, token, route, data, ctx)
     if route.provider == "groq" and used_today >= settings().groq_daily_token_limit:
@@ -199,7 +221,7 @@ def execute(workspace_id: str, result_id: str) -> str:
     client = router.generation_client(route)
     result = client.generate(model=route.model, system=prompts.SYSTEM[row.phase], user=user, max_tokens=row.request["budget_tokens"],
                              json_mode=client.json_mode(route.model) if hasattr(client, "json_mode") else "json_object",
-                             schema=registry_schema(row.phase))
+                             schema=registry_constrained(row.phase, ctx))
     check = validation.validate(row.phase, result.parsed, ctx) if result.ok else {"status": result.status, "problems": [result.error or ""]}
     call = {"provider": route.provider, "model": route.model, "request_id": result.request_id, "prompt_version": phase.prompt_version,
             "schema_version": phase.schema_version, "input_sha256": canonical_hash({"system": prompts.SYSTEM[row.phase], "user": user}),
@@ -217,6 +239,24 @@ def execute(workspace_id: str, result_id: str) -> str:
 
 
 LABELS = {"entailment", "contradiction", "neutral"}
+
+
+def _screen(workspace_id, result_id, token, route, data) -> str:
+    """Phase G: advisory injection screening of untrusted text. A high score asks for review; it never authorizes or blocks."""
+    client = router.encoder_client(route)
+    items, statuses = [], set()
+    for text in data["texts"]:
+        status, score = client.screen(validation.minimize(text) if route.external else text, route.model)
+        statuses.add(status)
+        if status == "succeeded":
+            items.append({"excerpt": text[:160], "score": round(score, 4), "flagged": score >= 0.5})
+    call = {"provider": route.provider, "model": route.model, "prompt_version": "G-1", "schema_version": "G-1",
+            "input_sha256": canonical_hash(data), "status": "succeeded" if items else "unavailable", "validation": {}, "usage": {}}
+    if not items:
+        return _finish(workspace_id, result_id, token, "unavailable", call=call, route=route, error=f"screening failed: {sorted(statuses)}")
+    status = "review_required" if any(i["flagged"] for i in items) else "proposed"
+    return _finish(workspace_id, result_id, token, status, call=call, route=route,
+                   output={"items": items, "note": "advisory screening signal; never authorizes or blocks an action"})
 
 
 def _classify(workspace_id, result_id, token, route, data, ctx) -> str:
@@ -296,7 +336,7 @@ def review(s, row: AiResult, *, decision: str, reviewer: str, note: str) -> dict
     if decision == "reject":
         row.status = "rejected"
     else:
-        if row.status == "review_required":
+        if row.status == "review_required" and row.phase not in ("D", "G"):  # D/G signals are advisory and may be acknowledged
             raise AiError("unsupported_claims", "a result with unsupported claims can only be rejected; request it again")
         row.status = "accepted"
         app = s.get(Application, row.application_id)

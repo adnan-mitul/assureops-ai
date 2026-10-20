@@ -267,9 +267,26 @@ def source_analysis(workspace_id: str, run_id: str):
         code_map = dict(run.code_map or {})
     try:
         files = analyzer.read_snapshot(data)
-        rea = analyzer.rea_status()
         result = analyzer.builtin(files)
-        if not rea["available"]:
+        rea = analyzer.rea_status()
+        if rea["available"]:
+            import tempfile
+            from pathlib import Path as _Path
+
+            with tempfile.TemporaryDirectory(prefix="ao-rea-") as tmp:  # extracted copy for REA; never executed
+                for rel, content in files.items():
+                    target = _Path(tmp, *rel.split("/"))
+                    target.parent.mkdir(parents=True, exist_ok=True)
+                    target.write_bytes(content)
+                try:
+                    rea_result = analyzer.run_rea(_Path(tmp))
+                    result["rea"] = rea_result
+                    result["analyzer"] = f"{result['analyzer']} + {rea_result['analyzer']}"
+                    result["observations"] += rea_result["observations"]
+                    result["gaps"] += rea_result["gaps"]
+                except analyzer.AnalysisError as exc:
+                    result["gaps"].append(f"REA run failed: {exc}")
+        else:
             result["gaps"].append(f"REA {rea['reason']}; built-in collector used")
         comparison = analyzer.compare_with_manifest(result, manifest, code_map)
         status, error = "completed", None
@@ -282,6 +299,7 @@ def source_analysis(workspace_id: str, run_id: str):
             run.result_artifact_id = artifact.id
             run.analyzer = result["analyzer"]
             run.summary = {**comparison, "coverage": result["coverage"], "gaps": result["gaps"],
-                           "observations": len(result["observations"]), "result_sha256": artifact.sha256}
+                           "observations": len(result["observations"]), "result_sha256": artifact.sha256,
+                           "rea": {k: result["rea"][k] for k in ("analyzer", "evidence_id", "subject_sha256", "coverage")} if result.get("rea") else None}
         run.status, run.error, run.finished_at = status, error, now()
     return status

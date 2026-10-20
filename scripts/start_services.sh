@@ -5,6 +5,7 @@ cd "$(dirname "$0")/.."
 PY=./.venv/Scripts/python
 [ -x "$PY" ] || PY=./.venv/bin/python
 mkdir -p var/logs
+bash scripts/start_models.sh
 "$PY" -m assureops_mcp.tool_server > var/logs/tools.log 2>&1 &
 sleep 3
 "$PY" -m uvicorn assureops_api.main:app --port 8700 > var/logs/api.log 2>&1 &

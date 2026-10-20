@@ -322,6 +322,8 @@ export type ReportDetail = {
   publication: { state: string; published_by: string; at: number } | null;
   current_status: { release: string; gate: Gate; scores: Scores } | null;
   decisions: { reviewer: string; decision: string; reason: string; at: number }[];
+  explanations?: { id: string; status: string; sections: { heading: string; text: string; fact_ids: string[] }[]; provider: string | null;
+    model: string | null; reviewer: string | null; at: number }[];
 };
 
 // ---------------- Incidents, operations, governance ----------------

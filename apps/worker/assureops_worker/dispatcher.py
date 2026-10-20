@@ -15,6 +15,7 @@ from assureops_domain.models import CaseIndex, JobStep, Outbox, Workspace, now
 from .tasks import ai_phase, fail_poison, finalize_assessment, run_step, source_analysis
 
 UNCLAIMED_AFTER = 300
+REDISPATCH_AFTER = 60  # a step whose lease expired is re-dispatched at most once per minute while no worker takes it
 
 
 def dispatch_once() -> int:
@@ -40,7 +41,7 @@ def reconcile_once():
         poisoned = []
         with tenant_session(ws) as s:
             stuck = s.scalars(select(JobStep).where(
-                ((JobStep.status == "running") & (JobStep.lease_expires_at < now()))
+                ((JobStep.status == "running") & (JobStep.lease_expires_at < now()) & (JobStep.updated_at < now() - REDISPATCH_AFTER))
                 | ((JobStep.status == "pending") & (JobStep.updated_at < now() - UNCLAIMED_AFTER)))).all()
             for step in stuck:
                 if step.attempt >= step.max_attempts:
@@ -52,6 +53,13 @@ def reconcile_once():
             fail_poison(ws, step_id)
 
 
+def deliver_notifications() -> int:
+    from assureops_domain import handoffs
+
+    with platform_session() as s:
+        return handoffs.deliver_pending(s)
+
+
 def main():
     print("outbox dispatcher running")
     last_reconcile = 0.0
@@ -60,6 +68,7 @@ def main():
             dispatched = dispatch_once()
             if time.time() - last_reconcile > 15:
                 reconcile_once()
+                deliver_notifications()
                 last_reconcile = time.time()
         except Exception as exc:  # keep the loop alive; state stays in PostgreSQL
             print(f"dispatcher error: {exc}")

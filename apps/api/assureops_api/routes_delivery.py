@@ -28,6 +28,39 @@ from . import services as svc
 from .auth import Caller, CustomerCaller, Service, api_error, service, token_hash
 
 router = APIRouter(prefix="/v1", tags=["delivery"])
+STATUS_CONTEXT = "assureops/release-gate"
+
+
+def _status_token() -> str | None:
+    """Server-side token allowed to write commit statuses (GITHUB_STATUS_TOKEN); development may reuse the git credential."""
+    import os
+    import subprocess
+
+    from assureops_domain.config import _dev_env
+
+    token = os.environ.get("GITHUB_STATUS_TOKEN") or _dev_env().get("GITHUB_STATUS_TOKEN")
+    if token:
+        return token
+    if (os.environ.get("GITHUB_STATUS_FROM_GIT") or _dev_env().get("GITHUB_STATUS_FROM_GIT")) == "true":
+        out = subprocess.run(["git", "credential", "fill"], input="protocol=https\nhost=github.com\n\n", capture_output=True, text=True)
+        return dict(line.split("=", 1) for line in out.stdout.splitlines() if "=" in line).get("password")
+    return None
+
+
+def post_commit_status(repository: str, sha: str, decision: str, reasons: list[str], transport=None) -> dict:
+    """Publish the exact-SHA gate decision as a GitHub commit status. Without a token the decision is only served by the API."""
+    import httpx
+
+    token = _status_token()
+    if not token:
+        return {"posted": False, "reason": "no status token configured"}
+    state = "success" if decision == "allow" else "failure"
+    description = ("Assessed and ready" if decision == "allow" else "; ".join(reasons) or "not ready")[:140]
+    with httpx.Client(transport=transport, timeout=10, trust_env=False) as http:
+        res = http.post(f"https://api.github.com/repos/{repository}/statuses/{sha}",
+                        headers={"Authorization": f"Bearer {token}", "Accept": "application/vnd.github+json", "X-GitHub-Api-Version": "2022-11-28"},
+                        json={"state": state, "context": STATUS_CONTEXT, "description": description})
+    return {"posted": res.status_code == 201, "status_code": res.status_code, "state": state, "context": STATUS_CONTEXT}
 
 
 def _sign(payload: dict) -> str:
@@ -206,6 +239,6 @@ async def github_webhook(request: Request, x_hub_signature_256: str | None = Hea
         result, release = evaluate(s, app, sha, None) if sha and len(sha) == 40 else ({"decision": "deny", "reasons": ["no commit SHA"]}, None)
         cases.audit(s, workspace_id=route.workspace_id, actor=f"github:{repo}", actor_kind="service", action=f"github.{x_github_event}",
                     target=sha or "-", detail={"decision": result["decision"], "reasons": result.get("reasons", [])})
-    # Posting a check run back to GitHub needs the App's private key; without it the decision is recorded and served by the gate API.
+    status = post_commit_status(repo, sha, result["decision"], result.get("reasons", [])) if sha and len(sha) == 40 else {"posted": False}
     return {"status": "evaluated", "event": x_github_event, "commit_sha": sha, "decision": result["decision"], "reasons": result.get("reasons", []),
-            "check_run": "not posted (GitHub App private key not configured)"}
+            "commit_status": status}
