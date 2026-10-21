@@ -157,6 +157,7 @@ jobs:
           done
           .venv/bin/python scripts/seed.py --reset
           .venv/bin/python scripts/render_web_env.py
+          .venv/bin/python scripts/storage_check.py  # the object store must accept writes before assessments use it
       - name: Build portals
         run: npm run build
       - name: Start API and portals

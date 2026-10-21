@@ -76,7 +76,7 @@ class S3Storage:
         self.client = boto3.client("s3", endpoint_url=cfg.s3_endpoint, aws_access_key_id=cfg.s3_access_key,
                                    aws_secret_access_key=cfg.s3_secret_key, region_name="us-east-1",
                                    config=Config(signature_version="s3v4", retries={"max_attempts": 3},
-                                                 connect_timeout=3, read_timeout=10, s3={"addressing_style": "path"}))
+                                                 connect_timeout=3, read_timeout=30, s3={"addressing_style": "path"}))
         try:
             self.client.head_bucket(Bucket=self.bucket)
         except Exception:
