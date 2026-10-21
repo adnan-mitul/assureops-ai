@@ -54,4 +54,16 @@ test.describe("membership and administration", () => {
     const res = await page.request.get(`${STAFF_URL}/api/v1/staff/admin/staff`);
     expect(res.status()).toBe(403);
   });
+
+  test("operators see the model route lifecycle; analysts do not", async ({ page, browser }) => {
+    await staffSignIn(page, "operator@assureops.test", "/governance");
+    await expect(page.getByRole("heading", { name: "Model route lifecycle" })).toBeVisible();
+    await expect(page.getByRole("button", { name: "Register candidate" })).toBeVisible();
+    const other = await browser.newPage();
+    await staffSignIn(other, "analyst@assureops.test", "/governance");
+    await expect(other.getByRole("heading", { name: "Gate policy" }).or(other.getByText("Gate policy").first())).toBeVisible();
+    await expect(other.getByRole("heading", { name: "Model route lifecycle" })).toHaveCount(0);
+    expect((await other.request.get(`${STAFF_URL}/api/v1/staff/admin/model-routes`)).status()).toBe(403);
+    await other.close();
+  });
 });

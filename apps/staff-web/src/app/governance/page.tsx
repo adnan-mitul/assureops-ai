@@ -3,7 +3,8 @@
 import { usePoll } from "@assureops/ui/client";
 import { ApiErrorBanner, Card, CardHeader, LoadingState, Mono, Notice, PageHeader, SeverityBadge, TableWrap, Td, Th } from "@assureops/ui/components";
 import { BookCheck, Bot, KeyRound, Scale, Users } from "lucide-react";
-import { ROLE_LABEL } from "@/lib/staff-context";
+import { ModelLifecycle } from "@/components/ModelLifecycle";
+import { ROLE_LABEL, useStaff } from "@/lib/staff-context";
 import type { Governance } from "@/lib/types";
 
 function requirementValue(value: unknown): string {
@@ -14,6 +15,7 @@ function requirementValue(value: unknown): string {
 
 export default function GovernancePage() {
   const { data, error, loading } = usePoll<Governance>("/v1/staff/governance", 0);
+  const { hasRole } = useStaff();
 
   return (
     <div className="mx-auto max-w-[1400px]">
@@ -88,6 +90,8 @@ export default function GovernancePage() {
               </tbody>
             </TableWrap>
           </Card>
+
+          {hasRole("operator", "admin", "senior_reviewer") && <ModelLifecycle />}
 
           <Card>
             <CardHeader title="Model routes" icon={<Bot className="size-4" aria-hidden />} count={`${data.model_routes.filter((m) => m.enabled).length} enabled · ${data.qualification_records.length} qualification records`} />

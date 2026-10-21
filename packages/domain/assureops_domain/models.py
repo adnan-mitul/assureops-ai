@@ -796,6 +796,8 @@ class AiResult(Base):
     requested_by: Mapped[str] = mapped_column(String)
     created_at: Mapped[float] = mapped_column(Float, default=now)
     updated_at: Mapped[float] = mapped_column(Float, default=now)
+    route_stage: Mapped[str | None] = mapped_column(String, nullable=True)  # unmanaged | active | canary | shadow
+    shadow_of: Mapped[str | None] = mapped_column(String, nullable=True)  # shadow runs are never reviewable or shown to customers
 
 
 class DeploymentReceipt(Base):
@@ -830,6 +832,44 @@ class RepositoryBinding(Base):
     installation_id: Mapped[str | None] = mapped_column(String, nullable=True)
     created_by: Mapped[str] = mapped_column(String)
     created_at: Mapped[float] = mapped_column(Float, default=now)
+
+
+class ModelRouteStage(Base):
+    """Platform record: lifecycle stage of one exact model route for one phase. Counters only, no customer content.
+
+    development -> holdout -> shadow -> canary -> active; any non-active stage -> retired; active -> rolled_back on rollback.
+    """
+
+    __tablename__ = "model_route_stages"
+    __table_args__ = (UniqueConstraint("phase", "provider", "model"),)
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("mrs"))
+    phase: Mapped[str] = mapped_column(String)
+    provider: Mapped[str] = mapped_column(String)
+    model: Mapped[str] = mapped_column(String)
+    stage: Mapped[str] = mapped_column(String, default="development")
+    canary_percent: Mapped[int] = mapped_column(Integer, default=10)
+    qualification_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    replaces_id: Mapped[str | None] = mapped_column(String, nullable=True)  # previous active route, restored by rollback
+    shadow_runs: Mapped[int] = mapped_column(Integer, default=0)
+    shadow_valid: Mapped[int] = mapped_column(Integer, default=0)
+    canary_runs: Mapped[int] = mapped_column(Integer, default=0)
+    canary_valid: Mapped[int] = mapped_column(Integer, default=0)
+    canary_invalid: Mapped[int] = mapped_column(Integer, default=0)
+    changed_by: Mapped[str] = mapped_column(String)
+    changed_at: Mapped[float] = mapped_column(Float, default=now)
+
+
+class ModelRouteEvent(Base):
+    """Stage history: who moved which route, from where to where, and why."""
+
+    __tablename__ = "model_route_events"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("mre"))
+    route_id: Mapped[str] = mapped_column(String, index=True)
+    from_stage: Mapped[str | None] = mapped_column(String, nullable=True)
+    to_stage: Mapped[str] = mapped_column(String)
+    actor: Mapped[str] = mapped_column(String)
+    note: Mapped[str] = mapped_column(Text, default="")
+    at: Mapped[float] = mapped_column(Float, default=now)
 
 
 class ModelQualification(Base):

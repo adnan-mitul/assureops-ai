@@ -149,7 +149,7 @@ def request_phase(application_id: str, phase: str, body: PhaseIn, caller: Caller
         try:
             row = service.request(s, app, phase, refs, caller.username)
         except service.AiError as exc:
-            raise api_error(422, exc.code, exc.detail)
+            raise api_error(429 if exc.code == "queue_full" else 422, exc.code, exc.detail)
         return service.result_json(row)
 
 
@@ -159,7 +159,7 @@ def list_results(application_id: str, caller: Caller = CustomerCaller):
 
     with tenant_session(caller.workspace_id) as s:
         svc.get_application(s, application_id)
-        return [service.result_json(r) for r in s.scalars(select(AiResult).where(AiResult.application_id == application_id)
+        return [service.result_json(r) for r in s.scalars(select(AiResult).where(AiResult.application_id == application_id, AiResult.shadow_of.is_(None))
                                                          .order_by(AiResult.created_at.desc()).limit(50))]
 
 

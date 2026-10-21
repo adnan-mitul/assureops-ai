@@ -35,7 +35,7 @@ C_OUTPUT = {"tests": [{"template": "auth_required", "control": "C01", "name": "C
 @pytest.fixture
 def private_route(monkeypatch):
     route = router.Route("C", "private", "fake-model", True, "test route")
-    monkeypatch.setattr(router, "resolve", lambda phase, allowed: route)
+    monkeypatch.setattr(router, "resolve", lambda phase, allowed, key=None: route)
     return route
 
 
@@ -99,7 +99,7 @@ def test_stale_owner_cannot_commit(workspace, private_route, monkeypatch):
 def test_private_only_workspace_sends_nothing_to_an_external_route(workspace, monkeypatch):
     calls = []
     monkeypatch.setattr(router, "generation_client", lambda route: calls.append(route) or FakeClient([]))
-    monkeypatch.setattr(router, "resolve", lambda phase, allowed: router.Route(phase, "groq", "m", False,
+    monkeypatch.setattr(router, "resolve", lambda phase, allowed, key=None: router.Route(phase, "groq", "m", False,
                         "external_processing_not_allowed: workspace is private-only", external=True))
     rid = _request(workspace)
     assert service.execute(workspace, rid) == "unavailable"
@@ -112,7 +112,7 @@ def test_private_only_workspace_sends_nothing_to_an_external_route(workspace, mo
 def test_a_late_external_reply_after_cancellation_is_never_stored(workspace, monkeypatch):
     """Groq answers after the job was cancelled: the call is kept for cost accounting, the output is discarded."""
     route = router.Route("C", "groq", "openai/gpt-oss-20b", True, "test external route", external=True)
-    monkeypatch.setattr(router, "resolve", lambda phase, allowed: route)
+    monkeypatch.setattr(router, "resolve", lambda phase, allowed, key=None: route)
     monkeypatch.setattr(service, "external_allowed", lambda ws: True)
     rid = _request(workspace)
 

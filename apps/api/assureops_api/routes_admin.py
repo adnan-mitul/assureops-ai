@@ -3,6 +3,7 @@
 import time
 
 from fastapi import APIRouter
+from pydantic import BaseModel, Field
 from sqlalchemy import select
 
 from assureops_domain import grants, handoffs
@@ -80,3 +81,87 @@ def workload(caller: Caller = StaffCaller):
                          "oldest_case_hours": round(max(ages) / 3600, 1) if ages else 0})
         unassigned = [c.case_id for c in index.values() if c.state not in ("closed",) and not any(a.case_id == c.case_id and a.duty == "analyst" for a in active)]
         return {"staff": rows, "unassigned_cases": len(unassigned)}
+
+
+# ---------------- Model route lifecycle (operators and admins) ----------------
+
+class RouteIn(BaseModel):
+    phase: str = Field(pattern=r"^[A-GR]$")
+    provider: str = Field(pattern=r"^(private|groq)$")
+    model: str = Field(min_length=2, max_length=200)
+
+
+class StageIn(BaseModel):
+    to: str = Field(pattern=r"^(holdout|shadow|canary|active|retired|development)$")
+    note: str = Field(min_length=3, max_length=1000)
+    canary_percent: int | None = Field(default=None, ge=1, le=50)
+
+
+class RollbackIn(BaseModel):
+    note: str = Field(min_length=3, max_length=1000)
+
+
+def _lifecycle_err(exc):
+    return api_error({"separation_of_duties": 403, "exists": 409, "nothing_active": 409}.get(exc.code, 422), exc.code, exc.detail)
+
+
+@router.get("/model-routes")
+def model_routes(caller: Caller = StaffCaller):
+    from assureops_ai import lifecycle, service
+    from assureops_domain.models import ModelRouteEvent, ModelRouteStage
+
+    caller.require_staff("operator", "admin", "senior_reviewer")
+    with platform_session() as p:
+        rows = p.scalars(select(ModelRouteStage).order_by(ModelRouteStage.phase, ModelRouteStage.changed_at.desc())).all()
+        events = {}
+        for e in p.scalars(select(ModelRouteEvent).order_by(ModelRouteEvent.at)):
+            events.setdefault(e.route_id, []).append(e)
+        managed = [lifecycle.to_json(r, events.get(r.id)) for r in rows]
+    serving = [{"phase": r["id"], "name": r["phase"], "provider": r["route"]["provider"], "model": r["route"]["model"], "enabled": r["enabled"],
+                "status": r["status"]} for r in service.route_table(None)]
+    return {"routes": managed, "serving": serving,
+            "rules": {"shadow_min_runs": lifecycle.SHADOW_MIN_RUNS, "canary_min_runs": lifecycle.CANARY_MIN_RUNS, "min_valid_rate": lifecycle.MIN_VALID_RATE}}
+
+
+@router.post("/model-routes", status_code=201)
+def register_route(body: RouteIn, caller: Caller = StaffCaller):
+    from assureops_ai import lifecycle
+
+    caller.require_staff("operator", "admin")
+    with platform_session() as p:
+        try:
+            row = lifecycle.register(p, phase=body.phase, provider=body.provider, model=body.model, actor=caller.username)
+        except lifecycle.LifecycleError as exc:
+            raise _lifecycle_err(exc)
+        return lifecycle.to_json(row)
+
+
+@router.post("/model-routes/{route_id}/stage")
+def change_stage(route_id: str, body: StageIn, caller: Caller = StaffCaller):
+    from assureops_ai import lifecycle
+    from assureops_domain.models import ModelRouteStage
+
+    caller.require_staff("operator", "admin")
+    with platform_session() as p:
+        row = p.scalars(select(ModelRouteStage).where(ModelRouteStage.id == route_id).with_for_update()).first()
+        if row is None:
+            raise api_error(404, "not_found", "route not found")
+        if body.canary_percent is not None:
+            row.canary_percent = body.canary_percent
+        try:
+            lifecycle.transition(p, row, to=body.to, actor=caller.username, note=body.note)
+        except lifecycle.LifecycleError as exc:
+            raise _lifecycle_err(exc)
+        return lifecycle.to_json(row)
+
+
+@router.post("/model-routes/phases/{phase}/rollback")
+def rollback_phase(phase: str, body: RollbackIn, caller: Caller = StaffCaller):
+    from assureops_ai import lifecycle
+
+    caller.require_staff("operator", "admin")
+    with platform_session() as p:
+        try:
+            return lifecycle.rollback(p, phase.upper(), actor=caller.username, note=body.note)
+        except lifecycle.LifecycleError as exc:
+            raise _lifecycle_err(exc)
