@@ -84,8 +84,11 @@ jobs:
           ../../.venv/bin/python -m alembic upgrade head
       - name: Tests (unit, integration, security, fault, AI contract)
         run: .venv/bin/python -m pytest
-      - name: Dependency audit (Python)
-        run: .venv/bin/python -m pip install pip-audit==2.7.3 && .venv/bin/pip-audit -r requirements.txt --skip-editable
+      - name: Dependency audit (Python, third-party requirements only)
+        run: |
+          .venv/bin/python -m pip install pip-audit==2.7.3
+          grep -v '^-e ' requirements.txt > /tmp/requirements-third-party.txt  # local packages are never looked up on PyPI
+          .venv/bin/pip-audit -r /tmp/requirements-third-party.txt --progress-spinner off
       - name: Secret scan (tracked files)
         run: bash scripts/verify/secret_scan.sh
 

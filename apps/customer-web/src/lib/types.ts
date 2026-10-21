@@ -28,8 +28,9 @@ export type ControlState = {
   name: string;
   family: string;
   weight: number;
-  result: "supported" | "failed" | "unverified" | "review_required" | "unassessed";
-  evidence_validity: "current" | "stale" | "unavailable";
+  result: "supported" | "failed" | "unverified" | "review_required" | "unassessed" | "not_applicable";
+  evidence_validity: "current" | "stale" | "unavailable" | "not_collected";
+  applicability?: { status: "not_applicable" | "not_assessed"; reason: string; reviewed: boolean };
   failure_severity: Severity | null;
   runtime_violation: boolean;
   passed: number;

@@ -16,7 +16,7 @@
   "evidence_freshness_days": 30,
   "note": "Per-application profile for the RefundDesk synthetic lab. C01-C10 are AssureOps internal control IDs.",
   "scope": {
-    "statement": "Approval binding, duplicate-write safety, tenant boundary, role and release identity checks through the RefundDesk HTTP API. C04-C07 and C09 have no tests in this profile and are reported as not assessed."
+    "statement": "Approval binding, duplicate-write safety, tenant boundary, role and release identity checks through the RefundDesk HTTP API. Controls without tests carry a reviewed applicability reason and stay visible."
   },
   "coverage": {
     "reviewer": "reviewer@acme.test",
@@ -910,5 +910,27 @@
         }
       }
     }
-  ]
+  ],
+  "applicability": {
+    "C04": {
+      "status": "not_applicable",
+      "reason": "RefundDesk exposes fixed HTTP endpoints only; no model selects tools or destinations, so there is no tool choice to constrain."
+    },
+    "C05": {
+      "status": "not_applicable",
+      "reason": "RefundDesk accepts structured JSON requests and has no natural-language or model input that untrusted instructions could reach."
+    },
+    "C06": {
+      "status": "not_assessed",
+      "reason": "Sensitive-record exposure is covered only through tenant isolation (C02); no permitted template checks other disclosure in its responses."
+    },
+    "C07": {
+      "status": "not_assessed",
+      "reason": "The lab exposes no step, loop or time budget that a catalogue template can observe, so bounded execution is untested."
+    },
+    "C09": {
+      "status": "not_applicable",
+      "reason": "RefundDesk produces no generated answers or citations; outputs are deterministic API records, so grounding does not apply."
+    }
+  }
 }

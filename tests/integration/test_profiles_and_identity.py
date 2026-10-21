@@ -28,7 +28,10 @@ def test_unassessed_controls_are_visible_and_never_supported(workspace):
         p = for_application(s, app_id)
         state = reducer.readiness(s, app_id, release, p)
     unassessed = {c["id"] for c in state["controls"] if c["result"] == "unassessed"}
-    assert unassessed == {"C04", "C05", "C06", "C07", "C09"} == set(state["gate"]["unassessed"])
+    not_applicable = {c["id"] for c in state["controls"] if c["result"] == "not_applicable"}
+    assert unassessed == {"C06", "C07"} and not_applicable == {"C04", "C05", "C09"} == set(state["gate"]["not_applicable"])
+    assert unassessed | not_applicable == set(state["gate"]["unassessed"])  # both stay visible as outside the tested scope
+    assert all(c["applicability"]["reviewed"] for c in state["controls"] if c["id"] in unassessed | not_applicable)
     assert state["scores"]["controls_assessed"] == 5 and state["gate"]["scope_limited"]
     assert "not assessed" in state["gate"]["reason"]
     assert state["scores"]["evidence_coverage_pct"] == 0  # nothing tested yet; unassessed never adds coverage

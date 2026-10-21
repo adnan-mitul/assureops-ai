@@ -14,4 +14,6 @@ for path in sorted((ROOT / "profiles" / "applications").glob("*.json")):
         if t["template"] != "mcp_reference":
             templates.validate_args(t["template"], t["args"])
     print(f"  {path.name}: {len(p['tests'])} tests, assessed {','.join(p['assessed_controls'])}, "
-          f"not assessed {','.join(p['unassessed_controls']) or 'none'}")
+          f"not assessed {','.join(c for c in p['unassessed_controls'] if c not in p['not_applicable_controls']) or 'none'}, "
+          f"not applicable {','.join(p['not_applicable_controls']) or 'none'}, "
+          f"without a reviewed reason {','.join(c for c, e in p['applicability'].items() if not e['reviewed']) or 'none'}")

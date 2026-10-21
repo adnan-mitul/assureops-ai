@@ -191,7 +191,9 @@ def readiness(session: Session, application_id: str, release: Release, p: dict) 
         own = [t for t in tests if t["control"] == cid]
         violations = [f for f in open_findings if f.control_id == cid and f.source == "runtime"]
         if not own and not violations:
-            control = {"id": cid, **meta, "result": "unassessed", "evidence_validity": "not_collected", "failure_severity": None,
+            applicability = (p.get("applicability") or {}).get(cid) or {"status": "not_assessed", "reason": "", "reviewed": False}
+            control = {"id": cid, **meta, "result": "not_applicable" if applicability["status"] == "not_applicable" else "unassessed",
+                       "evidence_validity": "not_collected", "failure_severity": None, "applicability": applicability,
                        "runtime_violation": False, "passed": 0, "total": 0, "assessed": False}
             controls.append(control)
             unassessed.append(control)
@@ -218,7 +220,8 @@ def readiness(session: Session, application_id: str, release: Release, p: dict) 
         if validity != "current" or result in ("unverified", "review_required"):
             incomplete.append(control)
 
-    weights = {c["id"]: p["controls"][c["id"]]["weight"] for c in controls}
+    # Reviewed not-applicable controls stay visible but leave the denominator; unassessed ones still count against coverage.
+    weights = {c["id"]: p["controls"][c["id"]]["weight"] for c in controls if c["result"] != "not_applicable"}
     total_weight = sum(weights.values())
     covered = [c for c in controls if c["evidence_validity"] == "current" and c["result"] in ("supported", "failed")]
     supported = [c for c in covered if c["result"] == "supported" and not c["runtime_violation"]]
@@ -255,9 +258,13 @@ def readiness(session: Session, application_id: str, release: Release, p: dict) 
                             f"({c['risk_accepted']['id']})")
     if not reason_parts:
         reason_parts.append("All assessed controls are supported with current evidence")
-    if unassessed:
-        reason_parts.append(f"{len(unassessed)} catalog control{'s are' if len(unassessed) > 1 else ' is'} outside this profile and not assessed "
-                            f"({', '.join(c['id'] for c in unassessed)})")
+    not_assessed = [c for c in unassessed if c["result"] == "unassessed"]
+    not_applicable = [c for c in unassessed if c["result"] == "not_applicable"]
+    if not_assessed:
+        reason_parts.append(f"{len(not_assessed)} catalog control{'s are' if len(not_assessed) > 1 else ' is'} outside this profile and not assessed "
+                            f"({', '.join(c['id'] for c in not_assessed)})")
+    if not_applicable:
+        reason_parts.append(f"{len(not_applicable)} reviewed as not applicable ({', '.join(c['id'] for c in not_applicable)})")
     reason = "; ".join(reason_parts) + "."
 
     retest = [t for t in tests if t["validity"] != "current" or t["result"] in ("failed", "unverified")]
@@ -275,6 +282,7 @@ def readiness(session: Session, application_id: str, release: Release, p: dict) 
             "evidence_support_pct": support_pct, "evidence_coverage_pct": coverage_pct,
             "controls_supported": len(supported), "controls_covered": len(covered), "controls_total": len(controls),
             "controls_assessed": len(controls) - len(unassessed), "controls_unassessed": len(unassessed),
+            "controls_not_applicable": sum(c["result"] == "not_applicable" for c in controls),
         },
         "counts": {
             "tests_total": len(tests), "tests_current_passing": sum(t["result"] == "supported" and t["validity"] == "current" for t in tests),
@@ -286,6 +294,7 @@ def readiness(session: Session, application_id: str, release: Release, p: dict) 
             "blocking": [c["id"] for c in blocking], "warnings": [c["id"] for c in warnings],
             "accepted_risks": [{"control": c["id"], **c["risk_accepted"]} for c in accepted],
             "incomplete": [c["id"] for c in incomplete], "unassessed": [c["id"] for c in unassessed],
+            "not_applicable": [c["id"] for c in unassessed if c["result"] == "not_applicable"],
             "scope_limited": bool(unassessed),
         },
         "evidence_digest": canonical_hash(sorted((t["test_id"], t.get("run_id"), t["result"], t["validity"]) for t in tests))[:16],

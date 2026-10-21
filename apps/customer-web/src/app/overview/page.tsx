@@ -200,7 +200,7 @@ export default function OverviewPage() {
                 {r.controls.map((c) => (
                   <li key={c.id} className="flex items-center justify-between gap-3" title={`${c.id} · ${c.family}`}>
                     <span className="flex items-center gap-2"><span className="size-2.5 rounded-sm" style={{ background: colorFor(c) }} aria-hidden />{c.name}</span>
-                    <span className="flex items-center gap-2 text-muted"><span className="sr-only">{c.result}, {c.evidence_validity}</span>{c.result === "unassessed" ? "not assessed" : `${c.passed}/${c.total}`}</span>
+                    <span className="flex items-center gap-2 text-muted"><span className="sr-only">{c.result}, {c.evidence_validity}</span>{c.result === "unassessed" ? "not assessed" : c.result === "not_applicable" ? "not applicable" : `${c.passed}/${c.total}`}</span>
                   </li>
                 ))}
               </ul>
@@ -294,9 +294,14 @@ export default function OverviewPage() {
               <li key={c.id} className="flex items-center justify-between gap-2">
                 <span className="flex items-center gap-2">
                   {c.result === "failed" ? <CircleX className="size-4 text-red-600" aria-hidden /> : c.result === "supported" && c.evidence_validity === "current"
-                    ? <CircleCheck className="size-4 text-brand-600" aria-hidden /> : c.result === "unassessed"
+                    ? <CircleCheck className="size-4 text-brand-600" aria-hidden /> : c.result === "unassessed" || c.result === "not_applicable"
                       ? <CircleDashed className="size-4 text-gray-400" aria-hidden /> : <CircleAlert className="size-4 text-amber-500" aria-hidden />}
-                  {c.id} {c.name}
+                  <span>
+                    {c.id} {c.name}
+                    {c.applicability && (
+                      <span className="block text-xs text-muted">{c.applicability.reviewed ? c.applicability.reason : "No reviewed applicability reason recorded"}</span>
+                    )}
+                  </span>
                 </span>
                 <ControlStateBadges result={c.result} validity={c.evidence_validity} />
               </li>

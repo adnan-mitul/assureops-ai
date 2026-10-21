@@ -54,6 +54,14 @@ class FileStorage:
         if path.exists():
             path.unlink()
 
+    def modified_at(self, key: str) -> float | None:
+        path = self.root / key
+        return path.stat().st_mtime if path.exists() else None
+
+    def keys(self, prefix: str) -> list[str]:
+        base = self.root / prefix
+        return sorted(f"{prefix}{p.relative_to(base).as_posix()}" for p in base.rglob("*") if p.is_file()) if base.exists() else []
+
 
 class S3Storage:
     """Private bucket; objects are never public and are only served through authorized API routes."""
@@ -95,6 +103,18 @@ class S3Storage:
 
     def delete(self, key: str):
         self.client.delete_object(Bucket=self.bucket, Key=key)
+
+    def modified_at(self, key: str) -> float | None:
+        try:
+            return self.client.head_object(Bucket=self.bucket, Key=key)["LastModified"].timestamp()
+        except Exception:
+            return None
+
+    def keys(self, prefix: str) -> list[str]:
+        out = []
+        for page in self.client.get_paginator("list_objects_v2").paginate(Bucket=self.bucket, Prefix=prefix):
+            out.extend(o["Key"] for o in page.get("Contents", []))
+        return sorted(out)
 
 
 _storage = None

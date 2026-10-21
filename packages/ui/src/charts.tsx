@@ -9,6 +9,7 @@ export const RESULT_COLORS: Record<string, string> = {
   unverified: "#9ca3af",
   stale: "#fbbf24",
   unassessed: "#e5e7eb",
+  not_applicable: "#f3f4f6",
 };
 
 export type DonutControl = { id: string; name: string; result: string; evidence_validity: string };
