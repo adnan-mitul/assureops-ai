@@ -17,6 +17,10 @@ on:
       qualify_phases:
         description: "Qualify these private model phases (space-separated, e.g. 'C D R' or 'A B C D E F R')"
         required: false
+      qualify_suite:
+        description: "Holdout suite: v1 (small) or v2 (200 held-out cases per phase, 300 for D)"
+        required: false
+        default: v1
 permissions:
   contents: read
 
@@ -84,6 +88,11 @@ jobs:
           ../../.venv/bin/python -m alembic upgrade head
       - name: Tests (unit, integration, security, fault, AI contract)
         run: .venv/bin/python -m pytest
+      - name: Frontend API contract is current (generated from OpenAPI)
+        run: |
+          .venv/bin/python scripts/export_openapi.py
+          npx --yes openapi-typescript@7.13.0 packages/ui/src/api/openapi.json -o packages/ui/src/api/schema.d.ts
+          git diff --exit-code -- packages/ui/src/api || { echo "regenerate with: python scripts/export_openapi.py && npm run gen:api"; exit 1; }
       - name: Dependency audit (Python, third-party requirements only)
         run: |
           .venv/bin/python -m pip install pip-audit==2.7.3
@@ -154,10 +163,15 @@ jobs:
         run: |
           mkdir -p var/logs
           nohup .venv/bin/python -m uvicorn assureops_api.main:app --port 8700 > var/logs/api.log 2>&1 &
+          nohup .venv/bin/python -m assureops_mcp.tool_server > var/logs/tools.log 2>&1 &
+          nohup .venv/bin/python -m uvicorn assureops_mcp.agent.app:app --port 8710 > var/logs/agent.log 2>&1 &
+          nohup .venv/bin/python -m celery -A assureops_worker.tasks worker --pool=solo -Q assessments -n assess@%h --loglevel=WARNING > var/logs/worker.log 2>&1 &
+          nohup .venv/bin/python -m assureops_worker.dispatcher > var/logs/dispatcher.log 2>&1 &
           nohup npm --workspace apps/customer-web run start -- --port 3700 > var/logs/customer-web.log 2>&1 &
           nohup npm --workspace apps/staff-web run start -- --port 3710 > var/logs/staff-web.log 2>&1 &
           ready() { for i in $(seq 1 120); do [ "$(curl -s -o /dev/null -w '%{http_code}' "$1")" = "$2" ] && return 0; sleep 2; done; echo "not ready: $1"; return 1; }
           ready http://127.0.0.1:8700/health 200
+          ready http://127.0.0.1:8710/health 200
           ready http://localhost:8780/realms/assureops/.well-known/openid-configuration 200
           ready http://localhost:8780/realms/assureops-staff/.well-known/openid-configuration 200
           ready http://localhost:3700/api/v1/applications 401
@@ -166,25 +180,33 @@ jobs:
         run: |
           npx playwright install --with-deps chromium
           npx playwright test
-      - name: Report and service logs on failure
-        if: failure()
+      - name: Journey recording, report and service logs
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: browser-journeys
           path: |
             var/e2e-report
             var/e2e-results
+            var/e2e-videos
             var/logs
-          retention-days: 7
+          retention-days: 14
 
   models:
-    name: Private model qualification (pinned artifacts, synthetic holdouts)
+    name: Private model qualification, phase ${{ matrix.phase }} (pinned artifacts, synthetic holdouts)
+    # One job per phase, in parallel, so a 200-case suite on a slow CPU model fits a runner's time limit.
     if: github.event_name == 'schedule' || (github.event_name == 'workflow_dispatch' && inputs.qualify_phases != '')
+    strategy:
+      fail-fast: false
+      matrix:
+        phase: [A, B, C, D, E, F, R]
     runs-on: ubuntu-24.04
-    timeout-minutes: 300
+    timeout-minutes: 355
     # Isolated: no repository secrets, no external model provider, synthetic holdout data only.
     env:
-      PHASES: ${{ inputs.qualify_phases || 'C D R' }}
+      REQUESTED: ${{ inputs.qualify_phases || 'C D R' }}
+      PHASES: ${{ matrix.phase }}
+      SUITE: ${{ inputs.qualify_suite || 'v1' }}
       PRIVATE_INFERENCE_URL: http://127.0.0.1:8740/v1
       PRIVATE_EMBED_URL: http://127.0.0.1:8730
       PRIVATE_CLASSIFY_URL: http://127.0.0.1:8730
@@ -201,15 +223,20 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Validate requested phases
-        run: echo "$PHASES" | grep -Eq '^[ABCDEFR]( [ABCDEFR])*$' || { echo "phases must be letters from A B C D E F R"; exit 1; }
+      - name: Validate requested phases and suite
+        run: |
+          echo "$REQUESTED" | grep -Eq '^[ABCDEFR]( [ABCDEFR])*$' || { echo "phases must be letters from A B C D E F R"; exit 1; }
+          echo "$SUITE" | grep -Eq '^v[12]$' || { echo "suite must be v1 or v2"; exit 1; }
+          if echo " $REQUESTED " | grep -q " $PHASES "; then echo "RUN=1" >> "$GITHUB_ENV"; else echo "phase $PHASES not requested"; fi
       - name: Install (CPU inference)
+        if: env.RUN == '1'
         run: |
           python -m venv .venv
           .venv/bin/python -m pip install -r requirements.txt
           .venv/bin/python -m pip install --index-url https://download.pytorch.org/whl/cpu torch==2.5.1
           .venv/bin/python -m pip install -r requirements-models.txt
       - name: Pinned Ollama runtime (checksum verified)
+        if: env.RUN == '1'
         run: |
           curl -fsSL -o /tmp/ollama.tar.zst "$OLLAMA_URL"
           echo "$OLLAMA_SHA256  /tmp/ollama.tar.zst" | sha256sum -c -
@@ -217,6 +244,7 @@ jobs:
           OLLAMA_MAX_LOADED_MODELS=1 OLLAMA_NUM_PARALLEL=1 OLLAMA_CONTEXT_LENGTH=8192 nohup /tmp/ollama/bin/ollama serve > /tmp/ollama.log 2>&1 &
           for i in $(seq 1 30); do curl -sf http://127.0.0.1:8740/api/version && break; sleep 2; done
       - name: Pull pinned generation models and encoder weights
+        if: env.RUN == '1'
         run: |
           for p in $PHASES; do
             m=$(jq -r ".phases.$p | select(.encoder != true) | .model" profiles/qualification/model-pins.json)
@@ -224,16 +252,18 @@ jobs:
           done
           .venv/bin/python scripts/fetch_models.py --pinned --dir "$ENCODER_MODELS_DIR"
       - name: Encoder service
+        if: env.RUN == '1'
         run: |
           nohup .venv/bin/python -m assureops_ai.encoder_server --port 8730 > /tmp/encoder.log 2>&1 &
           for i in $(seq 1 90); do curl -sf -o /dev/null http://127.0.0.1:8730/info && break; sleep 2; done
       - name: Qualify phases (fails on any artifact mismatch or unqualified phase)
-        run: .venv/bin/python scripts/ci_qualify_models.py --phases $PHASES --out var/qualification
+        if: env.RUN == '1'
+        run: .venv/bin/python scripts/ci_qualify_models.py --phases $PHASES --suite $SUITE --out var/qualification
       - name: Qualification results
-        if: always()
+        if: always() && env.RUN == '1'
         uses: actions/upload-artifact@v4
         with:
-          name: model-qualification
+          name: model-qualification-${{ matrix.phase }}-${{ env.SUITE }}
           path: var/qualification
           retention-days: 90
 

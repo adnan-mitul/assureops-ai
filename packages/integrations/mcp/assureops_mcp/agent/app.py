@@ -7,6 +7,7 @@ policy fault (approval threshold entered with extra zeros).
 
 import hashlib
 import json
+from pathlib import Path
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Header, HTTPException
@@ -16,7 +17,7 @@ from .. import mcp_client, settings
 from ..events_client import EventEmitter
 from ..gateway import Gateway, RunContext
 from ..profile_hash import canonical_hash
-from . import planner
+from . import llm_planner, planner
 
 AGENT_DIR = settings.PACKAGE / "agent"
 RELEASES = AGENT_DIR / "releases"
@@ -27,7 +28,7 @@ def active_release() -> str:
     return RELEASE_FILE.read_text().strip() if RELEASE_FILE.exists() else "R1"
 
 
-emitter = EventEmitter("refund-agent-1", settings.get("AGENT_SOURCE_TOKEN"), active_release)
+emitter = EventEmitter(settings.AGENT_SOURCE_ID, settings.get("AGENT_SOURCE_TOKEN"), active_release)
 
 
 @asynccontextmanager
@@ -42,6 +43,8 @@ app = FastAPI(title="Synthetic refund agent (reference MCP integration)", lifesp
 
 def load_config(release: str) -> dict:
     folder = RELEASES / release
+    if not folder.is_dir() and settings.EXTRA_RELEASES and release.isalnum():
+        folder = Path(settings.EXTRA_RELEASES) / release
     if not folder.is_dir():
         raise HTTPException(404, f"unknown release {release}")
     config = {name: json.loads((folder / f"{name}.json").read_text())
@@ -96,7 +99,7 @@ async def manifest():
         "config:limits": ("config", config["limits"]),
         "corpus:docs": ("corpus", settings.DOCS_PATH.read_bytes()),
         "code:gateway": ("code", (settings.PACKAGE / "gateway.py").read_bytes()),
-        "code:planner": ("code", (AGENT_DIR / "planner.py").read_bytes()),
+        "code:planner": ("code", (AGENT_DIR / ("llm_planner.py" if config["model"].get("planner") == "llm" else "planner.py")).read_bytes()),
     }
     if protocol:
         components["protocol:mcp"] = ("protocol", protocol)
@@ -125,7 +128,10 @@ async def chat(body: ChatRequest, x_assureops_test: str | None = Header(default=
     ctx = RunContext(body.workspace, body.user, body.role, body.approval_id, body.idempotency_key,
                      config["limits"]["max_steps"], test_traffic=x_assureops_test is not None,
                      assessment_step_id=x_assureops_test)
-    result = await planner.run(body.message, ctx, gateway, config, SECRET)
+    if config["model"].get("planner") == "llm":  # model-driven release: a real LLM chooses the tool calls
+        result = await llm_planner.run(body.message, ctx, gateway, config, SECRET, tools)
+    else:
+        result = await planner.run(body.message, ctx, gateway, config, SECRET)
     return {**result, "release": release}
 
 

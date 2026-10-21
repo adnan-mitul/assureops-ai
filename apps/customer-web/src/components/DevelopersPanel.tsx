@@ -1,5 +1,6 @@
 "use client";
 
+import { pathFor, type RequestBody } from "@assureops/ui/api/contract";
 import { api, del, put, useAction, usePoll } from "@assureops/ui/client";
 import { Button, Card, CardHeader, EmptyState, ErrorBanner, Field, Mono, Notice, StatusBadge, TableWrap, Td, Th, inputClass } from "@assureops/ui/components";
 import { formatTime } from "@assureops/ui/format";
@@ -59,7 +60,8 @@ export function DevelopersPanel({ appId }: { appId: string }) {
         <form className="mt-4 flex flex-wrap items-end gap-3" onSubmit={(e) => {
           e.preventDefault();
           const expires = days ? Date.now() / 1000 + Number(days) * 86400 : null;
-          action.run("assign", () => put(`/v1/applications/${appId}/developers/${encodeURIComponent(user)}`, { expires_at: expires }),
+          const body: RequestBody<"/v1/applications/{application_id}/developers/{username}", "put"> = { expires_at: expires };
+          action.run("assign", () => put(pathFor("/v1/applications/{application_id}/developers/{username}", { application_id: appId, username: user }), body),
             () => { setUser(""); setDays(""); after(`Assigned ${user}.`)(); });
         }}>
           <Field label="Developer">

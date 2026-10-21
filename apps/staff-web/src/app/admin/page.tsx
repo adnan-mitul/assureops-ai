@@ -4,6 +4,7 @@ import { del, put, usePoll } from "@assureops/ui/client";
 import { ApiErrorBanner, Button, Card, CardHeader, LoadingState, Mono, Notice, PageHeader, TableWrap, Td, Th } from "@assureops/ui/components";
 import { formatTime } from "@assureops/ui/format";
 import { Gauge, ShieldPlus, UsersRound } from "lucide-react";
+import { InquiriesCard } from "@/components/InquiriesCard";
 import { ActionDone, ActionError } from "@/components/staff-ui";
 import { useStaffAction } from "@/lib/actions";
 import { ROLE_LABEL, useStaff } from "@/lib/staff-context";
@@ -31,6 +32,8 @@ export default function AdminPage() {
       <PageHeader title="Administration" subtitle="Staff permissions and case workload. Metadata only: no customer content is shown here." />
       <ActionError error={action.error} />
       <ActionDone message={action.done} />
+
+      <InquiriesCard />
 
       <Card>
         <CardHeader title="Workload" icon={<Gauge className="size-4" aria-hidden />}

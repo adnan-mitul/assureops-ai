@@ -46,8 +46,21 @@ class PrivateEncoder:
             return ProviderResult("unavailable", self.name, model, latency_ms=latency, error=f"HTTP {res.status_code}")
         return ProviderResult("succeeded", self.name, model, parsed={"result": res.json()}, latency_ms=latency)
 
+    BATCH = 32  # the encoder service accepts at most 32 inputs per request
+
+    def _batched(self, path: str, inputs: list, model: str, extra: dict) -> ProviderResult:
+        """Split into service-sized requests; any failed batch fails the whole call (never a partial result)."""
+        results, latency = [], 0
+        for i in range(0, len(inputs), self.BATCH):
+            part = self._post(path, {"model": model, "inputs": inputs[i:i + self.BATCH], **extra}, model)
+            if not part.ok:
+                return part
+            results.extend(part.parsed["result"])
+            latency += part.latency_ms or 0
+        return ProviderResult("succeeded", self.name, model, parsed={"result": results}, latency_ms=latency)
+
     def embed(self, texts: list[str], model: str) -> ProviderResult:
-        return self._post("/embed", {"model": model, "inputs": texts, "truncate": True}, model)
+        return self._batched("/embed", texts, model, {"truncate": True})
 
     def classify_pairs(self, pairs: list[tuple[str, str]], model: str) -> ProviderResult:
-        return self._post("/predict", {"model": model, "inputs": [list(p) for p in pairs], "raw_scores": False}, model)
+        return self._batched("/predict", [list(p) for p in pairs], model, {"raw_scores": False})

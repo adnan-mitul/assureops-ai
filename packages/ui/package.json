@@ -13,7 +13,8 @@
     "./server/oidc": "./src/server/oidc.ts",
     "./server/session": "./src/server/session.ts",
     "./theme.css": "./src/theme.css",
-    "./inbox": "./src/inbox.tsx"
+    "./inbox": "./src/inbox.tsx",
+    "./api/contract": "./src/api/contract.ts"
   },
   "peerDependencies": {
     "clsx": "^2.1.1",

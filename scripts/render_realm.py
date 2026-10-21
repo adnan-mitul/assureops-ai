@@ -110,10 +110,13 @@ AMR_MAPPER = {"name": "amr", "protocol": "openid-connect", "protocolMapper": "oi
               "config": {"access.token.claim": "true", "id.token.claim": "true", "introspection.token.claim": "true"}}
 
 
-def realm(name: str, clients: list, users: list, idle_seconds: int) -> dict:
+def realm(name: str, clients: list, users: list, idle_seconds: int, registration: bool = False) -> dict:
+    # Customer self-registration only creates an identity: API access still needs a membership, and a membership
+    # needs an invitation sent to that exact e-mail address. Staff accounts are never self-registered.
+    # Hosted environments add SMTP and "verifyEmail": true.
     return {
-        "realm": name, "enabled": True, "sslRequired": "none", "registrationAllowed": False, "loginWithEmailAllowed": True,
-        "ssoSessionIdleTimeout": idle_seconds, "accessTokenLifespan": 300, "clients": clients, "users": users,
+        "realm": name, "enabled": True, "sslRequired": "none", "registrationAllowed": registration, "registrationEmailAsUsername": registration,
+        "loginWithEmailAllowed": True, "ssoSessionIdleTimeout": idle_seconds, "accessTokenLifespan": 300, "clients": clients, "users": users,
     }
 
 
@@ -133,7 +136,7 @@ def main():
     realms = {
         "realm-assureops.rendered.json": realm(
             "assureops", [client("customer-web", env["CUSTOMER_WEB_CLIENT_SECRET"], 3700, "assureops-customer-api", 300)],
-            [user(e, f, l, password) for e, f, l in CUSTOMER_USERS], 1800),
+            [user(e, f, l, password) for e, f, l in CUSTOMER_USERS], 1800, registration=True),
         "realm-assureops-staff.rendered.json": {**realm(
             "assureops-staff", [staff_client],
             [user(e, f, l, password, env[otp_key(e)]) for e, f, l in STAFF_USERS], 900), **MFA_FLOWS},

@@ -1,0 +1,5 @@
+{
+  "redact_secrets": true,
+  "untrusted_content": "quarantine",
+  "workspace_filter": true
+}

@@ -23,7 +23,7 @@ export async function api<T>(path: string, init: RequestInit & { idempotencyKey?
   if (init.idempotencyKey) headers["Idempotency-Key"] = init.idempotencyKey;
   const response = await fetch(`/api${path}`, { ...init, headers, cache: "no-store" });
   if (response.status === 401) {
-    window.location.href = `/auth/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+    window.location.href = `/auth/login?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`; // keep the query (e.g. an invitation token)
     throw new ApiError(401, "unauthenticated", "Redirecting to sign in…");
   }
   if (!response.ok) {

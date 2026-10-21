@@ -233,6 +233,8 @@ class Release(Base):
     profile_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
     connection_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=now)
+    # when this identity was last seen running; a redeployed earlier release becomes current again
+    last_collected_at: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class ChangeSet(Base):

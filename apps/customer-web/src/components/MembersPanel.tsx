@@ -1,5 +1,6 @@
 "use client";
 
+import { pathFor, type RequestBody } from "@assureops/ui/api/contract";
 import { post, put, useAction, usePoll } from "@assureops/ui/client";
 import { Button, Card, CardHeader, ErrorBanner, Field, Mono, Notice, StatusBadge, TableWrap, Td, Th, inputClass } from "@assureops/ui/components";
 import { formatTime } from "@assureops/ui/format";
@@ -71,7 +72,8 @@ export function MembersPanel({ members, isOwner, you, onChanged }: { members: Me
         <div className="space-y-4 border-t border-line px-5 py-4">
           <form className="flex flex-wrap items-end gap-3" onSubmit={(e) => {
             e.preventDefault();
-            action.run("invite", () => post("/v1/invitations", { email: email.trim(), role }), () => { setEmail(""); after(`Invitation sent to ${email.trim()}.`)(); });
+            const body: RequestBody<"/v1/invitations", "post"> = { email: email.trim(), role };
+            action.run("invite", () => post(pathFor("/v1/invitations"), body), () => { setEmail(""); after(`Invitation sent to ${email.trim()}.`)(); });
           }}>
             <Field label="Invite by e-mail">
               <input type="email" required value={email} onChange={(e) => setEmail(e.target.value)} className={`${inputClass} w-64`} placeholder="name@company.com" />

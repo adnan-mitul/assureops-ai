@@ -1,5 +1,6 @@
 "use client";
 
+import { pathFor, type RequestBody } from "@assureops/ui/api/contract";
 import { post, useAction, usePoll } from "@assureops/ui/client";
 import { Button, Card, CardHeader, ErrorBanner, Field, Mono, Notice, StatusBadge, inputClass } from "@assureops/ui/components";
 import { formatTime } from "@assureops/ui/format";
@@ -76,8 +77,10 @@ export function RiskPanel({ applicationId, control, severity, failing }: { appli
       {failing && canWrite && severity !== "critical" && (
         <form className="mt-4 grid gap-3" onSubmit={(e) => {
           e.preventDefault();
-          action.run("propose", () => post(`/v1/applications/${applicationId}/risk-acceptances`,
-            { control_id: control, reason, compensating_controls: compensating, expires_in_days: days }), () => { setReason(""); setCompensating(""); refresh(); });
+          const body: RequestBody<"/v1/applications/{application_id}/risk-acceptances", "post"> =
+            { control_id: control, reason, compensating_controls: compensating, expires_in_days: days };
+          action.run("propose", () => post(pathFor("/v1/applications/{application_id}/risk-acceptances", { application_id: applicationId }), body),
+            () => { setReason(""); setCompensating(""); refresh(); });
         }}>
           <Field label="Why ship with this failure?" hint="At least 20 characters">
             <textarea required minLength={20} value={reason} onChange={(e) => setReason(e.target.value)} className={`${inputClass} min-h-20`} />

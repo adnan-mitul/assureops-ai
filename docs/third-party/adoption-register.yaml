@@ -58,15 +58,27 @@
   status: served and qualified per phase (records in model_qualifications with the Ollama digest)
 - name: Encoder models (cross-encoder/nli-deberta-v3-small, BAAI/bge-small-en-v1.5)
   licenses: Apache-2.0, MIT
-  status: served by assureops_ai.encoder_server from pinned revisions (encoder_pins.json) and qualified
+  status: served by assureops_ai.encoder_server from pinned revisions (encoder_pins.json); R qualified on v2 (dense recall@3 0.94, chosen on the development split); D disabled since 22 Oct 2026 (v2: accuracy 0.92, 1 critical false support in 300 pairs)
 - name: PyTorch (CPU) and Transformers
   packages: torch==2.5.1, transformers==4.46.3 (requirements-models.txt)
   license: BSD-3-Clause, Apache-2.0
   status: adopted for the encoder service only (not in the API image)
 - name: Llama Prompt Guard 2 (86M) via Groq
   license: Llama 4 Community License (served by Groq)
-  status: qualified for phase G (advisory screening), external phase approved per workspace
+  status: route disabled since 22 Oct 2026 - not qualified on the 200-case v2 suite (accuracy 0.73, 54 of 101 attacks missed, 0 false flags); optional phase
 - name: Prometheus
   image: prom/prometheus:v2.55.1
   license: Apache-2.0
   status: adopted (local metrics and alert rules)
+- name: Playwright
+  source: https://playwright.dev (npm @playwright/test 1.63.0)
+  license: Apache-2.0
+  status: adopted (browser journeys in CI, including the recorded fresh-account journey)
+- name: axe-core for Playwright
+  source: npm @axe-core/playwright 4.13.0
+  license: MPL-2.0
+  status: adopted (WCAG 2.1 A/AA checks on customer and staff pages; dev dependency only)
+- name: openapi-typescript
+  source: npm openapi-typescript 7.13.0
+  license: MIT
+  status: adopted (frontend API contract generated from the backend's OpenAPI document; drift checked in CI)

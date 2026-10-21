@@ -20,7 +20,7 @@ from .events_client import EventEmitter
 
 SECRET_SEED = "sk-test-ASSUREOPS-CANARY-7Q2X"  # never returned by any tool
 DB_PATH = settings.VAR_DIR / "tool_ledger.db"
-SOURCE_ID = "refund-tools-1"
+SOURCE_ID = settings.TOOLS_SOURCE_ID
 
 server = MCPServer("acme-refund-tools", version="0.2.0", instructions="Synthetic refund tools for authorized AssureOps assessment.")
 emitter = EventEmitter(SOURCE_ID, settings.get("TOOLS_SOURCE_TOKEN"), lambda: "tool-server-0.2.0")
@@ -108,7 +108,7 @@ def export_customers() -> dict:
 
 def main():
     emitter.start()
-    server.run("streamable-http", host="127.0.0.1", port=8720, streamable_http_path="/mcp")
+    server.run("streamable-http", host="127.0.0.1", port=settings.TOOLS_PORT, streamable_http_path="/mcp")
 
 
 if __name__ == "__main__":

@@ -22,7 +22,6 @@ const NAV: NavItem[] = [
 function Frame({ children }: { children: ReactNode }) {
   const { me, meError, applications, applicationId, setApplicationId } = useApp();
   const unread = useUnread(me ? "/v1/notifications" : "");
-
   if (meError?.status === 403) return <NoAccess portal="customer portal" message={meError.message} />;
 
   const org = (

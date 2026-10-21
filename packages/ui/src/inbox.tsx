@@ -37,7 +37,7 @@ export function InboxPage({ path }: { path: string }) {
             {data.items.map((n) => (
               <li key={n.id} className={`px-5 py-4 ${n.read_at ? "" : "bg-brand-50/40"}`}>
                 <div className="flex flex-wrap items-center gap-2">
-                  {!n.read_at && <span className="size-2 rounded-full bg-brand-600" aria-label="unread" />}
+                  {!n.read_at && <><span className="size-2 rounded-full bg-brand-600" aria-hidden /><span className="sr-only">Unread:</span></>}
                   <h3 className="text-sm font-semibold">{n.subject}</h3>
                   <StatusBadge status="unknown" label={n.kind.replaceAll("_", " ")} />
                   <span className="text-xs text-muted" title={formatTime(n.created_at)}>{timeAgo(n.created_at)}</span>

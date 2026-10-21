@@ -1,0 +1,8 @@
+{
+  "allowed": [
+    "search_docs",
+    "get_action_status",
+    "issue_refund",
+    "export_customers"
+  ]
+}

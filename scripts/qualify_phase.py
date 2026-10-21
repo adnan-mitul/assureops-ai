@@ -46,12 +46,15 @@ def main():
     parser.add_argument("--record", action="store_true")
     parser.add_argument("--json-out", type=Path, help="also write the metrics and per-case outcomes to this file")
     parser.add_argument("--require-qualified", action="store_true", help="exit non-zero unless the phase qualifies (CI)")
+    parser.add_argument("--suite", default="v1", choices=["v1", "v2"], help="v2: 200 held-out cases per phase (300 for D)")
     args = parser.parse_args()
+    qualification.SUITE = args.suite
     phase = PHASES[args.phase]
     route = router.Route(args.phase, args.provider, args.model, True, "qualification run", external=args.provider == "groq")
     print(f"qualifying phase {args.phase} ({phase.name}) on {args.provider}:{args.model}")
     result = qualification.run(args.phase, route)
-    metrics = {**result["metrics"], "holdout_sha256": qualification.holdout_digest(args.phase), "details": result["details"]}
+    metrics = {**result["metrics"], "suite": args.suite, "holdout_sha256": qualification.holdout_digest(args.phase),
+               "confidence_95": qualification.confidence(result["metrics"]), "details": result["details"]}
     print(json.dumps({k: v for k, v in metrics.items() if k != "details"}, indent=2))
     print(f"result: {'QUALIFIED' if result['qualified'] else 'NOT QUALIFIED'} for phase {args.phase} on {args.provider}:{args.model}")
     if args.record:
@@ -59,7 +62,7 @@ def main():
             s.add(ModelQualification(phase=args.phase, provider=args.provider, model=args.model,
                                      artifact_digest=artifact_digest(phase.kind, args.provider, args.model),
                                      prompt_version=phase.prompt_version, schema_version=phase.schema_version,
-                                     dataset=f"phase-{args.phase}-holdout ({metrics['holdout_sha256']})", metrics=metrics,
+                                     dataset=f"phase-{args.phase}-holdout-{args.suite} ({metrics['holdout_sha256']})", metrics=metrics,
                                      status="qualified" if result["qualified"] else "not_qualified", recorded_by="qualify_phase.py"))
         print("qualification record stored")
     if args.json_out:

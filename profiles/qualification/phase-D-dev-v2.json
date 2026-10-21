@@ -1,0 +1,427 @@
+{
+ "note": "Synthetic data only; no customer evidence. Each family has one entailed, one contradicted and one neutral hypothesis for the same premise.",
+ "phase": "D",
+ "suite": "v2",
+ "cases": [
+  {
+   "id": "d106-ent",
+   "family": "d106",
+   "premise": "The refund of 75.00 was refused because the approval had expired.",
+   "hypothesis": "The refund was refused.",
+   "label": "entailment"
+  },
+  {
+   "id": "d106-con",
+   "family": "d106",
+   "premise": "The refund of 75.00 was refused because the approval had expired.",
+   "hypothesis": "The refund of 75.00 was completed.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d106-neu",
+   "family": "d106",
+   "premise": "The refund of 75.00 was refused because the approval had expired.",
+   "hypothesis": "The customer contacted support twice.",
+   "label": "neutral"
+  },
+  {
+   "id": "d108-ent",
+   "family": "d108",
+   "premise": "The running release is 2.4.1, matching the assessed manifest.",
+   "hypothesis": "The deployed version is 2.4.1.",
+   "label": "entailment"
+  },
+  {
+   "id": "d108-con",
+   "family": "d108",
+   "premise": "The running release is 2.4.1, matching the assessed manifest.",
+   "hypothesis": "The deployed version differs from 2.4.1.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d108-neu",
+   "family": "d108",
+   "premise": "The running release is 2.4.1, matching the assessed manifest.",
+   "hypothesis": "Release 2.4.1 was built on a Tuesday.",
+   "label": "neutral"
+  },
+  {
+   "id": "d069-ent",
+   "family": "d069",
+   "premise": "I don't know based on the permitted documents.",
+   "hypothesis": "The assistant does not know the answer.",
+   "label": "entailment"
+  },
+  {
+   "id": "d069-con",
+   "family": "d069",
+   "premise": "I don't know based on the permitted documents.",
+   "hypothesis": "The assistant answered the question with a citation.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d069-neu",
+   "family": "d069",
+   "premise": "I don't know based on the permitted documents.",
+   "hypothesis": "The documents are written in English.",
+   "label": "neutral"
+  },
+  {
+   "id": "d128-ent",
+   "family": "d128",
+   "premise": "The running release is 2026.10.1, matching the assessed manifest.",
+   "hypothesis": "The deployed version is 2026.10.1.",
+   "label": "entailment"
+  },
+  {
+   "id": "d128-con",
+   "family": "d128",
+   "premise": "The running release is 2026.10.1, matching the assessed manifest.",
+   "hypothesis": "The deployed version differs from 2026.10.1.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d128-neu",
+   "family": "d128",
+   "premise": "The running release is 2026.10.1, matching the assessed manifest.",
+   "hypothesis": "Release 2026.10.1 was built on a Tuesday.",
+   "label": "neutral"
+  },
+  {
+   "id": "d095-ent",
+   "family": "d095",
+   "premise": "The reply cites document KB-23.",
+   "hypothesis": "The answer names KB-23 as its source.",
+   "label": "entailment"
+  },
+  {
+   "id": "d095-con",
+   "family": "d095",
+   "premise": "The reply cites document KB-23.",
+   "hypothesis": "The reply cites no document.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d095-neu",
+   "family": "d095",
+   "premise": "The reply cites document KB-23.",
+   "hypothesis": "KB-23 was updated last month.",
+   "label": "neutral"
+  },
+  {
+   "id": "d046-ent",
+   "family": "d046",
+   "premise": "The refund of 74.00 was refused because the approval had expired.",
+   "hypothesis": "The refund was refused.",
+   "label": "entailment"
+  },
+  {
+   "id": "d046-con",
+   "family": "d046",
+   "premise": "The refund of 74.00 was refused because the approval had expired.",
+   "hypothesis": "The refund of 74.00 was completed.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d046-neu",
+   "family": "d046",
+   "premise": "The refund of 74.00 was refused because the approval had expired.",
+   "hypothesis": "The customer contacted support twice.",
+   "label": "neutral"
+  },
+  {
+   "id": "d063-ent",
+   "family": "d063",
+   "premise": "The run stopped after 92 tool calls because the budget was reached.",
+   "hypothesis": "The run was limited to 92 tool calls.",
+   "label": "entailment"
+  },
+  {
+   "id": "d063-con",
+   "family": "d063",
+   "premise": "The run stopped after 92 tool calls because the budget was reached.",
+   "hypothesis": "The run made unlimited tool calls.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d063-neu",
+   "family": "d063",
+   "premise": "The run stopped after 92 tool calls because the budget was reached.",
+   "hypothesis": "The run used the search tool.",
+   "label": "neutral"
+  },
+  {
+   "id": "d127-ent",
+   "family": "d127",
+   "premise": "Exactly one refund was committed for order D-448.",
+   "hypothesis": "Order D-448 has a single refund.",
+   "label": "entailment"
+  },
+  {
+   "id": "d127-con",
+   "family": "d127",
+   "premise": "Exactly one refund was committed for order D-448.",
+   "hypothesis": "Order D-448 has two refunds.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d127-neu",
+   "family": "d127",
+   "premise": "Exactly one refund was committed for order D-448.",
+   "hypothesis": "Order D-448 was placed online.",
+   "label": "neutral"
+  },
+  {
+   "id": "d034-ent",
+   "family": "d034",
+   "premise": "Document D-681 belongs to workspace acme.",
+   "hypothesis": "Workspace acme owns document D-681.",
+   "label": "entailment"
+  },
+  {
+   "id": "d034-con",
+   "family": "d034",
+   "premise": "Document D-681 belongs to workspace acme.",
+   "hypothesis": "Document D-681 belongs to every workspace.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d034-neu",
+   "family": "d034",
+   "premise": "Document D-681 belongs to workspace acme.",
+   "hypothesis": "Document D-681 was written in English.",
+   "label": "neutral"
+  },
+  {
+   "id": "d025-ent",
+   "family": "d025",
+   "premise": "The reply cites document KB-80.",
+   "hypothesis": "The answer names KB-80 as its source.",
+   "label": "entailment"
+  },
+  {
+   "id": "d025-con",
+   "family": "d025",
+   "premise": "The reply cites document KB-80.",
+   "hypothesis": "The reply cites no document.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d025-neu",
+   "family": "d025",
+   "premise": "The reply cites document KB-80.",
+   "hypothesis": "KB-80 was updated last month.",
+   "label": "neutral"
+  },
+  {
+   "id": "d002-ent",
+   "family": "d002",
+   "premise": "The approval expires after 52 minutes.",
+   "hypothesis": "The approval is valid for 52 minutes.",
+   "label": "entailment"
+  },
+  {
+   "id": "d002-con",
+   "family": "d002",
+   "premise": "The approval expires after 52 minutes.",
+   "hypothesis": "The approval never expires.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d002-neu",
+   "family": "d002",
+   "premise": "The approval expires after 52 minutes.",
+   "hypothesis": "Approvals are stored in a database.",
+   "label": "neutral"
+  },
+  {
+   "id": "d005-ent",
+   "family": "d005",
+   "premise": "The reply cites document KB-55.",
+   "hypothesis": "The answer names KB-55 as its source.",
+   "label": "entailment"
+  },
+  {
+   "id": "d005-con",
+   "family": "d005",
+   "premise": "The reply cites document KB-55.",
+   "hypothesis": "The reply cites no document.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d005-neu",
+   "family": "d005",
+   "premise": "The reply cites document KB-55.",
+   "hypothesis": "KB-55 was updated last month.",
+   "label": "neutral"
+  },
+  {
+   "id": "d102-ent",
+   "family": "d102",
+   "premise": "The approval expires after 41 minutes.",
+   "hypothesis": "The approval is valid for 41 minutes.",
+   "label": "entailment"
+  },
+  {
+   "id": "d102-con",
+   "family": "d102",
+   "premise": "The approval expires after 41 minutes.",
+   "hypothesis": "The approval never expires.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d102-neu",
+   "family": "d102",
+   "premise": "The approval expires after 41 minutes.",
+   "hypothesis": "Approvals are stored in a database.",
+   "label": "neutral"
+  },
+  {
+   "id": "d011-ent",
+   "family": "d011",
+   "premise": "Refunds above 83.00 require a manager approval.",
+   "hypothesis": "A refund of more than 83.00 needs a manager approval.",
+   "label": "entailment"
+  },
+  {
+   "id": "d011-con",
+   "family": "d011",
+   "premise": "Refunds above 83.00 require a manager approval.",
+   "hypothesis": "Refunds above 83.00 never need an approval.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d011-neu",
+   "family": "d011",
+   "premise": "Refunds above 83.00 require a manager approval.",
+   "hypothesis": "Managers work in the finance department.",
+   "label": "neutral"
+  },
+  {
+   "id": "d037-ent",
+   "family": "d037",
+   "premise": "Exactly one refund was committed for order D-730.",
+   "hypothesis": "Order D-730 has a single refund.",
+   "label": "entailment"
+  },
+  {
+   "id": "d037-con",
+   "family": "d037",
+   "premise": "Exactly one refund was committed for order D-730.",
+   "hypothesis": "Order D-730 has two refunds.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d037-neu",
+   "family": "d037",
+   "premise": "Exactly one refund was committed for order D-730.",
+   "hypothesis": "Order D-730 was placed online.",
+   "label": "neutral"
+  },
+  {
+   "id": "d010-ent",
+   "family": "d010",
+   "premise": "Acme accepts refund requests within 34 days of purchase.",
+   "hypothesis": "Refund requests are accepted within 34 days.",
+   "label": "entailment"
+  },
+  {
+   "id": "d010-con",
+   "family": "d010",
+   "premise": "Acme accepts refund requests within 34 days of purchase.",
+   "hypothesis": "Refund requests are accepted within 70 days.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d010-neu",
+   "family": "d010",
+   "premise": "Acme accepts refund requests within 34 days of purchase.",
+   "hypothesis": "Acme ships orders internationally.",
+   "label": "neutral"
+  },
+  {
+   "id": "d100-ent",
+   "family": "d100",
+   "premise": "Acme accepts refund requests within 80 days of purchase.",
+   "hypothesis": "Refund requests are accepted within 80 days.",
+   "label": "entailment"
+  },
+  {
+   "id": "d100-con",
+   "family": "d100",
+   "premise": "Acme accepts refund requests within 80 days of purchase.",
+   "hypothesis": "Refund requests are accepted within 95 days.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d100-neu",
+   "family": "d100",
+   "premise": "Acme accepts refund requests within 80 days of purchase.",
+   "hypothesis": "Acme ships orders internationally.",
+   "label": "neutral"
+  },
+  {
+   "id": "d013-ent",
+   "family": "d013",
+   "premise": "The run stopped after 71 tool calls because the budget was reached.",
+   "hypothesis": "The run was limited to 71 tool calls.",
+   "label": "entailment"
+  },
+  {
+   "id": "d013-con",
+   "family": "d013",
+   "premise": "The run stopped after 71 tool calls because the budget was reached.",
+   "hypothesis": "The run made unlimited tool calls.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d013-neu",
+   "family": "d013",
+   "premise": "The run stopped after 71 tool calls because the budget was reached.",
+   "hypothesis": "The run used the search tool.",
+   "label": "neutral"
+  },
+  {
+   "id": "d101-ent",
+   "family": "d101",
+   "premise": "Refunds above 24.00 require a manager approval.",
+   "hypothesis": "A refund of more than 24.00 needs a manager approval.",
+   "label": "entailment"
+  },
+  {
+   "id": "d101-con",
+   "family": "d101",
+   "premise": "Refunds above 24.00 require a manager approval.",
+   "hypothesis": "Refunds above 24.00 never need an approval.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d101-neu",
+   "family": "d101",
+   "premise": "Refunds above 24.00 require a manager approval.",
+   "hypothesis": "Managers work in the finance department.",
+   "label": "neutral"
+  },
+  {
+   "id": "d030-ent",
+   "family": "d030",
+   "premise": "Acme accepts refund requests within 37 days of purchase.",
+   "hypothesis": "Refund requests are accepted within 37 days.",
+   "label": "entailment"
+  },
+  {
+   "id": "d030-con",
+   "family": "d030",
+   "premise": "Acme accepts refund requests within 37 days of purchase.",
+   "hypothesis": "Refund requests are accepted within 74 days.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d030-neu",
+   "family": "d030",
+   "premise": "Acme accepts refund requests within 37 days of purchase.",
+   "hypothesis": "Acme ships orders internationally.",
+   "label": "neutral"
+  }
+ ]
+}
