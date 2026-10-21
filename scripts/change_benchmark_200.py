@@ -117,6 +117,25 @@ def ensure_connection_and_profile():
         return conn.status
 
 
+def sync_edges() -> int:
+    """Benchmark only: make the isolated bench application's accepted edges equal the contract file (after a reviewed edit)."""
+    from assureops_domain.models import DependencyEdge
+    from assureops_domain.profile import load_coverage_contract
+
+    contract = load_coverage_contract("refund-agent.mcp-reference")["dependency_edges"]
+    with tenant_session(WS) as s:
+        for row in s.scalars(select(DependencyEdge).where(DependencyEdge.application_id == APP)):
+            s.delete(row)
+        s.flush()
+        n = 0
+        for test_id, comps in contract.items():
+            for comp in comps:
+                s.add(DependencyEdge(workspace_id=WS, application_id=APP, test_id=test_id, component_id=comp, status="accepted",
+                                     source="coverage_contract", reviewer="bench-reviewer"))
+                n += 1
+        return n
+
+
 def deploy(name: str):
     httpx.post(f"{AGENT}/admin/release", json={"release": name}, timeout=10).raise_for_status()
 
@@ -177,12 +196,16 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--limit", type=int, default=None)
     parser.add_argument("--split", choices=["development", "held_out"], default=None)
+    parser.add_argument("--sync-edges", action="store_true", help="reset the bench application's reviewed edges to the coverage contract file")
+    parser.add_argument("--out", type=Path, default=OUT)
     args = parser.parse_args()
     spec = json.loads((ROOT / "profiles" / "qualification" / "change-scenarios-v1.json").read_text())
     scenarios = [s for s in spec["scenarios"] if not args.split or s["split"] == args.split][: args.limit]
     procs = start_stack()
     try:
         print("connection:", ensure_connection_and_profile())
+        if args.sync_edges:
+            print("reviewed edges synced from the coverage contract:", sync_edges())
         base = collect()
         base_a, base_b = assess(base), assess(base)
         flaky = {t for t in base_a if base_a.get(t) != base_b.get(t)}
@@ -224,8 +247,8 @@ def main():
                 "false_alarms": sum(r[arm]["false_alarms"] for r in part),
                 "saving_vs_full_pct": round(100 * (1 - sum(r[arm]["retested"] for r in part) / sum(r["full"]["retested"] for r in part)), 1),
             } for arm in ("full", "rule", "ai")}}
-        OUT.parent.mkdir(parents=True, exist_ok=True)
-        OUT.write_text(json.dumps({"at": time.time(), "minutes": round((time.time() - started) / 60, 1), "flaky_excluded": sorted(flaky),
+        args.out.parent.mkdir(parents=True, exist_ok=True)
+        args.out.write_text(json.dumps({"at": time.time(), "minutes": round((time.time() - started) / 60, 1), "flaky_excluded": sorted(flaky),
                                    "ai_model": router.resolve("B", False).model, "summary": summary, "scenarios": rows}, indent=1), encoding="utf-8")
         print(json.dumps(summary, indent=1))
     finally:

@@ -102,10 +102,10 @@ def test_changed_test_definition_blocks_reuse(workspace):
     with tenant_session(workspace) as s:
         edges = reducer.accepted_edges(s, f"{workspace}-app", p)
     mapped = {c for comps in edges.values() for c in comps}
-    good = _run(workspace, r1, "T-C09-01", p["tests_by_id"]["T-C09-01"]["digest"])
-    old = _run(workspace, r1, "T-C09-01", "different-definition")
-    assert reducer._reusable(good, r1, r2, edges["T-C09-01"], p["tests_by_id"]["T-C09-01"], mapped, p)
-    assert not reducer._reusable(old, r1, r2, edges["T-C09-01"], p["tests_by_id"]["T-C09-01"], mapped, p)
+    good = _run(workspace, r1, "T-C09-02", p["tests_by_id"]["T-C09-02"]["digest"])
+    old = _run(workspace, r1, "T-C09-02", "different-definition")
+    assert reducer._reusable(good, r1, r2, edges["T-C09-02"], p["tests_by_id"]["T-C09-02"], mapped, p)
+    assert not reducer._reusable(old, r1, r2, edges["T-C09-02"], p["tests_by_id"]["T-C09-02"], mapped, p)
 
 
 def test_vault_encrypts_and_never_describes_values(workspace):

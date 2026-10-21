@@ -16,7 +16,7 @@ def test_policy_change_invalidates_only_dependent_tests(workspace):
     expected = {t for t, comps in edges.items() if "policy:permission" in comps} | {"T-C10-01"}
     assert {r["test_id"] for r in result["retest"]} == expected
     assert not result["conservative_fallback"]
-    assert "T-C09-01" in result["reusable"]
+    assert "T-C09-02" in result["reusable"]  # its reviewed edges do not include the permission policy
 
 
 def test_unmapped_change_forces_full_retest(workspace):
@@ -70,18 +70,18 @@ def test_changed_dependency_makes_prior_support_stale_and_preserves_failures(wor
 
 def test_rejected_edge_invalidates_reuse(workspace):
     r1 = add_release(workspace, "R1")
-    run = _run(workspace, r1, "T-C09-01", "passed")
-    r2 = add_release(workspace, "R2", {"policy:permission": "fp-new"})  # does not touch T-C09-01's edges
+    run = _run(workspace, r1, "T-C09-02", "passed")
+    r2 = add_release(workspace, "R2", {"policy:permission": "fp-new"})  # does not touch T-C09-02's edges
     with tenant_session(workspace) as s:
         releases = {r1.id: r1}
         edges = reducer.accepted_edges(s, f"{workspace}-app", prof())
         mapped = {c for comps in edges.values() for c in comps}
-        assert reducer._reusable(run, releases[r1.id], r2, edges["T-C09-01"], prof()["tests_by_id"]["T-C09-01"], mapped, prof())
-        edge = s.query(DependencyEdge).filter_by(test_id="T-C09-01", component_id="corpus:docs").one()
+        assert reducer._reusable(run, releases[r1.id], r2, edges["T-C09-02"], prof()["tests_by_id"]["T-C09-02"], mapped, prof())
+        edge = s.query(DependencyEdge).filter_by(test_id="T-C09-02", component_id="corpus:docs").one()
         edge.status = "rejected"
         s.flush()
         edges = reducer.accepted_edges(s, f"{workspace}-app", prof())
-        assert not reducer._reusable(run, releases[r1.id], r2, edges["T-C09-01"], prof()["tests_by_id"]["T-C09-01"], mapped, prof())
+        assert not reducer._reusable(run, releases[r1.id], r2, edges["T-C09-02"], prof()["tests_by_id"]["T-C09-02"], mapped, prof())
 
 
 def test_scores_follow_plan_definitions(workspace):

@@ -30,7 +30,22 @@ Work on branch `completion-plan-v6` (draft PR adnan-mitul/assureops-ai#2). "Veri
 
 ## Change benchmark (200 scenarios)
 
-Results are filled in when the run finishes (`var/benchmarks/change-benchmark-200.json`).
+`scripts/change_benchmark_200.py` ran 200 documented configuration mutations of the reference agent's R1 (`profiles/qualification/change-scenarios-v1.json`). It used an isolated bench copy of the reference stack and took 90.6 minutes. Ground truth: every test re-run on every variant, compared with two identical R1 baselines (no flaky tests). 15 tests per scenario.
+
+| Split | Arm | Tests retested | Saving vs full | Missed affected tests | Critical misses | False alarms |
+|---|---|---|---|---|---|---|
+| development (60) | full retest | 900 | 0 % | 0 | 0 | 822 |
+| | reviewed rule-only map | 569 | 36.8 % | 4 | 1 | 495 |
+| | rule map + phase B (Phi-4-mini) links | 539 | 40.1 % | 4 | 1 | 465 |
+| held out (140) | full retest | 2100 | 0 % | 0 | 0 | 1920 |
+| | reviewed rule-only map | 1371 | 34.7 % | 11 | 0 | 1202 |
+| | rule map + phase B links | 1265 | 39.8 % | 12 | 0 | 1097 |
+
+What it shows:
+- Selective retesting saves 35–40 % of test runs, but it is **not** free of misses. Every miss traces to two missing edges in the reviewed coverage contract: T-C09-01 (citation) also depends on `policy:permission`, and T-C03-03 also depends on `tools:registry`.
+- The AI arm saves about 5 points more but missed one more test (V144). Its extra link removed the conservative full-retest fallback that had been covering the missing edge. More mapping is not automatically safer.
+- Both edges were found from the development split only and added to the contract (`profiles/coverage/refund-agent.mcp-reference.json`, with a revision note). The held-out split is then re-run (below). Existing activations keep their recorded edges until their profile is re-activated.
+- The 30 % saving is a research target. These numbers come from configuration mutations of one reference application, not from real customer change history.
 
 ## Fixed defects found during this work
 
