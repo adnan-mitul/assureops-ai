@@ -38,8 +38,12 @@ export function MembersPanel({ members, isOwner, you, onChanged }: { members: Me
               <Td>
                 {isOwner && m.user !== you ? (
                   <select aria-label={`Role for ${m.user}`} value={m.role} disabled={action.busy !== null} className={`${inputClass} w-40 min-w-40 py-1 capitalize`}
-                    onChange={(e) => action.run(`role-${m.user}`, () => put(`/v1/members/${encodeURIComponent(m.user)}`, { role: e.target.value }),
-                      after(`${m.user} is now ${e.target.value}.`))}>
+                    onChange={(e) => {
+                      const role = e.target.value;
+                      // A role change takes effect on the member's next request; confirm so a stray selection cannot promote anyone.
+                      if (!window.confirm(`Change ${m.user} from ${m.role} to ${role}?`)) return;
+                      action.run(`role-${m.user}`, () => put(`/v1/members/${encodeURIComponent(m.user)}`, { role }), after(`${m.user} is now ${role}.`));
+                    }}>
                     {ROLES.map((r) => <option key={r} value={r}>{r}</option>)}
                   </select>
                 ) : <span className="capitalize">{m.role}</span>}

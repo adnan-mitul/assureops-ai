@@ -15,6 +15,16 @@ test.describe("membership and administration", () => {
     await expect(page.getByRole("row", { name: new RegExp(email) })).toContainText("revoked");
   });
 
+  test("a role change needs confirmation; dismissing it changes nothing", async ({ page }) => {
+    await customerSignIn(page, "owner@acme.test", "/settings");
+    let asked = "";
+    page.once("dialog", (d) => { asked = d.message(); void d.dismiss(); });
+    await page.getByLabel("Role for viewer@acme.test").selectOption("owner");
+    await expect.poll(() => asked).toContain("Change viewer@acme.test from viewer to owner?");
+    const settings = await (await page.request.get(`${CUSTOMER_URL}/api/v1/settings`)).json();
+    expect(settings.members.find((m: { user: string }) => m.user === "viewer@acme.test").role).toBe("viewer");
+  });
+
   test("a developer cannot invite, and members are shown read-only", async ({ page }) => {
     await customerSignIn(page, "dev@acme.test", "/settings");
     await expect(page.getByRole("heading", { name: "Members" })).toBeVisible();

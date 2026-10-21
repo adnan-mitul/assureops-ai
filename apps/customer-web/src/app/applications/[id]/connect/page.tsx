@@ -6,6 +6,7 @@ import { CircleCheck, CircleDashed, KeyRound, Link2, PlugZap, Radio, ScrollText,
 import { useState } from "react";
 import { PageTop, useRouteId, WithSuspense } from "@/components/bits";
 import { DevelopersPanel } from "@/components/DevelopersPanel";
+import { RelayPanel } from "@/components/RelayPanel";
 import { useApp } from "@/lib/app-context";
 
 type Check = { id: string; status: "pass" | "fail" | "gap"; detail: string };
@@ -110,7 +111,10 @@ function Connect() {
       <ApiErrorBanner error={overview.error} />
       {(action.error || localError) && <ErrorBanner message={localError ?? action.error ?? ""} />}
 
-      <DevelopersPanel appId={appId} />
+      <div className="grid gap-5 xl:grid-cols-2">
+        <DevelopersPanel appId={appId} />
+        <RelayPanel appId={appId} />
+      </div>
 
       <Card className="p-5">
         <CardHeader title="Onboarding" icon={<ShieldCheck className="size-4" aria-hidden />} />

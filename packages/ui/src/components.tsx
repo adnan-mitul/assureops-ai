@@ -93,6 +93,7 @@ const STATUS: Record<string, { label: string; style: string; icon: typeof Circle
   unverified: { label: "Unverified", style: NEUTRAL, icon: CircleHelp },
   review_required: { label: "Review required", style: WARN, icon: Clock3 },
   not_applicable: { label: "Not applicable", style: NEUTRAL, icon: CircleHelp },
+  pending_relay: { label: "Waiting for relay", style: NEUTRAL, icon: Clock3 },
   // evidence_validity
   current: { label: "Current", style: GOOD, icon: CircleCheck },
   stale: { label: "Stale", style: WARN, icon: Clock3 },

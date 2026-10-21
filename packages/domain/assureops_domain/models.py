@@ -82,7 +82,7 @@ class ServiceCredential(Base):
 
     __tablename__ = "service_credentials"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("svc"))
-    kind: Mapped[str] = mapped_column(String)  # runner | gateway | tool_server
+    kind: Mapped[str] = mapped_column(String)  # runner | gateway | tool_server | ci | relay
     workspace_id: Mapped[str] = mapped_column(String)
     application_id: Mapped[str] = mapped_column(String)
     environment: Mapped[str] = mapped_column(String)
@@ -512,6 +512,35 @@ class EvidenceRequest(Base):
     answered_at: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
+class RelayTask(Base):
+    """Work for a customer-run private connector (relay) that reaches targets the hosted service cannot.
+
+    The payload is encrypted at rest and handed out once: claiming wipes the ciphertext.
+    The result must echo the claim nonce; only the relay credential bound to this
+    application can claim or complete it. A missed deadline expires the task.
+    """
+
+    __tablename__ = "relay_tasks"
+    __table_args__ = tenant_keys(("application_id", "applications"))
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("rly"))
+    workspace_id: Mapped[str] = mapped_column(String)
+    application_id: Mapped[str] = mapped_column(String)
+    kind: Mapped[str] = mapped_column(String)  # step | verify
+    ref_id: Mapped[str] = mapped_column(String)  # job step id, or connection id for verification
+    fencing_token: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    payload_ciphertext: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payload_sha256: Mapped[str] = mapped_column(String)
+    status: Mapped[str] = mapped_column(String, default="queued")  # queued | claimed | completed | expired | cancelled
+    claim_nonce_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+    claimed_by: Mapped[str | None] = mapped_column(String, nullable=True)  # relay credential id
+    result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[float] = mapped_column(Float, default=now)
+    deadline_at: Mapped[float] = mapped_column(Float)
+    claimed_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    completed_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
 class RiskAcceptance(Base):
     """A time-limited, release-bound decision to ship despite one failed control.
 
@@ -915,5 +944,5 @@ TENANT_TABLES = [
     "incidents", "assessment_cases", "evidence_requests", "case_messages", "reports", "review_decisions",
     "report_publications", "readiness_points", "audit_events", "evidence_reviews",
     "application_profiles", "connections", "connector_secrets", "artifact_deletions", "source_documents", "model_calls",
-    "ai_results", "deployment_receipts", "repository_bindings", "analysis_runs", "application_grants", "risk_acceptances",
+    "ai_results", "deployment_receipts", "repository_bindings", "analysis_runs", "application_grants", "risk_acceptances", "relay_tasks",
 ]

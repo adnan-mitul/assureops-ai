@@ -148,7 +148,8 @@ def create_assessment(s: Session, app: Application, release: Release, scope: str
         "environment": app.environment,
         "profile": {"revision": p["revision"], "version": profile_version(p), "digest": p["digest"]},
         "connection": {"revision": conn.revision, "adapter_id": conn.adapter_id, "adapter_version": conn.adapter_version,
-                       "evaluator_version": adapter.evaluator_version},
+                       "evaluator_version": adapter.evaluator_version,
+                       "execution_mode": "relay" if ((conn.config or {}).get("execution") or {}).get("mode") == "relay" else "platform"},
         "edge_revision": reducer.edge_revision(edges),
         "tests": {tid: p["tests_by_id"][tid] for tid in tests},
     }
