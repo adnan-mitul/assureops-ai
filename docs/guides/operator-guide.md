@@ -30,6 +30,18 @@ bash scripts/start_services.sh
 
 Hosted environments replace `dev.env` with a secret manager, enable SMTP with `verifyEmail` in the customer realm, use HTTPS with Secure cookies, and set `STAFF_MFA_REQUIRED=true` (the default).
 
+### Everything in Docker
+
+`bash scripts/docker_up.sh` runs the same components as containers (`infra/compose/full-stack.yml`):
+
+- The image `assureops-app` runs `api`, `worker`, `ai-worker`, `dispatcher`, `tools`, `agent` or `migrate` (schema, idempotent seed and an object store round trip). Its siblings are `assureops-encoder` and `assureops-customer-web` / `assureops-staff-web`.
+- All containers share one network namespace, so `dev.env` and the rendered portal env files apply unchanged and the Keycloak issuer is identical for browsers and services.
+- Processes that listen on 127.0.0.1 only (tool server, encoder, Ollama, labs) are published through `loopback-relay`, which forwards the namespace's interface address to loopback on the same port. If a port is published but the host gets no answer, check that the relay is running and lists that port.
+- On Windows, run the script from Git Bash. If lab paths need `MSYS_NO_PATHCONV=1`, the readiness checks still work, because they never pass `/dev/null` to the native curl.
+- Secrets are mounted at run time; images contain none.
+- Model weights are mounted read-only (`ASSUREOPS_MODELS_DIR`).
+- The project name and named volumes match `docker-compose.yml`, so data carries over when switching modes.
+
 ## Daily operation
 
 - **Operations page** (staff portal) shows outbox depth and age, job states, expired leases, ingestion rate, inference routes and runner isolation. It shows counts only, never customer content.

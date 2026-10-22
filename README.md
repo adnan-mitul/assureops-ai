@@ -48,6 +48,15 @@ npx playwright install chromium && npm run test:e2e   # browser journeys through
 
 `infra/compose/dev.env` holds generated local test values and is git-ignored. Customer accounts: `owner@acme.test`, `dev@acme.test`, `reviewer@acme.test`, `viewer@acme.test`, `dev@globex.test`. Staff accounts: `analyst@assureops.test`, `reviewer@assureops.test`, `manager@assureops.test`, `operator@assureops.test`. Staff sign-in asks for a one-time code: `python scripts/staff_otp.py analyst@assureops.test` prints the current code for the local test authenticator.
 
+## Run everything in Docker
+
+```bash
+bash scripts/docker_up.sh          # builds the images, starts the full stack, waits until it answers
+bash scripts/docker_up.sh --down   # stops it; data volumes are kept
+```
+
+`infra/compose/full-stack.yml` runs every part in containers: PostgreSQL, Redis, Keycloak, the object store, Prometheus, Ollama, the encoder service, the API, the assessment worker, the AI/analysis worker, the dispatcher, the reference agent and tool server, and both portals. All services share one network namespace (a small relay publishes the processes that bind loopback only) and listen on the same localhost ports as the local setup, so the same configuration and Keycloak issuer work in both modes; ports are published on 127.0.0.1 only. Models are mounted from `ASSUREOPS_MODELS_DIR` (default `D:/AssureOpsModels`: `ollama/` and `hf/`). Stop the local services first, since both modes use the same ports. In Docker the source analysis uses the built-in collector (REA is not installed in the image). The labs run with `--labs` and `REFUNDDESK_DIR` / `DOCVAULT_DIR` pointing at their folders.
+
 ## The supplied labs (RefundDesk, DocVault)
 
 Start each lab from its own folder (`python app.py`, ports 8811 and 8812). Then either use the portal (Applications → Register → Connect, with `profiles/connections/<app>.json` and `profiles/applications/<app>.json` as the settings and the reviewed profile), or run the scripted journey:

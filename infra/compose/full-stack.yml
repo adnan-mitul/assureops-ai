@@ -1,0 +1,217 @@
+# The whole platform in Docker on one machine (not a high-availability topology).
+#
+#   bash scripts/docker_up.sh            # render config, build images, start everything, wait until ready
+#   bash scripts/docker_up.sh --labs     # also run the RefundDesk/DocVault labs (REFUNDDESK_DIR, DOCVAULT_DIR)
+#
+# Every service joins one network namespace, owned by the `hub` container, and listens on the same localhost
+# port as the local setup. So the single configuration (dev.env and the rendered portal env files) works
+# unchanged inside the containers, and Keycloak's issuer, http://localhost:8780, is the same for the browser
+# and for every container. Only the hub publishes ports, all bound to 127.0.0.1. The project name and named
+# volumes match docker-compose.yml, so database, sessions and evidence carry over between the two modes.
+# Secrets are mounted at run time (dev.env, rendered files); none is baked into an image.
+name: assureops
+
+x-app: &app
+  image: assureops-app:local
+  network_mode: service:hub
+  restart: unless-stopped
+  volumes:
+    - ./dev.env:/app/infra/compose/dev.env:ro
+    - ../../var:/app/var
+  environment:
+    ENCODER_MODELS_DIR: /models/hf
+  depends_on:
+    migrate:
+      condition: service_completed_successfully
+
+services:
+  hub:
+    image: busybox:1.36.1
+    command: ["sh", "-c", "trap 'exit 0' TERM; sleep 2147483647 & wait"]
+    ports:
+      - "127.0.0.1:3700:3700"   # customer portal
+      - "127.0.0.1:3710:3710"   # staff portal
+      - "127.0.0.1:8700:8700"   # API
+      - "127.0.0.1:8710:8710"   # reference agent
+      - "127.0.0.1:8720:8720"   # reference MCP tool server
+      - "127.0.0.1:8730:8730"   # encoder service
+      - "127.0.0.1:8740:8740"   # Ollama
+      - "127.0.0.1:8780:8780"   # Keycloak
+      - "127.0.0.1:5441:5441"   # PostgreSQL
+      - "127.0.0.1:6391:6391"   # Redis
+      - "127.0.0.1:9100:9100"   # object store (S3)
+      - "127.0.0.1:9190:9190"   # Prometheus
+      - "127.0.0.1:8811:8811"   # RefundDesk lab (profile labs)
+      - "127.0.0.1:8812:8812"   # DocVault lab (profile labs)
+
+  # The MCP tool server, encoder service, Ollama and the labs bind 127.0.0.1 only; this makes them reachable through the hub.
+  loopback-relay:
+    image: python:3.12.8-slim-bookworm
+    network_mode: service:hub
+    restart: unless-stopped
+    command: ["python", "/relay/loopback_relay.py", "8720", "8730", "8740", "8811", "8812"]
+    volumes:
+      - ./loopback_relay.py:/relay/loopback_relay.py:ro
+
+  postgres:
+    image: postgres:16.4
+    network_mode: service:hub
+    restart: unless-stopped
+    env_file: dev.env
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: ${POSTGRES_SUPERUSER_PASSWORD}
+      PGPORT: "5441"   # the server and the init script's psql both use the local setup's port
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./postgres/01-roles.sh:/docker-entrypoint-initdb.d/01-roles.sh:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres -p 5441"]
+      interval: 5s
+      retries: 30
+
+  redis:
+    image: redis:7.4.1
+    network_mode: service:hub
+    restart: unless-stopped
+    command: ["redis-server", "--port", "6391", "--appendonly", "yes", "--appendfsync", "everysec"]
+    volumes:
+      - redisdata:/data
+
+  keycloak:
+    image: quay.io/keycloak/keycloak:26.0.7
+    network_mode: service:hub
+    restart: unless-stopped
+    command: ["start-dev", "--import-realm", "--http-port=8780"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+    volumes:
+      - ./keycloak/realm-assureops.rendered.json:/opt/keycloak/data/import/realm-assureops.json:ro
+      - ./keycloak/realm-assureops-staff.rendered.json:/opt/keycloak/data/import/realm-assureops-staff.json:ro
+
+  objectstore:
+    image: chrislusf/seaweedfs:3.80
+    network_mode: service:hub
+    restart: unless-stopped
+    command: ["server", "-dir=/data", "-s3", "-s3.port=9100", "-s3.config=/etc/seaweedfs/s3.json", "-volume.max=0", "-master.volumeSizeLimitMB=256"]
+    volumes:
+      - objdata:/data
+      - ./seaweedfs/s3.rendered.json:/etc/seaweedfs/s3.json:ro
+
+  prometheus:
+    image: prom/prometheus:v2.55.1
+    network_mode: service:hub
+    restart: unless-stopped
+    command: ["--config.file=/etc/prometheus/prometheus.yml", "--web.listen-address=:9190"]
+    volumes:
+      - ./prometheus/prometheus.netns.rendered.yml:/etc/prometheus/prometheus.yml:ro
+      - ./prometheus/alerts.yml:/etc/prometheus/alerts.yml:ro
+      - ./prometheus/metrics.token.rendered:/etc/prometheus/metrics.token:ro
+
+  ollama:
+    image: ollama/ollama:0.40.7
+    network_mode: service:hub
+    restart: unless-stopped
+    environment:
+      OLLAMA_HOST: 127.0.0.1:8740
+      OLLAMA_MODELS: /models
+      OLLAMA_MAX_LOADED_MODELS: "1"
+      OLLAMA_NUM_PARALLEL: "1"
+      OLLAMA_CONTEXT_LENGTH: "8192"
+    volumes:
+      - ${ASSUREOPS_MODELS_DIR:-D:/AssureOpsModels}/ollama:/models
+
+  encoder:
+    image: assureops-encoder:local
+    build:
+      context: ../..
+      dockerfile: infra/encoder/Dockerfile
+    network_mode: service:hub
+    restart: unless-stopped
+    volumes:
+      - ${ASSUREOPS_MODELS_DIR:-D:/AssureOpsModels}/hf:/models/hf:ro
+
+  migrate:
+    <<: *app
+    build:
+      context: ../..
+      dockerfile: infra/api/Dockerfile
+    command: ["migrate"]
+    restart: "no"
+    depends_on:
+      postgres:
+        condition: service_healthy
+      objectstore:
+        condition: service_started
+
+  api:
+    <<: *app
+    command: ["api"]
+
+  worker:
+    <<: *app
+    command: ["worker"]
+
+  ai-worker:
+    <<: *app
+    command: ["ai-worker"]
+
+  dispatcher:
+    <<: *app
+    command: ["dispatcher"]
+
+  tools:
+    <<: *app
+    command: ["tools"]
+
+  agent:
+    <<: *app
+    command: ["agent"]
+
+  customer-web:
+    image: assureops-customer-web:local
+    build:
+      context: ../..
+      dockerfile: infra/portal/Dockerfile
+      args: {APP: customer-web, PORTAL_ID: customer-web}
+    network_mode: service:hub
+    restart: unless-stopped
+    env_file: ../../apps/customer-web/.env.local
+    environment:
+      PORT: "3700"
+
+  staff-web:
+    image: assureops-staff-web:local
+    build:
+      context: ../..
+      dockerfile: infra/portal/Dockerfile
+      args: {APP: staff-web, PORTAL_ID: staff-web}
+    network_mode: service:hub
+    restart: unless-stopped
+    env_file: ../../apps/staff-web/.env.local
+    environment:
+      PORT: "3710"
+
+  refunddesk:
+    profiles: [labs]
+    image: python:3.12.8-slim-bookworm
+    network_mode: service:hub
+    working_dir: /lab
+    command: ["python", "app.py"]
+    volumes:
+      - ${REFUNDDESK_DIR:-./labs-not-configured}:/lab
+
+  docvault:
+    profiles: [labs]
+    image: python:3.12.8-slim-bookworm
+    network_mode: service:hub
+    working_dir: /lab
+    command: ["python", "app.py"]
+    volumes:
+      - ${DOCVAULT_DIR:-./labs-not-configured}:/lab
+
+volumes:
+  pgdata:
+  redisdata:
+  objdata:

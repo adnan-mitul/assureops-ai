@@ -30,12 +30,14 @@ def main():
         s.add(ServiceCredential(kind="metrics", workspace_id="platform", application_id="platform", environment="local",
                                 token_hash=hashlib.sha256(token.encode()).hexdigest()))
     (OUT / "metrics.token.rendered").write_text(token, encoding="utf-8")
-    (OUT / "prometheus.rendered.yml").write_text(
-        "global:\n  scrape_interval: 15s\n  evaluation_interval: 15s\n"
-        "rule_files:\n  - /etc/prometheus/alerts.yml\n"
-        "scrape_configs:\n  - job_name: assureops-api\n    metrics_path: /metrics\n"
-        "    authorization:\n      type: Bearer\n      credentials_file: /etc/prometheus/metrics.token\n"
-        "    static_configs:\n      - targets: ['host.docker.internal:8700']\n", encoding="utf-8")
+    for name, target in (("prometheus.rendered.yml", "host.docker.internal:8700"),  # API on the host (local services)
+                         ("prometheus.netns.rendered.yml", "127.0.0.1:8700")):  # API in the shared namespace (full Docker stack)
+        (OUT / name).write_text(
+            "global:\n  scrape_interval: 15s\n  evaluation_interval: 15s\n"
+            "rule_files:\n  - /etc/prometheus/alerts.yml\n"
+            "scrape_configs:\n  - job_name: assureops-api\n    metrics_path: /metrics\n"
+            "    authorization:\n      type: Bearer\n      credentials_file: /etc/prometheus/metrics.token\n"
+            f"    static_configs:\n      - targets: ['{target}']\n", encoding="utf-8")
     print("rendered prometheus scrape config and a new metrics credential (value not shown)")
 
 

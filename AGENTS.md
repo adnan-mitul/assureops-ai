@@ -13,7 +13,7 @@ The execution specification is `AssureOps-AI-Production-Execution-Plan-v5.md` (k
 - `profiles/` control catalog, per-application profiles, connection templates, coverage contracts, qualification holdouts. `infra/compose` Postgres, Redis, Keycloak, SeaweedFS (private S3).
 
 ## Commands
-- Infra: `docker compose --env-file infra/compose/dev.env -f infra/compose/docker-compose.yml up -d`
+- Infra: `docker compose --env-file infra/compose/dev.env -f infra/compose/docker-compose.yml up -d`; whole platform in Docker: `bash scripts/docker_up.sh` (`--down` to stop)
 - Reset and seed: `.venv/Scripts/python scripts/seed.py --reset`
 - Backend services: `bash scripts/start_services.sh` (stop: `powershell -File scripts/stop_services.ps1`)
 - Portals: `npm run dev:customer`, `npm run dev:staff`

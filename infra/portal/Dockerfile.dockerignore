@@ -1,0 +1,8 @@
+**/node_modules
+**/.next
+.venv
+var
+.git
+**/.env.local
+infra/compose/dev.env
+**/*.rendered*
