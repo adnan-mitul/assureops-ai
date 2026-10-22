@@ -53,6 +53,8 @@ jobs:
       ALLOW_PRIVATE_TARGETS: "true"
       STAFF_MFA_REQUIRED: "true"
     steps:
+      - name: Free runner disk (the ML requirements and the audit's temporary environment exceed the default space)
+        run: sudo rm -rf /usr/share/dotnet /usr/local/lib/android /opt/ghc /opt/hostedtoolcache/CodeQL && df -h / | tail -1
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
