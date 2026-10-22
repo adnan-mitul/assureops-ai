@@ -73,6 +73,12 @@ Alternatives: a **baseline** from a few declared facts on Connect, or a **JSON**
 
 ## 6. Stay current
 
-- **Release gate in CI**: your pipeline asks AssureOps about an exact commit and gets a signed, expiring decision (`docs/integrations/customer-release-gate.yml`). A new incident invalidates it.
+- **Release gate in CI (GitHub)**:
+  1. The owner issues a CI credential on **Applications → AI → Release gate and repository → Issue CI credential**. It is shown once; store it as the repository secret `ASSUREOPS_CI_TOKEN`, and set the repository variable `ASSUREOPS_API_URL`.
+  2. The owner **binds** the repository (`owner/name`) to the application.
+  3. Copy `docs/integrations/customer-release-gate.yml` into the repository's `.github/workflows/`.
+  4. When you submit a release, enter its **commit SHA** next to **Submit release**.
+
+  Each pipeline run then asks AssureOps about that exact commit and receives a signed, expiring decision. It deploys only on `allow`, and re-verifies the receipt at deploy time; a new incident or policy change invalidates it. With a GitHub App installed and `GITHUB_STATUS_TOKEN` set, the decision also appears on the commit as the `assureops/release-gate` status.
 - **Monitoring**: the event bridge sends runtime events. Only a tool-side verified unauthorized effect opens an incident. Closing one is a reviewed decision.
 - **Notice board**: every release, plan change, AI review and finished assessment is posted for the team automatically.

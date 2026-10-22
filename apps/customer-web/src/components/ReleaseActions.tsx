@@ -1,9 +1,10 @@
 "use client";
 
 import { newIdempotencyKey, post, useAction } from "@assureops/ui/client";
-import { Button } from "@assureops/ui/components";
+import { Button, inputClass } from "@assureops/ui/components";
 import { FlaskConical, Loader2, RefreshCw, Rocket, Upload } from "lucide-react";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
 import { useApp } from "@/lib/app-context";
 
 /** Submit a release, schedule the change-driven retest plan or a full assessment. */
@@ -13,6 +14,8 @@ export function ReleaseActions({ applicationId, changeId, running, onChange, sho
   const { canWrite } = useApp();
   const router = useRouter();
   const { busy, error, run } = useAction();
+  const [commit, setCommit] = useState("");  // the Git commit of this release; the CI release gate matches it exactly
+  const commitValid = commit === "" || /^[0-9a-f]{7,40}$/.test(commit);
   if (!canWrite) {
     return <p className="text-xs text-muted">Your role can view results but cannot submit releases or start assessments.</p>;
   }
@@ -34,7 +37,11 @@ export function ReleaseActions({ applicationId, changeId, running, onChange, sho
             ))}
           </div>
         )}
-        <Button disabled={disabled} onClick={() => run("submit", () => post(`/v1/applications/${applicationId}/releases`), onChange)}>
+        <input aria-label="Commit SHA of this release (optional)" placeholder="commit SHA (optional)" value={commit}
+          onChange={(e) => setCommit(e.target.value.trim().toLowerCase())}
+          className={`${inputClass} w-56 py-1.5 font-mono text-xs ${commitValid ? "" : "border-red-400"}`} />
+        <Button disabled={disabled || !commitValid} onClick={() => run("submit", () => post(`/v1/applications/${applicationId}/releases`,
+          commit ? { source_commit: commit } : {}), onChange)}>
           <Upload className="size-4" aria-hidden /> Submit release
         </Button>
         {changeId && (
