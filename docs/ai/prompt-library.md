@@ -393,7 +393,7 @@ No generative prompt: this phase calls an encoder (embedding, NLI classification
 ## Phase G: input screening
 
 - Candidate: `meta-llama/Llama-Prompt-Guard-2-86M` (86M), kind `classify`
-- Prompt version `G-1`, schema version `G-1`
+- Prompt version `G-2`, schema version `G-2`
 - Purpose: Bounded untrusted text -> screening signal; never authorizes an action
 
 No generative prompt: this phase calls an encoder (embedding, NLI classification or screening) on bounded inputs.

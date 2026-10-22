@@ -153,6 +153,25 @@ def request_phase(application_id: str, phase: str, body: PhaseIn, caller: Caller
         return service.result_json(row)
 
 
+@router.post("/applications/{application_id}/profiles/ai-plan", status_code=201)
+def build_ai_plan(application_id: str, caller: Caller = CustomerCaller):
+    """Assemble one proposed profile revision from this application's accepted phase A and C proposals; another person activates it."""
+    from assureops_ai import plan, service
+    from assureops_domain import connections
+
+    caller.require_role("owner", "developer")
+    with tenant_session(caller.workspace_id) as s:
+        app = svc.get_application(s, application_id)
+        require_application_writer(s, caller, app.id)
+        try:
+            row, summary = plan.assemble(s, app, actor=caller.username)
+        except service.AiError as exc:
+            raise api_error(409, exc.code, exc.detail)
+        except connections.OnboardingError as exc:
+            raise api_error(422, exc.code, exc.detail)
+        return {**svc.profile_row_json(row), "plan": summary}
+
+
 @router.get("/applications/{application_id}/ai/results")
 def list_results(application_id: str, caller: Caller = CustomerCaller):
     from assureops_ai import service

@@ -2,6 +2,11 @@
 
     python scripts/lab_journey.py --app refunddesk-demo --name RefundDesk --lab-readme <lab>/README.md
     python scripts/lab_journey.py --app docvault-demo --name DocVault --lab-readme <lab>/README.md
+    python scripts/lab_journey.py --app refunddesk-ai --connection refunddesk-demo --name RefundDesk --lab-readme <lab>/README.md --ai-plan
+
+With --ai-plan no profile file is used: the application is registered with its declared purpose, the developer
+requests phases A and C, a reviewer accepts each proposal, the developer builds the test plan from the accepted
+proposals and a reviewer activates it. The journey then verifies the connection and runs the R1 assessment.
 
 Steps (integration plan §5 acceptance): connect -> verify -> profile proposed by a
 developer and activated by a reviewer -> R1 full assessment -> R2 deployed: show
@@ -74,6 +79,27 @@ def wait_for(job_id: str, ws: str, timeout: int = 600) -> dict:
     raise SystemExit(f"assessment {job_id} did not finish within {timeout}s")
 
 
+def ai_phase(app_id: str, phase: str, requester: Caller, reviewer: Caller, timeout: int = 3600) -> dict:
+    """Request one phase as the developer, wait for the model, and have a different person accept a valid proposal."""
+    from assureops_api import ai_routes
+    from assureops_domain.models import AiResult
+
+    row = ai_routes.request_phase(app_id, phase, ai_routes.PhaseIn(), caller=requester)
+    started, deadline = time.time(), time.time() + timeout
+    while time.time() < deadline:
+        with tenant_session(requester.workspace_id) as s:
+            result = s.get(AiResult, row["id"])
+            status, output, error = result.status, result.output, result.error
+        if status not in ("pending", "running"):
+            break
+        time.sleep(5)
+    print(f"  phase {phase}: {status} after {round(time.time() - started)} s{(' (' + error + ')') if error else ''}")
+    if status != "proposed":
+        raise SystemExit(f"phase {phase} produced no acceptable proposal ({status}); rerun or build the plan by hand")
+    ai_routes.review_result(row["id"], ai_routes.AiReviewIn(decision="accept", note=f"Reviewed the phase {phase} proposal"), caller=reviewer)
+    return output
+
+
 def lab_switch(conn_cfg: dict, actors: dict, release: str):
     r = httpx.post(f"{conn_cfg['config']['base_url']}/admin/release", json={"release": release},
                    headers={"Authorization": f"Bearer {actors['lab_admin']}"}, timeout=5)
@@ -91,14 +117,21 @@ def main():
     parser.add_argument("--name", required=True)
     parser.add_argument("--lab-readme", required=True)
     parser.add_argument("--live-traffic", default=None, help="JSON file with one live (non-test) request to send on R2")
+    parser.add_argument("--connection", default=None, help="connection file name under profiles/connections (default: --app)")
+    parser.add_argument("--ai-plan", action="store_true", help="build the test plan with phases A and C instead of a profile file")
+    parser.add_argument("--purpose", default=None, help="declared application purpose (phase A reads it when no document is added)")
+    parser.add_argument("--source-file", default=None, help="policy or requirements text a reviewer approves as phase A's reference source")
     args = parser.parse_args()
 
     actors_file = ROOT / "var" / "demo-actors" / f"{args.app}.json"
     subprocess.run([sys.executable, str(ROOT / "scripts" / "demo_actor_tokens.py"), "--readme", args.lab_readme, "--out", str(actors_file)], check=True)
     actors = json.loads(actors_file.read_text(encoding="utf-8"))
-    conn_cfg = json.loads((ROOT / "profiles" / "connections" / f"{args.app}.json").read_text(encoding="utf-8"))
+    conn_name = args.connection or args.app
+    conn_cfg = json.loads((ROOT / "profiles" / "connections" / f"{conn_name}.json").read_text(encoding="utf-8"))
     conn_cfg["config"] = {k: v for k, v in conn_cfg["config"].items() if v is not None}
-    raw_profile = json.loads((ROOT / "profiles" / "applications" / f"{args.app}.json").read_text(encoding="utf-8"))
+    profile_file = ROOT / "profiles" / "applications" / f"{args.app}.json"
+    raw_profile = None if args.ai_plan else json.loads(profile_file.read_text(encoding="utf-8"))
+    purpose = args.purpose or (raw_profile["scope"]["statement"] if raw_profile else f"{args.name}, an AI application under assessment")
     owner, dev, reviewer = customer("owner@acme.test"), customer("dev@acme.test"), customer("reviewer@acme.test")
     analyst, senior, manager = staff("analyst@assureops.test"), staff("reviewer@assureops.test"), staff("manager@assureops.test")
     ws = owner.workspace_id
@@ -108,7 +141,7 @@ def main():
     with tenant_session(ws) as s:
         exists = s.get(Application, args.app) is not None
     if not exists:
-        rc.register_application(rc.ApplicationIn(id=args.app, name=args.name, purpose=raw_profile["scope"]["statement"], environment="staging",
+        rc.register_application(rc.ApplicationIn(id=args.app, name=args.name, purpose=purpose, environment="staging",
                                                  mode="observe_only"), caller=owner)
     rh.assign_application_developer(args.app, dev.username, caller=owner)  # the owner assigns the developer to this application
     conn = ro.create_connection(args.app, ro.ConnectionIn(adapter_id=conn_cfg["adapter_id"], config=conn_cfg["config"],
@@ -117,7 +150,23 @@ def main():
           f"{sorted(v['secret']['fingerprint'] for v in conn['actors'].values())[:2]}...")
 
     step("2. Profile: proposed by the developer, activated by a different reviewer")
-    proposed = ro.propose_profile(args.app, ro.ProfileIn(profile=raw_profile), caller=dev)
+    if args.ai_plan:
+        from assureops_api import ai_routes
+
+        if args.source_file:
+            src = ai_routes.add_source(args.app, ai_routes.SourceIn(title=f"{args.name} policy", kind="policy",
+                                                                    text=Path(args.source_file).read_text(encoding="utf-8")), caller=reviewer)
+            print(f"  reference source approved by {reviewer.username}: {src['id']} (sha256 {src['sha256'][:12]})")
+        reqs = ai_phase(args.app, "A", dev, reviewer)
+        print(f"  requirements: {[(r['control'], r['statement'][:60]) for r in reqs.get('requirements', [])]}")
+        tests = ai_phase(args.app, "C", dev, reviewer)
+        print(f"  proposed tests: {[(t['control'], t['template'], t['name'][:50]) for t in tests.get('tests', [])]}")
+        built = ai_routes.build_ai_plan(args.app, caller=dev)
+        print(f"  plan r{built['revision']}: {built['plan']['tests']} tests on {built['plan']['controls_tested']}, "
+              f"not assessed {built['plan']['controls_not_assessed']}, skipped {built['plan']['skipped']}")
+        proposed = built
+    else:
+        proposed = ro.propose_profile(args.app, ro.ProfileIn(profile=raw_profile), caller=dev)
     try:
         ro.activate_profile(args.app, proposed["revision"], ro.ProfileDecisionIn(note="self-activation attempt"), caller=dev)
         print("ERROR: proposer activated their own profile")
@@ -146,7 +195,7 @@ def main():
     except Exception as exc:
         print(f"source {source_id}: {getattr(exc, 'detail', exc)}")
     bridge_cmd = [sys.executable, "-m", "assureops_connectors.bridge", "--api", API, "--source-id", source_id, "--source-token-file", str(token_file),
-                  "--connection", str(ROOT / "profiles" / "connections" / f"{args.app}.json"), "--actors-file", str(actors_file), "--once"]
+                  "--connection", str(ROOT / "profiles" / "connections" / f"{conn_name}.json"), "--actors-file", str(actors_file), "--once"]
 
     def bridge():
         out = subprocess.run(bridge_cmd, capture_output=True, text=True, cwd=ROOT)
@@ -185,6 +234,9 @@ def main():
 
     step("6. R1 full assessment")
     assess("R1", "full")
+    if args.ai_plan:
+        print("\nAI-built plan journey complete: the plan came from accepted phase A and C proposals, not from a profile file.")
+        return
     bridge()
 
     step("7. R2 deployed (seeded fault): stale evidence, dependency-driven retest, failures preserved")

@@ -10,6 +10,10 @@ state and the workflow continues with reviewers.
 from dataclasses import dataclass, field
 
 QUICK_STATUS = "quick_check"  # qualification record of a 20-case quick run that found no critical error: informational only
+# Phase G-2 flag threshold on Prompt Guard 2's injection probability. Its scores are extreme: on phase-G-dev-v2 (60 cases,
+# families disjoint from the held-out sets) benign text scored at most 0.0006 and attacks at least 0.0009, so 0.5 missed most
+# attacks. Chosen on the development split only; a flag asks for review and never blocks or authorizes anything.
+SCREEN_THRESHOLD = 0.0008
 
 SPAN = {"type": "object", "required": ["source_id", "quote"], "properties": {
     "source_id": {"type": "string"}, "quote": {"type": "string", "minLength": 3, "maxLength": 400}}}
@@ -79,7 +83,7 @@ PHASES: dict[str, Phase] = {p.id: p for p in [
     Phase("R", "retrieval", "embed", "BAAI/bge-small-en-v1.5", "33.4M",
           "Authorized English sources -> embeddings; hybrid retrieval only after comparison with lexical search", "R-1", "R-1"),
     Phase("G", "input_screening", "classify", "meta-llama/Llama-Prompt-Guard-2-86M", "86M",
-          "Bounded untrusted text -> screening signal; never authorizes an action", "G-1", "G-1", external_approved=("groq",), optional=True),
+          "Bounded untrusted text -> screening signal; never authorizes an action", "G-2", "G-2", external_approved=("groq",), optional=True),
 ]}
 
 

@@ -22,7 +22,7 @@ from assureops_domain.models import (
 from assureops_domain.profile import canonical_hash, control_catalog, try_for_application
 
 from . import prompts, retrieval, router, validation
-from .registry import PHASES
+from .registry import PHASES, SCREEN_THRESHOLD
 from .registry import constrained as registry_constrained
 
 WORKER_ID = f"{socket.gethostname()}:{os.getpid()}"
@@ -93,22 +93,35 @@ def _facts_from_snapshot(snapshot: dict) -> dict[str, str]:
     return facts
 
 
+def _declared_source(s, app) -> list[dict]:
+    """The application's own declaration as a quotable source: purpose, environment and collected component names (no evidence)."""
+    if not (app.purpose or "").strip():
+        return []
+    release = s.scalars(select(Release).where(Release.application_id == app.id).order_by(Release.created_at.desc())).first()
+    parts = [f"Application purpose: {app.purpose.strip()}", f"Environment: {app.environment}."]
+    if release:
+        comps = sorted(release.manifest.get("components", {}))
+        parts.append(f"Collected components of release {release.version}: {', '.join(comps)}.")
+    return [{"id": f"declared:{app.id}", "title": f"{app.name} (declared by the application owner)", "text": " ".join(parts)}]
+
+
 def build_input(s, row: AiResult) -> tuple[dict, dict]:
     """(data for the prompt, validation context). Only references named in the request are read."""
     refs = row.request["refs"]
     app = s.get(Application, row.application_id)
     if row.phase == "A":
         docs = s.scalars(select(SourceDocument).where(SourceDocument.application_id == app.id)).all()
-        if not docs:
-            raise AiError("no_sources", "no approved reference sources for this application")
         ids = set(refs.get("source_ids") or [d.id for d in docs])
-        docs = [d for d in docs if d.id in ids]
-        method, hits = retrieval.hybrid_search([{"id": d.id, "title": d.title, "text": d.text} for d in docs],
-                                               refs.get("query") or app.purpose or "requirements", k=8)
+        sources = [{"id": d.id, "title": d.title, "text": d.text} for d in docs if d.id in ids]
+        if not sources:  # a newly connected application: its declared purpose and collected components are the only source
+            sources = _declared_source(s, app)
+        if not sources:
+            raise AiError("no_sources", "add a reference document or the application's purpose before requesting requirements")
+        method, hits = retrieval.hybrid_search(sources, refs.get("query") or app.purpose or "requirements", k=8)
         data = {"application_purpose": app.purpose,
                 "controls": {k: f"{v['name']}: {v['description']}" for k, v in control_catalog()["controls"].items()},
                 "sources": [{"source_id": c.source_id, "title": c.title, "text": c.text} for _, c in hits]}
-        return data, {"sources": {d.id: d.text for d in docs}}
+        return data, {"sources": {x["id"]: x["text"] for x in sources}}
     if row.phase in ("B", "C"):
         p = try_for_application(s, app.id)
         accepted = [r.output for r in s.scalars(select(AiResult).where(AiResult.application_id == app.id, AiResult.phase == "A",
@@ -247,16 +260,21 @@ def _execute(workspace_id: str, result_id: str) -> str:
     result = client.generate(model=route.model, system=prompts.SYSTEM[row.phase], user=user, max_tokens=row.request["budget_tokens"],
                              json_mode=client.json_mode(route.model) if hasattr(client, "json_mode") else "json_object",
                              schema=registry_constrained(row.phase, ctx))
-    check = validation.validate(row.phase, result.parsed, ctx) if result.ok else {"status": result.status, "problems": [result.error or ""]}
+    parsed, dropped = result.parsed, []
+    if result.ok and row.phase == "C" and not validation.check_schema("C", parsed):
+        parsed, dropped = validation.keep_runnable_c_tests(parsed, ctx)
+    check = validation.validate(row.phase, parsed, ctx) if result.ok else {"status": result.status, "problems": [result.error or ""]}
+    if dropped:
+        check = {**check, "removed": dropped}
     call = {"provider": route.provider, "model": route.model, "request_id": result.request_id, "prompt_version": phase.prompt_version,
             "schema_version": phase.schema_version, "input_sha256": canonical_hash({"system": prompts.SYSTEM[row.phase], "user": user}),
             "status": "succeeded" if check["status"] == "valid" else check["status"], "validation": check, "usage": result.usage,
             "latency_ms": result.latency_ms, "attempts": result.attempts}
     if check["status"] == "valid":
-        return _finish(workspace_id, result_id, token, "proposed", output=result.parsed, call=call, route=route,
-                       spans=_spans(row.phase, result.parsed), unknowns=result.parsed.get("unknowns") or result.parsed.get("gaps") or [])
+        return _finish(workspace_id, result_id, token, "proposed", output=parsed, call=call, route=route,
+                       spans=_spans(row.phase, parsed), unknowns=parsed.get("unknowns") or parsed.get("gaps") or [])
     if check["status"] == "unsupported_claims":
-        return _finish(workspace_id, result_id, token, "review_required", output=result.parsed, call=call, route=route,
+        return _finish(workspace_id, result_id, token, "review_required", output=parsed, call=call, route=route,
                        error="; ".join(check["problems"])[:2000])
     retry = result.status in ("rate_limited", "timeout", "unavailable")
     return _finish(workspace_id, result_id, token, "pending" if retry else "unavailable", call=call, route=route,
@@ -274,8 +292,8 @@ def _screen(workspace_id, result_id, token, route, data) -> str:
         status, score = client.screen(validation.minimize(text) if route.external else text, route.model)
         statuses.add(status)
         if status == "succeeded":
-            items.append({"excerpt": text[:160], "score": round(score, 4), "flagged": score >= 0.5})
-    call = {"provider": route.provider, "model": route.model, "prompt_version": "G-1", "schema_version": "G-1",
+            items.append({"excerpt": text[:160], "score": round(score, 6), "flagged": score >= SCREEN_THRESHOLD})
+    call = {"provider": route.provider, "model": route.model, "prompt_version": "G-2", "schema_version": "G-2",
             "input_sha256": canonical_hash(data), "status": "succeeded" if items else "unavailable", "validation": {}, "usage": {}}
     if not items:
         return _finish(workspace_id, result_id, token, "unavailable", call=call, route=route, error=f"screening failed: {sorted(statuses)}")
@@ -407,8 +425,12 @@ def review(s, row: AiResult, *, decision: str, reviewer: str, note: str) -> dict
             effects["edges_proposed"] = created
         if row.phase == "C":
             p = try_for_application(s, app.id)
-            if p is None:
-                raise AiError("no_profile", "activate a profile before adding proposed tests")
+            if p is None:  # no plan yet: the accepted proposal waits for "Build test plan" (plan.assemble)
+                effects["plan_input"] = True
+                row.reviewer, row.review_note, row.updated_at = reviewer, note, now()
+                cases.audit(s, workspace_id=row.workspace_id, actor=reviewer, actor_kind="customer", action=f"ai.{decision}", target=row.id,
+                            detail=effects)
+                return effects
             from assureops_domain.models import ApplicationProfile
 
             active = s.scalars(select(ApplicationProfile).where(ApplicationProfile.application_id == app.id, ApplicationProfile.status == "active")).first()
@@ -419,7 +441,8 @@ def review(s, row: AiResult, *, decision: str, reviewer: str, note: str) -> dict
                                      "template": t["template"], "args": t["args"], "requires_review": True})
             major, minor, patch = (int(x) for x in raw["version"].split("."))
             raw["version"] = f"{major}.{minor + 1}.0"
-            revision = connections.propose_profile(s, app, raw, source="ai", actor=f"ai:{row.id}")
+            # The reviewer who accepted the proposal is its proposer, so a different person must activate the revision.
+            revision = connections.propose_profile(s, app, raw, source="ai", actor=reviewer)
             effects["profile_revision_proposed"] = revision.revision
     row.reviewer, row.review_note, row.updated_at = reviewer, note, now()
     cases.audit(s, workspace_id=row.workspace_id, actor=reviewer, actor_kind="customer", action=f"ai.{decision}", target=row.id, detail=effects)

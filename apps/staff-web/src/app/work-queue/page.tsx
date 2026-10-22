@@ -13,8 +13,6 @@ import { useStaffAction } from "@/lib/actions";
 import { useStaff } from "@/lib/staff-context";
 import type { Duty, Governance, QueueItem } from "@/lib/types";
 
-const KNOWN_STAFF = ["analyst@assureops.test", "reviewer@assureops.test"];
-
 function ReassignInline({ caseId, duty, from, staff, run, busy }: {
   caseId: string; duty: Duty; from: string; staff: string[];
   run: (key: string, fn: () => Promise<unknown>, success?: string) => Promise<unknown>; busy: string | null;
@@ -102,8 +100,9 @@ function WorkQueue() {
   const [managing, setManaging] = useState<string | null>(null);
   const claim = useStaffAction(refresh);
 
-  const staff = Array.from(new Set([...KNOWN_STAFF, ...(gov?.staff_permissions
-    .filter((s) => s.roles.includes("analyst") || s.roles.includes("senior_reviewer")).map((s) => s.user) ?? [])]));
+  // Reassignment targets come from the staff directory: whoever currently holds an analyst or senior reviewer role.
+  const staff = Array.from(new Set(gov?.staff_permissions
+    .filter((s) => s.roles.includes("analyst") || s.roles.includes("senior_reviewer")).map((s) => s.user) ?? []));
 
   const rows = (data ?? []).filter((r) => !q || [r.title, r.workspace, r.application, r.state, r.case_id].some((v) => v.toLowerCase().includes(q)));
 

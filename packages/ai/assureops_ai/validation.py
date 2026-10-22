@@ -81,16 +81,7 @@ def validate(phase: str, output: dict, ctx: dict) -> dict:
             if link["component_id"] not in comps:
                 unsupported.append(f"unknown component {link['component_id']}")
     elif phase == "C":
-        from assureops_connectors import templates
-
-        for test in output["tests"]:
-            try:
-                templates.validate_args(test["template"], test["args"])
-                used = templates.actors_used(test["template"], test["args"])
-                if used - set(ctx["actors"]) - {"anonymous", "invalid"}:
-                    unsupported.append(f"{test['name']}: undeclared actors {sorted(used - set(ctx['actors']))}")
-            except templates.TemplateError as exc:
-                unsupported.append(f"{test['name']}: {exc}")
+        unsupported += [problem for test in output["tests"] if (problem := c_test_problem(test, ctx))]
     elif phase == "E":
         unsupported += check_spans(output["spans"], ctx["sources"])
         unsupported += [f"unknown test {t}" for t in output["retest_suggestions"] if t not in set(ctx["test_ids"])]
@@ -110,6 +101,34 @@ def validate(phase: str, output: dict, ctx: dict) -> dict:
     if unsupported:
         return {"status": "unsupported_claims", "problems": unsupported}
     return {"status": "valid", "problems": []}
+
+
+def c_test_problem(test: dict, ctx: dict) -> str | None:
+    """Why one proposed phase C test cannot run as written (catalogue arguments, declared actors), or None."""
+    from assureops_connectors import templates
+
+    try:
+        templates.validate_args(test["template"], test["args"])
+        used = templates.actors_used(test["template"], test["args"])
+    except templates.TemplateError as exc:
+        return f"{test['name']}: {exc}"
+    if used - set(ctx["actors"]) - {"anonymous", "invalid"}:
+        return f"{test['name']}: undeclared actors {sorted(used - set(ctx['actors']))}"
+    return None
+
+
+def keep_runnable_c_tests(output: dict, ctx: dict) -> tuple[dict, list[str]]:
+    """Serving path for phase C: tests that cannot run are removed and listed, so one malformed test does not void the others.
+
+    Removed tests never reach a proposal; the reviewer sees each with its reason. Qualification still scores the whole output."""
+    kept, dropped = [], []
+    for test in output.get("tests", []):
+        problem = c_test_problem(test, ctx)
+        (dropped.append(problem) if problem else kept.append(test))
+    if not dropped or not kept:
+        return output, []
+    notes = [f"removed by validation: {d}"[:300] for d in dropped]
+    return {**output, "tests": kept, "unknowns": [*output.get("unknowns", []), *notes][:12]}, dropped
 
 
 def minimize(text: str) -> str:

@@ -12,6 +12,8 @@ import re
 
 import jsonschema
 
+from assureops_domain.matchers import OPERATORS
+
 REQ = {"type": "object", "required": ["method", "path"], "properties": {
     "method": {"enum": ["GET", "POST", "PUT", "PATCH", "DELETE"]}, "path": {"type": "string", "pattern": "^/"},
     "body": {}, "headers": {"type": "object"}}}
@@ -23,8 +25,19 @@ TEMPLATES: dict[str, dict] = {
     "scenario": {
         "title": "Declared multi-step scenario",
         "description": "Ordered requests as named actors with captures and assertions.",
-        "schema": {"type": "object", "required": ["steps", "assert"], "properties": {"steps": {"type": "array"}, "assert": {"type": "array"},
-                                                                                    "vars": {"type": "object"}}},
+        # Shaped like the scenario engine's own checks (scenario.validate), so constrained decoding and review see runnable steps only.
+        "schema": {"type": "object", "required": ["steps", "assert"], "properties": {
+            "steps": {"type": "array", "minItems": 1, "items": {"anyOf": [
+                {"type": "object", "required": ["kind"], "properties": {"kind": {"const": "manifest"}, "name": {"type": "string"}}},
+                {"type": "object", "required": ["name", "method", "path"], "properties": {
+                    "name": {"type": "string", "minLength": 1}, "actor": ACTOR, "method": REQ["properties"]["method"],
+                    "path": REQ["properties"]["path"], "body": {}, "headers": {"type": "object"}, "capture": {"type": "object"},
+                    "parallel": {"type": "integer"}, "repeat": {"type": "integer"}}}]}},
+            "assert": {"type": "array", "minItems": 1, "items": {"anyOf": [
+                {"type": "object", "required": ["any"], "properties": {"any": {"type": "array", "minItems": 1}}},
+                {"type": "object", "required": ["step", "op"], "properties": {"step": {"type": "string"}, "op": {"enum": list(OPERATORS)},
+                                                                              "path": {"type": "string"}}}]}},
+            "vars": {"type": "object"}}},
     },
     "manifest_identity": {
         "title": "Running release matches the assessed manifest",
@@ -111,6 +124,13 @@ def validate_args(template: str, args: dict) -> None:
         jsonschema.validate(args, TEMPLATES[template]["schema"])
     except jsonschema.ValidationError as exc:
         raise TemplateError(f"{template} arguments invalid at {'/'.join(map(str, exc.absolute_path)) or 'args'}: {exc.message}")
+    if template == "scenario":  # names, references and bounds, as the engine checks them (actors are checked against the connection later)
+        from .scenario import ScenarioError, validate
+
+        try:
+            validate(args, {s.get("actor", "anonymous") for s in args["steps"]} | {"anonymous", "invalid"})
+        except ScenarioError as exc:
+            raise TemplateError(f"scenario arguments invalid: {exc}")
 
 
 def _step(name: str, actor: str, request: dict, **extra) -> dict:

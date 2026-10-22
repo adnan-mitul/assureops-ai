@@ -28,6 +28,8 @@ python -m venv .venv && .venv/Scripts/python -m pip install -r requirements.txt 
 bash scripts/start_services.sh
 ```
 
+To test without any predefined application, seed with `scripts/seed.py --reset --users-only`, or set `ASSUREOPS_SEED_APPS=false` for the Docker `migrate` step. The demo workspaces and users still exist for signing in, but every application is submitted in the portal, connected and given an AI-built or baseline test plan by its own users. New customers can also sign up themselves (registration is open in the customer realm).
+
 Hosted environments replace `dev.env` with a secret manager, enable SMTP with `verifyEmail` in the customer realm, use HTTPS with Secure cookies, and set `STAFF_MFA_REQUIRED=true` (the default).
 
 ### Everything in Docker

@@ -12,7 +12,7 @@ import time
 from pathlib import Path
 
 from . import prompts, retrieval, router, validation
-from .registry import PHASES, QUICK_STATUS, constrained  # noqa: F401 (QUICK_STATUS used by scripts)
+from .registry import PHASES, QUICK_STATUS, SCREEN_THRESHOLD, constrained  # noqa: F401 (QUICK_STATUS used by scripts)
 
 HOLDOUTS = Path(__file__).resolve().parents[3] / "profiles" / "qualification"
 READY_CLAIM = re.compile(r"\b(is|are|now) (fully )?ready\b|\bready for (release|deployment|production)\b|\bno blocking\b", re.I)
@@ -226,9 +226,9 @@ def run_screening_g(route: router.Route, log=print) -> dict:
             details.append({"case": case["id"], "status": status})
             log(f"  {case['id']}: {status}")
             continue
-        flagged = score >= 0.5
+        flagged = score >= SCREEN_THRESHOLD  # the production threshold (registry, G-2)
         correct += flagged == case["malicious"]
-        details.append({"case": case["id"], "malicious": case["malicious"], "score": round(score, 4), "flagged": flagged})
+        details.append({"case": case["id"], "malicious": case["malicious"], "score": round(score, 6), "flagged": flagged})
         log(f"  {case['id']}: malicious={case['malicious']} score={score:.4f}")
         time.sleep(0.3)
     answered = sum(1 for d in details if "score" in d)

@@ -5,12 +5,18 @@ its coverage contract and scoped machine credentials.
 Customer applications (for example the RefundDesk and DocVault labs) are not
 seeded: they are connected through the portal or scripts/connect_application.py.
 
-  python scripts/seed.py            # idempotent seed
-  python scripts/seed.py --reset    # drop schema, re-migrate, clear local evidence and ledgers, then seed
+  python scripts/seed.py              # idempotent seed
+  python scripts/seed.py --reset      # drop schema, re-migrate, clear local evidence and ledgers, then seed
+  python scripts/seed.py --users-only # demo users and workspaces only: no predefined application
+
+With --users-only (or ASSUREOPS_SEED_APPS=false) the demo accounts exist so people can sign in and test, but no
+application is predefined: an owner or developer submits the application in the portal, connects it, has the AI
+phases propose its test plan, and a second person activates it. New customers can also sign up themselves.
 """
 
 import argparse
 import hashlib
+import os
 import shutil
 import subprocess
 import sys
@@ -61,8 +67,20 @@ def reset():
     print("schema reset and migrated; local evidence, ledgers and agent release cleared")
 
 
-def seed():
+def seed_staff():
+    with platform_session() as s:
+        for username, display, roles in STAFF:
+            user = s.scalars(select(User).where(User.username == username)).first() or User(username=username, display_name=display, kind="staff")
+            s.add(user)
+            s.flush()
+            for role in roles:
+                if not s.scalars(select(StaffRole).where(StaffRole.user_id == user.id, StaffRole.role == role)).first():
+                    s.add(StaffRole(user_id=user.id, role=role))
+
+
+def seed(with_apps: bool = True):
     env = _dev_env()
+    seed_staff()
     with platform_session() as s:
         for ws, name in [("acme", "Acme Corp"), ("globex", "Globex Ltd")]:
             if not s.get(Workspace, ws):
@@ -74,13 +92,9 @@ def seed():
             s.flush()
             if not s.scalars(select(Membership).where(Membership.user_id == user.id, Membership.workspace_id == ws)).first():
                 s.add(Membership(workspace_id=ws, user_id=user.id, role=role))
-        for username, display, roles in STAFF:
-            user = s.scalars(select(User).where(User.username == username)).first() or User(username=username, display_name=display, kind="staff")
-            s.add(user)
-            s.flush()
-            for role in roles:
-                if not s.scalars(select(StaffRole).where(StaffRole.user_id == user.id, StaffRole.role == role)).first():
-                    s.add(StaffRole(user_id=user.id, role=role))
+        if not with_apps:
+            print("seeded staff, demo workspaces and demo users; applications are submitted through the portal")
+            return
         creds = [("runner", "RUNNER_SERVICE_TOKEN"), ("gateway", "GATEWAY_SERVICE_TOKEN"), ("tool_server", "TOOLS_SERVICE_TOKEN")]
         for kind, key in creds:
             if not s.scalars(select(ServiceCredential).where(ServiceCredential.token_hash == h(env[key]))).first():
@@ -127,7 +141,8 @@ def seed():
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
     parser.add_argument("--reset", action="store_true")
+    parser.add_argument("--users-only", action="store_true", help="demo users and workspaces only; no predefined application")
     args = parser.parse_args()
     if args.reset:
         reset()
-    seed()
+    seed(with_apps=not (args.users_only or os.environ.get("ASSUREOPS_SEED_APPS", "").lower() in ("false", "0", "no")))

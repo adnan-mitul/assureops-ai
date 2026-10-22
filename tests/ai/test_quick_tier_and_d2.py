@@ -50,3 +50,31 @@ def test_quick_suites_are_v2_subsets_with_balanced_classifier_labels():
         assert len(quick[field]) == 20 and all(c in full[field] for c in quick[field])
     labels = Counter(c["label"] for c in json.loads((ROOT / "profiles/qualification/phase-D-holdout-quick.json").read_text())["cases"])
     assert min(labels.values()) >= 6
+
+
+def test_serving_phase_c_removes_only_the_tests_that_cannot_run():
+    from assureops_ai import validation
+
+    ctx = {"actors": ["customer"], "templates": []}
+    good = {"template": "auth_required", "control": "C01", "name": "Anonymous chat is refused", "args": {"request": {"method": "POST", "path": "/chat"}}}
+    bad = {"template": "role_forbidden", "control": "C01", "name": "Forbidden role", "args": {}}
+    stranger = {"template": "data_not_disclosed", "control": "C02", "name": "Other tenant", "args": {"actor": "intruder", "markers": ["X"],
+                                                                                                   "request": {"method": "GET", "path": "/x"}}}
+    kept, dropped = validation.keep_runnable_c_tests({"tests": [good, bad, stranger], "unknowns": []}, ctx)
+    assert kept["tests"] == [good] and len(dropped) == 2 and all(u.startswith("removed by validation") for u in kept["unknowns"])
+    assert validation.validate("C", kept, ctx)["status"] == "valid"
+    assert validation.validate("C", {"tests": [good, bad], "unknowns": []}, ctx)["status"] == "unsupported_claims"  # qualification stays strict
+    assert validation.keep_runnable_c_tests({"tests": [bad], "unknowns": []}, ctx)[1] == []  # nothing runnable: left for review as before
+
+
+def test_scenario_arguments_must_be_runnable():
+    import pytest
+    from assureops_connectors import templates
+
+    ok = {"steps": [{"name": "ask", "actor": "customer", "method": "POST", "path": "/chat"}], "assert": [{"step": "ask", "op": "eq", "value": 200}]}
+    templates.validate_args("scenario", ok)
+    for broken in ({"steps": [{"actor": "customer", "path": "/refunds"}], "assert": [{"type": "response", "status": 200}]},  # what a small model wrote
+                   {"steps": [], "assert": []},
+                   {**ok, "assert": [{"step": "missing", "op": "eq"}]}):
+        with pytest.raises(templates.TemplateError):
+            templates.validate_args("scenario", broken)

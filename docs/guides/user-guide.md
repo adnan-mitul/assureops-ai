@@ -23,7 +23,16 @@ A person who proposes something (a profile, a risk acceptance, an AI request) ne
 4. **Register and assign**: register the application, then assign one or more developers on **Applications → Connect**.
 5. **Connect**: the developer chooses an adapter (HTTP/JSON for most applications) and enters the base URL, scope and test credentials. Credentials are encrypted and never shown again. If AssureOps cannot reach the target, use the **private connector (relay)**: it runs in your network and connects outbound only.
 6. **Verify**: AssureOps checks the destination, health, manifest, ownership and credentials, and lists any gaps.
-7. **Profile**: a profile lists the controls to assess and the tests that cover them. One person proposes it; another activates it. Controls without tests stay visible as *not assessed* or, with a reviewed reason, *not applicable*.
+7. **Profile**: a profile lists the controls to assess and the tests that cover them. One person proposes it; another activates it. Controls without tests stay visible as *not assessed* or, with a reviewed reason, *not applicable*. There are three ways to get one:
+   - **AI-built (no file needed)**: on **Applications → AI**:
+     1. Approve at least one reference document (policy, requirements or design text) under **Approved reference sources**, then run **A**. It proposes requirements with quotes from those documents. With no document it falls back to the application's stated purpose and collected components. That is often too little for the small private model: its requirements then fail the quote check and can only be rejected.
+     2. A reviewer accepts the requirements.
+     3. Run **C**. It proposes tests from the permitted catalogue.
+     4. A reviewer accepts those.
+     5. Choose **Build test plan**, which assembles one proposed revision with the release identity check.
+     6. A different person activates it on **Connect**. Every AI-added test asks for a reviewer's acceptance of its passing evidence.
+   - **Baseline** from a few declared facts (endpoints, a known answer, protected resources) on **Connect**.
+   - **JSON** written by an analyst.
 8. **Release**: submit the running release. AssureOps collects its manifest and freezes its identity.
 9. **Assess**: run a full assessment. Each test runs in a disposable sandbox that can reach only your application's origin. Results appear per control, together with how current the evidence is.
 10. **Findings and fixes**: failures become findings with their evidence. Fix, submit the new release, and AssureOps retests only what the change affects, unless the change cannot be mapped, in which case it retests everything.

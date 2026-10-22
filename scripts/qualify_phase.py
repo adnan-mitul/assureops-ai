@@ -1,7 +1,7 @@
 """Phase qualification: run a phase's synthetic holdout through one exact provider/model and record the result.
 
     python scripts/qualify_phase.py --phase A --provider private --model granite4:micro [--record]
-    python scripts/qualify_phase.py --phase F --provider groq --model openai/gpt-oss-20b --record
+    python scripts/qualify_phase.py --phase F --provider groq --model openai/gpt-oss-20b --suite standard --record
     python scripts/qualify_phase.py --phase C --provider private --model qwen2.5-coder:1.5b --suite quick --record
 
 Criteria live in packages/ai/assureops_ai/qualification.py: zero critical
@@ -47,8 +47,10 @@ def main():
     parser.add_argument("--record", action="store_true")
     parser.add_argument("--json-out", type=Path, help="also write the metrics and per-case outcomes to this file")
     parser.add_argument("--require-qualified", action="store_true", help="exit non-zero unless the phase qualifies (CI)")
-    parser.add_argument("--suite", default="v1", choices=["v1", "v2", "v3", "quick"],
-                        help="v2: 200 held-out cases per phase (300 for D); v3: fresh D set; quick: 20 v2 cases, recorded as a quick check")
+    parser.add_argument("--suite", default="v1", choices=["v1", "compact", "standard", "v2", "v3", "quick"],
+                        help="compact: 50 stratified v2 cases (CPU-served models); standard: 75, the routine qualification tier; "
+                             "v2: 200 held-out cases per phase "
+                             "(300 for D), release grade; v3: fresh D set; quick: 20 v2 cases, recorded as a quick check")
     args = parser.parse_args()
     if args.suite == "quick" and args.require_qualified:
         parser.error("a quick check never qualifies a route; use --suite v2 for --require-qualified")

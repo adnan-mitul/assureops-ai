@@ -1,0 +1,780 @@
+{
+ "phase": "R",
+ "corpus": [
+  {
+   "id": "doc-refund-0",
+   "title": "Refund policy note 1",
+   "text": "Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-refund-1",
+   "title": "Refund policy note 2",
+   "text": "Note 2: Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-refund-2",
+   "title": "Refund policy note 3",
+   "text": "Note 3: Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-refund-3",
+   "title": "Refund policy note 4",
+   "text": "Note 4: Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-tenancy-0",
+   "title": "Tenancy policy note 1",
+   "text": "Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-tenancy-1",
+   "title": "Tenancy policy note 2",
+   "text": "Note 2: Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-tenancy-2",
+   "title": "Tenancy policy note 3",
+   "text": "Note 3: Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-tenancy-3",
+   "title": "Tenancy policy note 4",
+   "text": "Note 4: Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-secrets-0",
+   "title": "Secrets policy note 1",
+   "text": "Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-secrets-1",
+   "title": "Secrets policy note 2",
+   "text": "Note 2: Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-secrets-2",
+   "title": "Secrets policy note 3",
+   "text": "Note 3: Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-secrets-3",
+   "title": "Secrets policy note 4",
+   "text": "Note 4: Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-tools-0",
+   "title": "Tools policy note 1",
+   "text": "Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-tools-1",
+   "title": "Tools policy note 2",
+   "text": "Note 2: Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-tools-2",
+   "title": "Tools policy note 3",
+   "text": "Note 3: Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-tools-3",
+   "title": "Tools policy note 4",
+   "text": "Note 4: Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-grounding-0",
+   "title": "Grounding policy note 1",
+   "text": "Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-grounding-1",
+   "title": "Grounding policy note 2",
+   "text": "Note 2: Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-grounding-2",
+   "title": "Grounding policy note 3",
+   "text": "Note 3: Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-grounding-3",
+   "title": "Grounding policy note 4",
+   "text": "Note 4: Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-limits-0",
+   "title": "Limits policy note 1",
+   "text": "Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-limits-1",
+   "title": "Limits policy note 2",
+   "text": "Note 2: Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-limits-2",
+   "title": "Limits policy note 3",
+   "text": "Note 3: Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-limits-3",
+   "title": "Limits policy note 4",
+   "text": "Note 4: Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-retries-0",
+   "title": "Retries policy note 1",
+   "text": "Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-retries-1",
+   "title": "Retries policy note 2",
+   "text": "Note 2: Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-retries-2",
+   "title": "Retries policy note 3",
+   "text": "Note 3: Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-retries-3",
+   "title": "Retries policy note 4",
+   "text": "Note 4: Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-release-0",
+   "title": "Release policy note 1",
+   "text": "Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-release-1",
+   "title": "Release policy note 2",
+   "text": "Note 2: Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-release-2",
+   "title": "Release policy note 3",
+   "text": "Note 3: Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-release-3",
+   "title": "Release policy note 4",
+   "text": "Note 4: Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-injection-0",
+   "title": "Injection policy note 1",
+   "text": "Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-injection-1",
+   "title": "Injection policy note 2",
+   "text": "Note 2: Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-injection-2",
+   "title": "Injection policy note 3",
+   "text": "Note 3: Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-injection-3",
+   "title": "Injection policy note 4",
+   "text": "Note 4: Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-roles-0",
+   "title": "Roles policy note 1",
+   "text": "Only administrators may export customer records or change billing."
+  },
+  {
+   "id": "doc-roles-1",
+   "title": "Roles policy note 2",
+   "text": "Note 2: Only administrators may export customer records or change billing."
+  },
+  {
+   "id": "doc-roles-2",
+   "title": "Roles policy note 3",
+   "text": "Note 3: Only administrators may export customer records or change billing."
+  },
+  {
+   "id": "doc-roles-3",
+   "title": "Roles policy note 4",
+   "text": "Note 4: Only administrators may export customer records or change billing."
+  }
+ ],
+ "suite": "compact",
+ "note": "Compact tier: 50 of the 200 v2 held-out cases (scripts/gen_holdouts_quick.py), stratified over 15 keys. A qualification tier (zero critical in 50: below 7.1 %). Synthetic data only; no customer evidence. Relevant documents are the four notes of the queried topic.",
+ "derived_from": {
+  "file": "phase-R-holdout-v2.json",
+  "sha256": "bfad1f173c12393c"
+ },
+ "covers": [
+  "grounding/abstain",
+  "grounding/what",
+  "injection/instructions",
+  "injection/prompt",
+  "injection/should",
+  "limits/how",
+  "limits/run",
+  "refund/manager",
+  "release/how",
+  "roles/billing",
+  "secrets/credential",
+  "secrets/may",
+  "tenancy/tenant",
+  "tools/tool",
+  "tools/unregistered"
+ ],
+ "queries": [
+  {
+   "id": "q007",
+   "family": "secrets/credential",
+   "q": "credential leakage rule for our team",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q000",
+   "family": "tools/tool",
+   "q": "tool registry enforcement in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q088",
+   "family": "grounding/what",
+   "q": "what if no document answers please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q032",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q050",
+   "family": "release/how",
+   "q": "how is a release identified?",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q025",
+   "family": "limits/run",
+   "q": "run budget limit for our team",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q073",
+   "family": "secrets/may",
+   "q": "may the bot show a password in production",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q055",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure in production",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q014",
+   "family": "injection/prompt",
+   "q": "prompt injection in files please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q021",
+   "family": "roles/billing",
+   "q": "billing changes permission?",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q010",
+   "family": "injection/should",
+   "q": "should the agent obey document text for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q008",
+   "family": "limits/how",
+   "q": "how many tool calls per run for our team",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q015",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search in production",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q074",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls for our team",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q004",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000 in production",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q022",
+   "family": "secrets/credential",
+   "q": "credential leakage rule please",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q034",
+   "family": "tools/tool",
+   "q": "tool registry enforcement in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q089",
+   "family": "grounding/what",
+   "q": "what if no document answers please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q072",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads?",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q096",
+   "family": "release/how",
+   "q": "how is a release identified for our team",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q041",
+   "family": "limits/run",
+   "q": "run budget limit",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q116",
+   "family": "secrets/may",
+   "q": "may the bot show a password please",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q062",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure?",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q016",
+   "family": "injection/prompt",
+   "q": "prompt injection in files in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q058",
+   "family": "roles/billing",
+   "q": "billing changes permission please",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q051",
+   "family": "injection/should",
+   "q": "should the agent obey document text for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q017",
+   "family": "limits/how",
+   "q": "how many tool calls per run in production",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q020",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search please",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q125",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q063",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000 for our team",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q085",
+   "family": "secrets/credential",
+   "q": "credential leakage rule",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q036",
+   "family": "tools/tool",
+   "q": "tool registry enforcement for our team",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q161",
+   "family": "grounding/what",
+   "q": "what if no document answers please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q130",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q106",
+   "family": "release/how",
+   "q": "how is a release identified please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q093",
+   "family": "limits/run",
+   "q": "run budget limit?",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q132",
+   "family": "secrets/may",
+   "q": "may the bot show a password in production",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q084",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure in production",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q026",
+   "family": "injection/prompt",
+   "q": "prompt injection in files in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q099",
+   "family": "roles/billing",
+   "q": "billing changes permission?",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q090",
+   "family": "injection/should",
+   "q": "should the agent obey document text in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q028",
+   "family": "limits/how",
+   "q": "how many tool calls per run?",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q102",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q149",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q070",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000?",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q087",
+   "family": "secrets/credential",
+   "q": "credential leakage rule for our team",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q057",
+   "family": "tools/tool",
+   "q": "tool registry enforcement in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q183",
+   "family": "grounding/what",
+   "q": "what if no document answers for our team",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q136",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q113",
+   "family": "release/how",
+   "q": "how is a release identified?",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  }
+ ]
+}

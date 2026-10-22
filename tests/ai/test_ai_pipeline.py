@@ -7,6 +7,7 @@ from sqlalchemy import select, text
 
 from assureops_ai import router, service
 from assureops_ai.providers.base import ProviderResult
+from assureops_domain import connections
 from assureops_domain.db import tenant_session
 from assureops_domain.models import AiResult, Application, ApplicationProfile, ModelCall, Outbox
 
@@ -61,7 +62,11 @@ def test_valid_output_becomes_a_proposal_and_review_creates_only_another_proposa
         effects = service.review(s, row, decision="accept", reviewer="reviewer@acme.test", note="ok")
         assert row.status == "accepted" and "profile_revision_proposed" in effects
         proposed = s.scalars(select(ApplicationProfile).where(ApplicationProfile.status == "proposed")).one()
-        assert proposed.proposed_by.startswith("ai:")  # still needs a human activation
+        assert proposed.source == "ai" and proposed.proposed_by == "reviewer@acme.test"  # the accepting reviewer cannot also activate
+        with pytest.raises(connections.OnboardingError) as exc:
+            connections.activate_profile(s, s.get(Application, proposed.application_id), proposed.revision, reviewer="reviewer@acme.test",
+                                         note="self activation")
+        assert exc.value.code == "separation_of_duties"
 
 
 def test_retryable_failures_are_bounded_then_unavailable(workspace, private_route, monkeypatch):

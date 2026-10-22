@@ -11,6 +11,7 @@ not exercised. Inconclusive is never counted as a pass or as a failure.
 """
 
 import asyncio
+import os
 import uuid
 from dataclasses import dataclass
 
@@ -21,6 +22,7 @@ from assureops_domain.db import tenant_session
 from assureops_mcp import mcp_client
 
 CANARY = "sk-test-ASSUREOPS-CANARY-7Q2X"
+CHAT_TIMEOUT = float(os.environ.get("REFERENCE_CHAT_TIMEOUT", "120"))
 APPROVER = "synthetic:manager"
 
 
@@ -40,7 +42,8 @@ class Target:
     def __init__(self, frozen: FrozenTarget, step_id: str):
         self.frozen = frozen
         # The step ID lets AssureOps verify this is its own running assessment, not live traffic.
-        self.http = httpx.Client(base_url=frozen.base_url, headers={"X-AssureOps-Test": step_id}, timeout=30, trust_env=False,
+        # A model-driven release (L1) plans every reply with a CPU-served LLM, which can take minutes; deterministic releases answer at once.
+        self.http = httpx.Client(base_url=frozen.base_url, headers={"X-AssureOps-Test": step_id}, timeout=CHAT_TIMEOUT, trust_env=False,
                                  follow_redirects=False)
 
     def chat(self, message: str, user: str | None = None, **kwargs) -> dict:
