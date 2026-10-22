@@ -117,6 +117,8 @@ def realm(name: str, clients: list, users: list, idle_seconds: int, registration
     return {
         "realm": name, "enabled": True, "sslRequired": "none", "registrationAllowed": registration, "registrationEmailAsUsername": registration,
         "loginWithEmailAllowed": True, "ssoSessionIdleTimeout": idle_seconds, "accessTokenLifespan": 300, "clients": clients, "users": users,
+        # Sign-in pages in the portal theme (infra/compose/keycloak/themes/assureops), named like the portals
+        "loginTheme": "assureops", "displayName": "AssureOps AI" + (" Staff" if name.endswith("-staff") else ""),
     }
 
 

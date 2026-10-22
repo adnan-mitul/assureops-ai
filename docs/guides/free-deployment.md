@@ -11,7 +11,7 @@ The models need about 8–10 GB of RAM, so most free "app hosting" tiers (Render
 |---|---|
 | Server | Oracle Cloud Always Free, Ampere A1: 4 ARM cores, 24 GB RAM, 200 GB disk (a card is needed to sign up; Always Free resources are not charged) |
 | Public address with HTTPS | A free DuckDNS subdomain (e.g. `assureops.duckdns.org`) plus Caddy, which gets Let's Encrypt certificates automatically. Alternatively, Cloudflare Tunnel if you own a domain |
-| E-mail | Brevo free plan (300 e-mails a day) or a Gmail app password |
+| E-mail | **Resend** free plan (3,000 e-mails a month): set `RESEND_API_KEY` in `dev.env`. Until you verify a sending domain in Resend, it only delivers to the e-mail address that owns the Resend account; other recipients are kept in `var/mail` with the reason. Brevo or a Gmail app password over SMTP also work |
 | External model (optional) | Groq free tier for phases F and G |
 | Code and images | GitHub (this repository) |
 
@@ -43,11 +43,8 @@ PUBLIC_AUTH_ORIGIN=https://myapp-auth.duckdns.org
 CUSTOMER_OIDC_ISSUER=https://myapp-auth.duckdns.org/realms/assureops
 STAFF_OIDC_ISSUER=https://myapp-auth.duckdns.org/realms/assureops-staff
 STAFF_MFA_REQUIRED=true
-NOTIFY_SMTP_HOST=smtp-relay.brevo.com
-NOTIFY_SMTP_PORT=587
-NOTIFY_SMTP_USER=<brevo login>
-NOTIFY_SMTP_PASSWORD=<brevo SMTP key>
-NOTIFY_FROM=AssureOps <you@yourdomain>
+RESEND_API_KEY=<your Resend key>
+NOTIFY_FROM=AssureOps <no-reply@your-verified-domain>
 ASSUREOPS_SEED_APPS=false
 ```
 Then render the realms and portal settings, and start the stack:

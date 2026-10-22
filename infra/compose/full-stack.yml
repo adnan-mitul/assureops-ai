@@ -92,7 +92,8 @@ services:
     volumes:
       - ./keycloak/realm-assureops.rendered.json:/opt/keycloak/data/import/realm-assureops.json:ro
       - ./keycloak/realm-assureops-staff.rendered.json:/opt/keycloak/data/import/realm-assureops-staff.json:ro
-      - kcdata:/opt/keycloak/data/h2  # accounts people register survive restarts (the realm import only seeds a new database)
+      - ./keycloak/themes/assureops:/opt/keycloak/themes/assureops:ro  # sign-in pages in the portal theme
+      - kcdata:/opt/keycloak/data  # accounts people register survive restarts (the realm import only seeds a new database)
 
   objectstore:
     image: chrislusf/seaweedfs:3.80

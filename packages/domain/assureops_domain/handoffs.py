@@ -16,7 +16,7 @@ from pathlib import Path
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
-from .config import ROOT
+from .config import ROOT, _dev_env
 from .models import Invitation, Membership, Notification, User, now
 
 INVITATION_TTL = 7 * 86400
@@ -114,8 +114,8 @@ def deliver_pending(session: Session, limit: int = 20) -> int:
     for n in rows:
         n.attempts += 1
         try:
-            _send(n)
-            n.status, n.delivered_at, n.last_error = "delivered", now(), None
+            note = _send(n)
+            n.status, n.delivered_at, n.last_error = "delivered", now(), note
         except Exception as exc:  # bounded retries, then a visible failure
             n.last_error = f"{exc.__class__.__name__}: {exc}"[:500]
             if n.attempts >= 5:
@@ -145,21 +145,52 @@ def _webhook(n: Notification):
         raise RuntimeError(f"webhook answered {res.status_code}")
 
 
-def _send(n: Notification):
+def _setting(name: str, default: str = "") -> str:
+    """The environment wins, even when it sets a value to empty (that switches a transport off, e.g. in tests); then dev.env."""
+    if name in os.environ:
+        return os.environ[name] or default
+    return _dev_env().get(name) or default
+
+
+def _resend(n: Notification) -> str | None:
+    """Send through Resend (https://resend.com). Returns a note when Resend refused the recipient, None when sent.
+
+    Without a verified sending domain Resend only accepts onboarding@resend.dev as the sender and only the account
+    owner's address as the recipient; such refusals fall back to the local mail drop with the reason recorded."""
+    import httpx
+
+    sender = _setting("NOTIFY_FROM", "AssureOps <onboarding@resend.dev>")
+    res = httpx.post("https://api.resend.com/emails", timeout=15, follow_redirects=False,
+                     headers={"Authorization": f"Bearer {_setting('RESEND_API_KEY')}", "Idempotency-Key": n.id},
+                     json={"from": sender, "to": [n.recipient], "subject": n.subject, "text": n.body})
+    if res.status_code < 300:
+        return None
+    if res.status_code in (403, 422):  # recipient or sender not allowed for this account: keep the mail, record why
+        return f"resend refused ({res.status_code}): {res.json().get('message', '')[:300]}; kept in the local mail drop"
+    raise RuntimeError(f"resend answered {res.status_code}")  # transient: retried
+
+
+def _send(n: Notification) -> str | None:
+    """Deliver one notification: signed webhook, then e-mail through Resend, SMTP or the development mail drop."""
     _webhook(n)  # receivers dedupe on X-AssureOps-Delivery; a webhook grants no access to anything
     msg = EmailMessage()
-    msg["From"] = os.environ.get("NOTIFY_FROM", "AssureOps <no-reply@assureops.test>")
+    msg["From"] = _setting("NOTIFY_FROM", "AssureOps <no-reply@assureops.test>")
     msg["To"] = n.recipient
     msg["Subject"] = n.subject
     msg.set_content(n.body)
-    smtp_url = os.environ.get("NOTIFY_SMTP_HOST")
-    if smtp_url:
-        with smtplib.SMTP(smtp_url, int(os.environ.get("NOTIFY_SMTP_PORT", "587")), timeout=10) as smtp:
+    note = None
+    if _setting("RESEND_API_KEY"):
+        note = _resend(n)
+        if note is None:
+            return None
+    elif _setting("NOTIFY_SMTP_HOST"):
+        with smtplib.SMTP(_setting("NOTIFY_SMTP_HOST"), int(_setting("NOTIFY_SMTP_PORT", "587")), timeout=10) as smtp:
             smtp.starttls()
-            if os.environ.get("NOTIFY_SMTP_USER"):
-                smtp.login(os.environ["NOTIFY_SMTP_USER"], os.environ["NOTIFY_SMTP_PASSWORD"])
+            if _setting("NOTIFY_SMTP_USER"):
+                smtp.login(_setting("NOTIFY_SMTP_USER"), _setting("NOTIFY_SMTP_PASSWORD"))
             smtp.send_message(msg)
-        return
-    drop = Path(os.environ.get("NOTIFY_MAIL_DROP", str(ROOT / "var" / "mail")))  # development mail drop
+        return None
+    drop = Path(_setting("NOTIFY_MAIL_DROP", str(ROOT / "var" / "mail")))  # development mail drop
     drop.mkdir(parents=True, exist_ok=True)
     (drop / f"{n.id}.eml").write_bytes(bytes(msg))
+    return note

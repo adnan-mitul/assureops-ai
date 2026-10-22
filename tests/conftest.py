@@ -1,5 +1,6 @@
 """Integration fixtures: each test gets its own throwaway workspace in the real database."""
 
+import os
 import uuid
 
 import pytest
@@ -13,6 +14,10 @@ from assureops_domain.models import (
 )
 from assureops_domain.profile import canonical_hash, load_coverage_contract, load_profile_file, normalize
 
+
+# Tests never reach a real mail provider: the local dev.env may hold a Resend key or SMTP settings.
+for _transport in ("RESEND_API_KEY", "NOTIFY_SMTP_HOST", "NOTIFY_WEBHOOK_URL"):
+    os.environ[_transport] = ""
 
 def prof() -> dict:
     """The reference profile exactly as the reducer sees it for the fixture application (active revision 1)."""

@@ -1,0 +1,77 @@
+/* AssureOps theme for the Keycloak sign-in pages: the same palette and type as the portals (packages/ui/src/theme.css). */
+/* No external font request from the sign-in page: Inter when installed, otherwise the system font. */
+:root {
+  --ao-canvas: #f4f8f5;
+  --ao-line: #d7e2da;
+  --ao-ink: #111827;
+  --ao-muted: #4b5563;
+  --ao-brand-50: #eaf3ed;
+  --ao-brand-600: #15803d;
+  --ao-brand-700: #166534;
+  --ao-brand-800: #14532d;
+  --pf-v5-global--FontFamily--text: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --pf-v5-global--FontFamily--heading: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --pf-v5-global--primary-color--100: var(--ao-brand-700);
+  --pf-v5-global--primary-color--200: var(--ao-brand-800);
+  --pf-v5-global--link--Color: var(--ao-brand-700);
+  --pf-v5-global--link--Color--hover: var(--ao-brand-800);
+  --pf-v5-global--active-color--100: var(--ao-brand-600);
+}
+
+body, .pf-v5-c-login {
+  font-family: var(--pf-v5-global--FontFamily--text);
+  color: var(--ao-ink);
+  background: radial-gradient(circle at 15% 10%, #d3f5e1 0, transparent 45%), radial-gradient(circle at 90% 90%, #eaf3ed 0, transparent 40%),
+    var(--ao-canvas) !important;
+}
+
+/* Header: shield mark plus the product name, as in the portal sidebar */
+#kc-header-wrapper, .pf-v5-c-login__header .pf-v5-c-brand {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.6rem;
+  font-weight: 700;
+  font-size: 1.6rem;
+  letter-spacing: -0.01em;
+  color: var(--ao-brand-700) !important;  /* the base theme paints the header text white */
+  text-transform: none;
+}
+#kc-header-wrapper * { color: inherit !important; }
+#kc-header-wrapper::before {
+  content: "";
+  width: 2.5rem;
+  height: 2.5rem;
+  border-radius: 0.6rem;
+  background: var(--ao-brand-50) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23166534' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z'/><path d='m9 12 2 2 4-4'/></svg>") center / 1.4rem no-repeat;
+}
+
+/* Card */
+.pf-v5-c-login__main {
+  border: 1px solid var(--ao-line);
+  border-radius: 1rem;
+  box-shadow: 0 10px 30px -12px rgba(20, 83, 45, 0.25);
+  background: #fff;
+}
+.pf-v5-c-login__main-header .pf-v5-c-title, #kc-page-title {
+  font-weight: 700;
+  color: var(--ao-ink);
+}
+
+/* Inputs and buttons */
+.pf-v5-c-form-control {
+  border-radius: 0.5rem;
+  --pf-v5-c-form-control--focus--after--BorderBottomColor: var(--ao-brand-600);
+}
+.pf-v5-c-button.pf-m-primary {
+  border-radius: 0.5rem;
+  font-weight: 600;
+  --pf-v5-c-button--m-primary--BackgroundColor: var(--ao-brand-700);
+  --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--ao-brand-800);
+  --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--ao-brand-800);
+  --pf-v5-c-button--m-primary--active--BackgroundColor: var(--ao-brand-800);
+}
+a, .pf-v5-c-button.pf-m-link { color: var(--ao-brand-700); }
+a:hover { color: var(--ao-brand-800); }
+
+.pf-v5-c-login__main-footer-band { border-top: 1px solid var(--ao-line); background: var(--ao-canvas); }
