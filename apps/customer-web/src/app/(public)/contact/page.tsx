@@ -3,7 +3,7 @@
 import { Button, Card, ErrorBanner, Field, Notice, PageHeader, inputClass } from "@assureops/ui/components";
 import { useSearchParams } from "next/navigation";
 import { Suspense, useState } from "react";
-import { YEARLY_MONTHS_CHARGED, planById, taka, type Plan } from "@/lib/plans";
+import { planById, planSummary, type Plan } from "@/lib/plans";
 
 export default function ContactPage() {
   return <Suspense fallback={null}><ContactForm /></Suspense>;
@@ -16,8 +16,7 @@ function ContactForm() {
   const params = useSearchParams();  // the plan chosen on the landing page travels in the query string
   const chosen: Plan | undefined = planById(params.get("plan"));
   const plan = chosen ? { plan: chosen, yearly: params.get("billing") === "yearly" } : null;
-  const planLine = plan && `Plan: ${plan.plan.name}` + (plan.plan.monthly === null ? " (custom pricing)"
-    : plan.yearly ? ` (${taka(plan.plan.monthly * YEARLY_MONTHS_CHARGED)} / year)` : ` (${taka(plan.plan.monthly)} / month)`);
+  const planLine = plan && planSummary(plan.plan, plan.yearly);
 
   const submit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -41,7 +40,7 @@ ${form.message}` : form.message }) });
         <Notice tone="success">Thank you. Your inquiry was received; you will get an invitation e-mail once your workspace is ready.</Notice>
       ) : (
         <Card className="p-6">
-          {planLine && <div className="mb-4"><Notice tone="info">{planLine}. We confirm the subscription with your workspace invitation.</Notice></div>}
+          {planLine && <div className="mb-4"><Notice tone="info">{planLine}. {plan?.plan.trialDays ? `Your ${plan.plan.trialDays}-day trial starts when you accept the workspace invitation.` : "We confirm the subscription with your workspace invitation."}</Notice></div>}
           <form className="grid gap-4" onSubmit={submit}>
             <Field label="Company"><input required minLength={2} maxLength={120} value={form.company} onChange={(e) => setForm({ ...form, company: e.target.value })} className={inputClass} /></Field>
             <Field label="Work e-mail"><input required type="email" value={form.contact_email} onChange={(e) => setForm({ ...form, contact_email: e.target.value })} className={inputClass} /></Field>

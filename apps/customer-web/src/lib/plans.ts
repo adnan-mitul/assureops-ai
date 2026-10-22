@@ -2,15 +2,22 @@
 // Prices exclude VAT. Change them here only.
 
 export type Plan = {
-  id: "starter" | "growth" | "enterprise";
+  id: "trial" | "starter" | "growth" | "enterprise";
   name: string;
-  monthly: number | null; // null: priced per agreement
+  monthly: number | null; // null: priced per agreement; 0: free
   blurb: string;
   features: string[];
   highlight?: boolean;
+  trialDays?: number;
 };
 
+export const TRIAL_DAYS = 14;
+
 export const PLANS: Plan[] = [
+  {
+    id: "trial", name: "Free trial", monthly: 0, trialDays: TRIAL_DAYS, blurb: `Try AssureOps on one application for ${TRIAL_DAYS} days. No payment.`,
+    features: ["1 application", "1 full assessment", "Published report with evidence", "Notice board and e-mail updates", "Upgrade any time, keep your results"],
+  },
   {
     id: "starter", name: "Starter", monthly: 4999, blurb: "One AI application, tested before every release.",
     features: ["1 application", "2 full assessments a month", "Retests of changed parts", "Published report with evidence bundle", "E-mail support"],
@@ -35,4 +42,11 @@ export function taka(amount: number): string {
 
 export function planById(id: string | null | undefined): Plan | undefined {
   return PLANS.find((p) => p.id === id);
+}
+
+/** One line describing a chosen plan, for the contact form and the inquiry. */
+export function planSummary(plan: Plan, yearly: boolean): string {
+  if (plan.trialDays) return `Plan: ${plan.name} (${plan.trialDays} days, free)`;
+  if (plan.monthly === null) return `Plan: ${plan.name} (custom pricing)`;
+  return `Plan: ${plan.name} (${yearly ? `${taka(plan.monthly * YEARLY_MONTHS_CHARGED)} / year` : `${taka(plan.monthly)} / month`})`;
 }
