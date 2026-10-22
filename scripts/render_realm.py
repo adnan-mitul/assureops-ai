@@ -119,7 +119,19 @@ def realm(name: str, clients: list, users: list, idle_seconds: int, registration
         "loginWithEmailAllowed": True, "ssoSessionIdleTimeout": idle_seconds, "accessTokenLifespan": 300, "clients": clients, "users": users,
         # Sign-in pages in the portal theme (infra/compose/keycloak/themes/assureops), named like the portals
         "loginTheme": "assureops", "displayName": "AssureOps AI" + (" Staff" if name.endswith("-staff") else ""),
+        **mail_settings(),
     }
+
+
+def mail_settings() -> dict:
+    """Password reset by e-mail when a mail transport is configured: Resend's SMTP relay with the same key the platform uses."""
+    env = load_env()
+    key = env.get("RESEND_API_KEY")
+    if not key:
+        return {"resetPasswordAllowed": False}
+    sender = env.get("NOTIFY_FROM_ADDRESS", "onboarding@resend.dev")  # a verified Resend domain address once you have one
+    return {"resetPasswordAllowed": True, "smtpServer": {"host": "smtp.resend.com", "port": "587", "starttls": "true", "auth": "true",
+                                                         "user": "resend", "password": key, "from": sender, "fromDisplayName": "AssureOps AI"}}
 
 
 def main():

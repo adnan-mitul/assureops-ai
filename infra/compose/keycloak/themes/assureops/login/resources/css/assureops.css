@@ -1,16 +1,18 @@
-/* AssureOps theme for the Keycloak sign-in pages: the same palette and type as the portals (packages/ui/src/theme.css). */
-/* No external font request from the sign-in page: Inter when installed, otherwise the system font. */
+/* AssureOps sign-in pages: white page, tinted infographic panel on the left, open sign-in form on the right.
+   Same palette and type as the portals (packages/ui/src/theme.css). No external fonts or images. */
+
 :root {
-  --ao-canvas: #f4f8f5;
-  --ao-line: #d7e2da;
-  --ao-ink: #111827;
+  --ao-ink: #0f2e1d;          /* headings: deep green-black */
+  --ao-text: #1f2937;
   --ao-muted: #4b5563;
-  --ao-brand-50: #eaf3ed;
+  --ao-line: #d7e2da;
+  --ao-tint: #eaf3ed;
+  --ao-brand-500: #16a34a;
   --ao-brand-600: #15803d;
   --ao-brand-700: #166534;
   --ao-brand-800: #14532d;
-  --pf-v5-global--FontFamily--text: "Inter", ui-sans-serif, system-ui, sans-serif;
-  --pf-v5-global--FontFamily--heading: "Inter", ui-sans-serif, system-ui, sans-serif;
+  --pf-v5-global--FontFamily--text: "Inter", ui-sans-serif, system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pf-v5-global--FontFamily--heading: var(--pf-v5-global--FontFamily--text);
   --pf-v5-global--primary-color--100: var(--ao-brand-700);
   --pf-v5-global--primary-color--200: var(--ao-brand-800);
   --pf-v5-global--link--Color: var(--ao-brand-700);
@@ -18,163 +20,121 @@
   --pf-v5-global--active-color--100: var(--ao-brand-600);
 }
 
-body, .pf-v5-c-login {
-  font-family: var(--pf-v5-global--FontFamily--text);
-  color: var(--ao-ink);
-  background: radial-gradient(circle at 15% 10%, #d3f5e1 0, transparent 45%), radial-gradient(circle at 90% 90%, #eaf3ed 0, transparent 40%),
-    var(--ao-canvas) !important;
+html, body.ao-body { background: #fff !important; color: var(--ao-text); font-family: var(--pf-v5-global--FontFamily--text); }
+body.ao-body { min-height: 100vh; display: flex; flex-direction: column; }
+
+/* Top bar */
+.ao-top { display: flex; align-items: center; justify-content: space-between; padding: 1.1rem clamp(1.25rem, 3vw, 2.5rem); }
+.ao-logo { display: inline-flex; align-items: center; gap: 0.6rem; font-size: 1.45rem; font-weight: 800; color: var(--ao-brand-700); letter-spacing: -0.02em; }
+.ao-mark {
+  width: 2.4rem; height: 2.4rem; border-radius: 0.7rem;
+  background: var(--ao-brand-700) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z'/><path d='m9 12 2 2 4-4'/></svg>") center / 1.35rem no-repeat;
+}
+.ao-tag { padding: 0.12rem 0.55rem; border-radius: 999px; font-size: 0.72rem; font-weight: 600; color: var(--ao-brand-800); background: var(--ao-tint); }
+.ao-back { font-size: 0.92rem; font-weight: 500; color: var(--ao-brand-700); text-decoration: none; }
+.ao-back:hover { text-decoration: underline; }
+
+/* Two columns */
+.ao-split {
+  flex: 1; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: clamp(2rem, 5vw, 6rem); align-items: center;
+  width: 100%; max-width: 82rem; margin: 0 auto; padding: 0.5rem clamp(1.25rem, 4vw, 3rem) 1.5rem;
 }
 
-/* Header: shield mark plus the product name, as in the portal sidebar */
-#kc-header-wrapper, .pf-v5-c-login__header .pf-v5-c-brand {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0.6rem;
-  font-weight: 700;
-  font-size: 1.6rem;
-  letter-spacing: -0.01em;
-  color: var(--ao-brand-700) !important;  /* the base theme paints the header text white */
-  text-transform: none;
+/* Left: tinted infographic panel */
+.ao-hero {
+  padding: clamp(2rem, 4vw, 3.25rem); border-radius: 1.75rem; border: 1px solid var(--ao-line);
+  background: radial-gradient(circle at 15% 0%, #dff3e7 0, transparent 55%), linear-gradient(180deg, #eef7f1 0%, #e6f2ea 100%);
 }
-#kc-header-wrapper * { color: inherit !important; }
-#kc-header-wrapper::before {
-  content: "";
-  width: 2.5rem;
-  height: 2.5rem;
-  border-radius: 0.6rem;
-  background: var(--ao-brand-50) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23166534' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z'/><path d='m9 12 2 2 4-4'/></svg>") center / 1.4rem no-repeat;
-}
+.ao-eyebrow { margin: 0; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.18em; text-transform: uppercase; color: var(--ao-brand-800); }
+.ao-title { margin: 1.4rem 0 0; font-size: clamp(2.1rem, 3.6vw, 3.1rem); line-height: 1.08; font-weight: 800; letter-spacing: -0.03em; color: var(--ao-ink); }
+.ao-title em { font-family: Georgia, "Times New Roman", serif; font-style: italic; font-weight: 400; letter-spacing: -0.01em; color: var(--ao-brand-700); }
+.ao-lead { margin: 1.1rem 0 0; font-size: 1.05rem; color: var(--ao-muted); }
 
-/* Card */
-.pf-v5-c-login__main {
-  border: 1px solid var(--ao-line);
-  border-radius: 1rem;
-  box-shadow: 0 10px 30px -12px rgba(20, 83, 45, 0.25);
-  background: #fff;
+.ao-diagram { position: relative; margin: 2.2rem auto 0; width: 100%; max-width: 32rem; aspect-ratio: 520 / 330; }
+.ao-diagram svg { position: absolute; inset: 0; width: 100%; height: 100%; overflow: visible; }
+.ao-diagram path { fill: none; stroke: var(--ao-brand-500); stroke-width: 2; vector-effect: non-scaling-stroke; }
+.ao-diagram circle { fill: var(--ao-brand-500); }
+.ao-node {
+  position: absolute; transform: translate(-50%, -50%); width: 42%; padding: 0.75rem 0.6rem; border-radius: 0.85rem; text-align: center;
+  background: #fff; box-shadow: 0 12px 28px -14px rgba(20, 83, 45, 0.35); border: 1px solid rgba(215, 226, 218, 0.7);
 }
-.pf-v5-c-login__main-header .pf-v5-c-title, #kc-page-title {
-  font-weight: 700;
-  color: var(--ao-ink);
-}
+.ao-node strong { display: block; font-size: 0.98rem; font-weight: 700; color: var(--ao-ink); }
+.ao-node small { display: block; margin-top: 0.2rem; font-size: 0.8rem; color: var(--ao-muted); }
+.ao-n-top { left: 50%; top: 10.6%; }
+.ao-n-left { left: 25%; top: 55%; }
+.ao-n-right { left: 75%; top: 55%; }
+.ao-n-bottom { left: 50%; top: 92%; width: 44%; padding: 0.6rem; }
+.ao-dot { position: absolute; width: 0.8rem; height: 0.8rem; border-radius: 999px; }
+.ao-dot-a { left: 26%; top: 0; background: var(--ao-brand-500); box-shadow: 0 0 0 5px rgba(22, 163, 74, 0.15); }
+.ao-dot-b { right: 4%; top: 42%; width: 0.55rem; height: 0.55rem; background: var(--ao-brand-800); }
+.ao-caption { margin: 1.6rem 0 0; text-align: center; font-size: 0.78rem; color: var(--ao-muted); }
 
-/* Inputs and buttons */
-.pf-v5-c-form-control {
-  border-radius: 0.5rem;
-  --pf-v5-c-form-control--focus--after--BorderBottomColor: var(--ao-brand-600);
+/* Right: open sign-in form (Keycloak's card made transparent) */
+.ao-panel { width: 100%; max-width: 27rem; justify-self: center; }
+.ao-panel .pf-v5-c-login, .ao-panel .pf-v5-c-login__container, .ao-panel .pf-v5-c-login__main {
+  min-height: auto; padding: 0 !important; margin: 0; width: 100%; max-width: none !important; background: transparent !important; box-shadow: none !important; border: 0 !important;
 }
-.pf-v5-c-button.pf-m-primary {
-  border-radius: 0.5rem;
-  font-weight: 600;
+.ao-panel .pf-v5-c-login__container { display: block !important; }
+.ao-panel #kc-header, .ao-panel .pf-v5-c-login__footer { display: none; }
+.ao-panel-sub { margin: 0.75rem 0 0; font-size: 1rem; color: var(--ao-muted); }
+.ao-panel .pf-v5-c-login__main-header { display: block !important; padding: 0 0 1.75rem !important; }
+.ao-panel #kc-page-title { font-size: clamp(2rem, 2.8vw, 2.5rem); font-weight: 800; letter-spacing: -0.03em; line-height: 1.1; color: var(--ao-ink); }
+.ao-panel .pf-v5-c-login__main-body, .ao-panel .pf-v5-c-login__main-footer { padding: 0 !important; }
+.ao-panel .pf-v5-c-form { gap: 1.1rem; }
+.ao-panel .pf-v5-c-form__label { font-size: 0.86rem; font-weight: 600; color: var(--ao-ink); }
+
+/* Inputs: bordered boxes, light whatever the browser's colour scheme */
+.ao-panel .pf-v5-c-form-control {
+  --pf-v5-c-form-control--BackgroundColor: #fff;
+  border: 1px solid #c9d6cd; border-radius: 0.6rem; min-height: 3rem; background: #fff !important; transition: border-color .15s, box-shadow .15s;
+}
+.ao-panel .pf-v5-c-form-control::before, .ao-panel .pf-v5-c-form-control::after { display: none; }
+.ao-panel .pf-v5-c-form-control:focus-within { border-color: var(--ao-brand-600); box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.14); }
+.ao-panel .pf-v5-c-form-control > input { padding: 0 0.9rem !important; font-size: 1rem; color: var(--ao-text) !important; background: transparent !important; }
+.ao-panel .pf-v5-c-form-control > input::placeholder { color: #8a948e; }
+.ao-panel .pf-v5-c-form-control > input:-webkit-autofill { -webkit-box-shadow: 0 0 0 40px #fff inset !important; -webkit-text-fill-color: var(--ao-text) !important; }
+
+/* Password: the visibility control becomes a "Show"/"Hide" text button inside the box */
+.ao-panel .pf-v5-c-input-group { position: relative; }
+.ao-panel .pf-v5-c-input-group .pf-v5-c-form-control > input { padding-right: 4.2rem !important; }
+.ao-panel .pf-v5-c-input-group .pf-v5-c-button.pf-m-control {
+  position: absolute; right: 0.35rem; top: 50%; transform: translateY(-50%); z-index: 2; min-height: auto; padding: 0.35rem 0.6rem;
+  border: 0; background: transparent !important; font-size: 0; color: var(--ao-brand-800);
+}
+.ao-panel .pf-v5-c-input-group .pf-v5-c-button.pf-m-control::after { display: none; }
+.ao-panel .pf-v5-c-input-group .pf-v5-c-button.pf-m-control i { display: none; }
+.ao-panel .pf-v5-c-input-group .pf-v5-c-button.pf-m-control::before { content: "Show"; font-size: 0.86rem; font-weight: 600; }
+.ao-panel .pf-v5-c-input-group .pf-v5-c-button.pf-m-control[aria-label*="Hide"]::before { content: "Hide"; }
+
+/* "Forgot password?" sits under the password, right-aligned */
+.ao-panel .pf-v5-c-form__helper-text a, .ao-panel #kc-form-options a, .ao-panel a[href*="reset-credentials"] { font-size: 0.86rem; font-weight: 600; color: var(--ao-brand-800); }
+.ao-panel .pf-v5-c-form__group-label-help, .ao-panel .pf-v5-c-form__label-info { margin-left: auto; }
+
+/* Primary action */
+.ao-panel #kc-form-buttons { margin-top: 1.4rem; }
+.ao-panel .pf-v5-c-button.pf-m-primary {
+  width: 100%; min-height: 3rem; border-radius: 0.6rem; font-size: 1rem; font-weight: 700;
   --pf-v5-c-button--m-primary--BackgroundColor: var(--ao-brand-700);
   --pf-v5-c-button--m-primary--hover--BackgroundColor: var(--ao-brand-800);
   --pf-v5-c-button--m-primary--focus--BackgroundColor: var(--ao-brand-800);
   --pf-v5-c-button--m-primary--active--BackgroundColor: var(--ao-brand-800);
 }
-a, .pf-v5-c-button.pf-m-link { color: var(--ao-brand-700); }
-a:hover { color: var(--ao-brand-800); }
 
-.pf-v5-c-login__main-footer-band { border-top: 1px solid var(--ao-line); background: var(--ao-canvas); }
+/* "New to AssureOps? Create an account" */
+.ao-panel #kc-info, .ao-panel .pf-v5-c-login__main-footer-band { margin-top: 1.4rem; padding: 0 !important; border: 0; background: transparent !important; text-align: center; color: var(--ao-muted); font-size: 0.95rem; }
+.ao-panel #kc-registration a { font-weight: 700; color: var(--ao-brand-800); }
 
-/* ---------- Two columns: infographic left, sign-in right (template.ftl) ---------- */
-.ao-split { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); min-height: 100vh; }
-.ao-panel { display: flex; align-items: center; justify-content: center; padding: 2rem 1.5rem; }
-.ao-panel .pf-v5-c-login { min-height: auto; background: transparent !important; padding: 0; width: 100%; }
-.ao-panel .pf-v5-c-login__container {
-  width: 100%; max-width: 28rem !important; padding: 0 !important;
-  grid-template-columns: minmax(0, 1fr) !important; grid-template-areas: "header" "main" "footer" !important; /* PatternFly puts columns side by side at wide widths */
-}
-.ao-panel .pf-v5-c-login__main { width: 100%; grid-area: main; padding: 0.5rem 0.25rem; }
-.ao-panel .pf-v5-c-login__footer { grid-area: footer; }
-.ao-panel #kc-header { display: none; } /* the brand sits on the left panel */
+.ao-panel .pf-v5-c-alert { border-radius: 0.6rem; }
 
-.ao-hero {
-  display: flex; flex-direction: column; justify-content: center; gap: 1.6rem; padding: 3rem clamp(2rem, 5vw, 5rem);
-  color: #ecfdf3; background: radial-gradient(circle at 20% 15%, #1f8a4c 0, transparent 45%), linear-gradient(160deg, #166534 0%, #14532d 70%, #0f3d22 100%);
-}
-.ao-brand { display: flex; align-items: center; gap: 0.6rem; font-size: 1.35rem; font-weight: 700; color: #fff; }
-.ao-mark { width: 2.4rem; height: 2.4rem; border-radius: 0.6rem; background: rgba(255,255,255,0.14) url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='white' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><path d='M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z'/><path d='m9 12 2 2 4-4'/></svg>") center / 1.3rem no-repeat; }
-.ao-tag { margin-left: 0.3rem; padding: 0.1rem 0.55rem; border-radius: 999px; font-size: 0.75rem; background: rgba(255,255,255,0.18); }
-.ao-title { margin: 0; font-size: clamp(1.7rem, 2.6vw, 2.4rem); line-height: 1.15; font-weight: 700; color: #fff; letter-spacing: -0.02em; }
-.ao-lead { margin: 0; max-width: 34rem; font-size: 1.02rem; line-height: 1.55; color: #c9f2d9; }
+.ao-foot { padding: 0.9rem 1rem 1.2rem; text-align: center; font-size: 0.8rem; color: var(--ao-muted); }
 
-.ao-flow { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.75rem; position: relative; }
-.ao-flow::before { content: ""; position: absolute; left: 1.05rem; top: 1rem; bottom: 1rem; width: 2px; background: rgba(255,255,255,0.25); }
-.ao-flow li { display: flex; align-items: center; gap: 0.9rem; position: relative; }
-.ao-step { flex: none; display: grid; place-items: center; width: 2.1rem; height: 2.1rem; border-radius: 999px; background: #fff; color: #166534; font-weight: 700; font-size: 0.9rem; box-shadow: 0 0 0 4px rgba(255,255,255,0.15); }
-.ao-flow strong { display: block; color: #fff; font-size: 0.98rem; }
-.ao-flow small { display: block; color: #b7e8ca; font-size: 0.82rem; }
-
-.ao-card { max-width: 26rem; padding: 0.9rem 1rem; border-radius: 0.9rem; background: #fff; color: #111827; box-shadow: 0 18px 40px -18px rgba(0,0,0,0.45); }
-.ao-card-head, .ao-card-foot { display: flex; justify-content: space-between; align-items: center; font-size: 0.82rem; }
-.ao-card-head span:first-child { font-weight: 600; }
-.ao-card-foot { margin-top: 0.45rem; color: #4b5563; }
-.ao-pill { padding: 0.12rem 0.55rem; border-radius: 999px; background: #d3f5e1; color: #14532d; font-weight: 600; font-size: 0.75rem; }
-.ao-bar { margin-top: 0.6rem; height: 0.5rem; border-radius: 999px; background: #eaf3ed; overflow: hidden; }
-.ao-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #15803d, #22c55e); }
-.ao-note { margin: 0; font-size: 0.8rem; color: #9fdcb7; }
-
-/* Always light inputs, whatever the browser's colour scheme */
-.pf-v5-c-form-control, .pf-v5-c-form-control > input, .pf-v5-c-input-group .pf-v5-c-button.pf-m-control {
-  --pf-v5-c-form-control--BackgroundColor: #fff;
-  background-color: #fff !important; color: #111827 !important;
-}
-.pf-v5-c-form-control > input:-webkit-autofill { -webkit-box-shadow: 0 0 0 40px #fff inset !important; -webkit-text-fill-color: #111827 !important; }
-
-@media (max-width: 900px) {
-  .ao-split { grid-template-columns: 1fr; }
-  .ao-hero { padding: 2rem 1.5rem; gap: 1.1rem; }
-  .ao-card, .ao-note, .ao-flow { display: none; }
+@media (max-width: 960px) {
+  .ao-split { grid-template-columns: 1fr; gap: 1.5rem; }
+  .ao-hero { display: none; }
+  .ao-panel { padding-top: 1.5rem; }
 }
 
-/* ---------- Sign-in card ---------- */
-.ao-panel .pf-v5-c-login__main { padding: 2.25rem 2.25rem 1.5rem; border-radius: 1.1rem; }
-.ao-panel #kc-page-title { font-size: 1.55rem; line-height: 1.25; letter-spacing: -0.01em; white-space: nowrap; }
-.ao-sub { margin: 0.45rem 0 0; color: var(--ao-muted); font-size: 0.92rem; line-height: 1.45; }
-.ao-panel .pf-v5-c-login__main-header {
-  margin-bottom: 1.25rem; padding: 0; display: flex !important; flex-direction: column; align-items: flex-start; gap: 0; /* title above the welcome line */
-}
-.ao-panel .pf-v5-c-login__main-body, .ao-panel .pf-v5-c-login__main-footer { padding-left: 0; padding-right: 0; }
-.ao-panel .pf-v5-c-form__label { font-weight: 600; font-size: 0.85rem; color: var(--ao-ink); }
-
-/* Inputs: rounded, bordered, with an icon */
-.ao-panel .pf-v5-c-form-control {
-  border: 1px solid var(--ao-line); border-radius: 0.65rem; min-height: 2.9rem; transition: border-color .15s, box-shadow .15s;
-}
-.ao-panel .pf-v5-c-form-control::before, .ao-panel .pf-v5-c-form-control::after { display: none; }
-.ao-panel .pf-v5-c-form-control:focus-within { border-color: var(--ao-brand-600); box-shadow: 0 0 0 4px rgba(22, 163, 74, 0.15); }
-.ao-panel .pf-v5-c-form-control > input { padding-left: 2.6rem !important; font-size: 0.97rem; background: transparent !important; }
-.ao-panel #username, .ao-panel #password, .ao-panel #email {
-  background-repeat: no-repeat !important; background-position: 0.85rem center !important; background-size: 1.1rem !important;
-}
-.ao-panel #username, .ao-panel #email {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='2' y='4' width='20' height='16' rx='2'/><path d='m22 7-10 6L2 7'/></svg>") !important;
-}
-.ao-panel #password {
-  background-image: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%236b7280' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='11' width='18' height='11' rx='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/></svg>") !important;
-}
-.ao-panel .pf-v5-c-input-group { gap: 0.5rem; }
-.ao-panel .pf-v5-c-input-group .pf-v5-c-button.pf-m-control {
-  border: 1px solid var(--ao-line); border-radius: 0.65rem; min-width: 2.9rem; color: var(--ao-muted);
-}
-.ao-panel .pf-v5-c-input-group .pf-v5-c-button.pf-m-control::after { display: none; }
-
-/* Primary action */
-.ao-panel .pf-v5-c-button.pf-m-primary.pf-m-block, .ao-panel #kc-login {
-  min-height: 2.9rem; font-size: 1rem; border-radius: 0.65rem; box-shadow: 0 10px 20px -10px rgba(22, 101, 52, 0.7);
-}
-.ao-panel #kc-form-buttons { margin-top: 1.4rem; }
-
-/* "New user? Register" row */
-.ao-panel #kc-info, .ao-panel .pf-v5-c-login__main-footer-band {
-  margin-top: 1.1rem; border: 1px dashed var(--ao-line); border-radius: 0.65rem; background: var(--ao-canvas); text-align: center;
-}
-.ao-panel #kc-registration a, .ao-panel #kc-info a { font-weight: 600; }
-
-.ao-secure { display: flex; align-items: center; justify-content: center; gap: 0.45rem; margin: 1.1rem 0 0; font-size: 0.78rem; color: var(--ao-muted); text-align: center; }
-.ao-lock { width: 0.9rem; height: 0.9rem; flex: none; background: url("data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%2315803d' stroke-width='2.4' stroke-linecap='round' stroke-linejoin='round'><rect x='3' y='11' width='18' height='11' rx='2'/><path d='M7 11V7a5 5 0 0 1 10 0v4'/></svg>") center / contain no-repeat; }
-
-@media (max-width: 480px) {
-  .ao-panel .pf-v5-c-login__main { padding: 1.5rem 1.25rem 1.25rem; }
-  .ao-panel #kc-page-title { white-space: normal; }
-}
+/* "Forgot password?" under the password box, on the right as in the design */
+.ao-panel .pf-v5-c-helper-text:has(a[href*="reset-credentials"]) { display: flex; justify-content: flex-end; margin-top: 0.55rem; }
+.ao-panel .pf-v5-c-helper-text a[href*="reset-credentials"] { font-size: 0.86rem; font-weight: 600; color: var(--ao-brand-800); text-decoration: none; }
+.ao-panel .pf-v5-c-helper-text a[href*="reset-credentials"]:hover { text-decoration: underline; }

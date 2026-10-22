@@ -79,30 +79,30 @@
 
 <body id="keycloak-bg" class="${properties.kcBodyClass!} ao-body">
 <#assign aoStaff = realm.name?ends_with("-staff")>
+<header class="ao-top">
+  <span class="ao-logo"><span class="ao-mark"></span>AssureOps AI<#if aoStaff><span class="ao-tag">Staff</span></#if></span>
+  <a class="ao-back" id="ao-back" href="/" hidden>Back to website &#8599;</a>
+</header>
 <div class="ao-split">
 <aside class="ao-hero" aria-label="About AssureOps">
-  <div class="ao-brand"><span class="ao-mark"></span>AssureOps AI<#if aoStaff><span class="ao-tag">Staff</span></#if></div>
-  <#if aoStaff>
-    <h2 class="ao-title">Test, review and publish with confidence.</h2>
-    <p class="ao-lead">Your work queue, the evidence of every test run and the reports waiting for an independent approval.</p>
-  <#else>
-    <h2 class="ao-title">Release your AI application with evidence.</h2>
-    <p class="ao-lead">We test what your AI agent actually does, show the proof for every result, and a second person approves the report.</p>
-  </#if>
-  <ol class="ao-flow">
-    <li><span class="ao-step">1</span><div><strong>Submit</strong><small>GitHub link, live URL, environment</small></div></li>
-    <li><span class="ao-step">2</span><div><strong>Test</strong><small>An AssureOps developer runs isolated tests</small></div></li>
-    <li><span class="ao-step">3</span><div><strong>Approve</strong><small>An independent admin checks the evidence</small></div></li>
-    <li><span class="ao-step">4</span><div><strong>Report</strong><small>Results per area, with proof, by e-mail</small></div></li>
-  </ol>
-  <div class="ao-card">
-    <div class="ao-card-head"><span>Refund Bot · 2.4.1</span><span class="ao-pill">Gate: ready</span></div>
-    <div class="ao-bar"><i style="width:92%"></i></div>
-    <div class="ao-card-foot"><span>Evidence support 92%</span><span>Coverage 100%</span></div>
+  <p class="ao-eyebrow"><#if aoStaff>The AssureOps staff workspace<#else>The AssureOps workspace</#if></p>
+  <h2 class="ao-title">Release AI with evidence.<br><em>Not guesswork.</em></h2>
+  <p class="ao-lead"><#if aoStaff>Your work queue, test evidence and reports awaiting approval.<#else>Pick up where your team left off.</#if></p>
+  <div class="ao-diagram" role="img" aria-label="Your application is tested by an AssureOps developer and approved by an independent admin, giving an evidence-backed report">
+    <svg viewBox="0 0 520 330" preserveAspectRatio="none" aria-hidden="true">
+      <path d="M260 70 V112 M130 112 H390 M130 112 V150 M390 112 V150 M130 214 V258 M390 214 V258 M130 258 H390 M260 258 V276" />
+      <circle cx="260" cy="112" r="4" />
+    </svg>
+    <span class="ao-dot ao-dot-a"></span><span class="ao-dot ao-dot-b"></span>
+    <div class="ao-node ao-n-top"><strong>Your application</strong><small>GitHub link and live URL</small></div>
+    <div class="ao-node ao-n-left"><strong>AssureOps developer</strong><small>Runs isolated tests</small></div>
+    <div class="ao-node ao-n-right"><strong>Independent admin</strong><small>Approves the evidence</small></div>
+    <div class="ao-node ao-n-bottom"><strong>Evidence-backed report</strong></div>
   </div>
-  <p class="ao-note">Evidence-backed readiness, not a certification.</p>
+  <p class="ao-caption">Illustrative product view</p>
 </aside>
 <div class="ao-panel">
+<#if aoStaff><p class="ao-panel-sub" data-for="staff">Sign in to the AssureOps staff workspace. You will also need your authenticator code.</p><#else><p class="ao-panel-sub" data-for="customer">Sign in to your AssureOps workspace.</p></#if>
 <div class="${properties.kcLogin!}">
   <div class="${properties.kcLoginContainer!}">
     <header id="kc-header" class="pf-v5-c-login__header">
@@ -112,9 +112,6 @@
     <main class="${properties.kcLoginMain!}">
       <div class="${properties.kcLoginMainHeader!}">
         <h1 class="${properties.kcLoginMainTitle!}" id="kc-page-title"><#nested "header"></h1>
-        <#if url.loginAction?? && (url.loginAction?contains("/login-actions/authenticate") || url.loginAction?contains("/protocol/openid-connect/auth"))>
-          <p class="ao-sub"><#if aoStaff>Staff access: password and a one-time code from your authenticator app.<#else>Welcome back. Sign in to follow your applications, results and reports.</#if></p>
-        </#if>
         <#if realm.internationalizationEnabled  && locale.supported?size gt 1>
         <div class="${properties.kcLoginMainHeaderUtilities!}">
           <div class="${properties.kcInputClass!}">
@@ -223,7 +220,6 @@
       <div class="pf-v5-c-login__main-footer">
         <#nested "socialProviders">
       </div>
-      <p class="ao-secure"><span class="ao-lock"></span>Secure sign-in. Your connection is encrypted and every action is recorded.</p>
     </main>
 
     <@loginFooter.content/>
@@ -231,6 +227,24 @@
 </div>
 </div>
 </div>
+<footer class="ao-foot">&copy; 2026 AssureOps AI &mdash; evidence-backed readiness, not a certification.</footer>
+<script>
+  // "Back to website": the portal that sent the visitor here (remembered across the sign-in steps of this tab).
+  (function () {
+    var key = "ao-home", home = null;
+    try {
+      var r = new URLSearchParams(location.search).get("redirect_uri");
+      if (r) { home = new URL(r).origin + "/"; sessionStorage.setItem(key, home); } else { home = sessionStorage.getItem(key); }
+    } catch (e) { home = null; }
+    var a = document.getElementById("ao-back");
+    if (home && /^https?:\/\//.test(home)) { a.href = home; a.hidden = false; }
+    var sub = document.querySelector(".ao-panel-sub"), head = document.querySelector(".pf-v5-c-login__main-header");
+    if (sub && head && document.getElementById("kc-form-login")) { head.appendChild(sub); } else if (sub) { sub.remove(); }
+    var u = document.getElementById("username"), pw = document.getElementById("password");
+    if (u && !u.placeholder) u.placeholder = "you@company.com";
+    if (pw && !pw.placeholder) pw.placeholder = "Enter your password";
+  })();
+</script>
 </body>
 </html>
 </#macro>
