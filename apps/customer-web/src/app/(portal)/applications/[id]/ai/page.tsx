@@ -3,7 +3,7 @@
 import { post, useAction, usePoll } from "@assureops/ui/client";
 import { ApiErrorBanner, Button, Card, CardHeader, EmptyState, ErrorBanner, Field, LoadingState, Notice, StatusBadge, inputClass } from "@assureops/ui/components";
 import { Bot, FileSearch, FileUp, GitBranch, Library, ScanSearch } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PageTop, useRouteId, WithSuspense } from "@/components/bits";
 import { useApp } from "@/lib/app-context";
 
@@ -84,6 +84,13 @@ function AiView() {
     if (!release) return;
     action.run("snapshot", () => post(`${base}/releases/${release.id}/source-analyses`, { zip_base64: btoa(binary), code_map: JSON.parse(codeMap) }), analyses.refresh);
   };
+
+  const loaded = !!phases.data;
+  useEffect(() => {  // the page renders after its data loads, so a #repository link scrolls once the card exists
+    if (loaded && typeof window !== "undefined" && window.location.hash === "#repository") {
+      document.getElementById("repository")?.scrollIntoView({ behavior: "smooth", block: "start" });
+    }
+  }, [loaded]);
 
   if (phases.loading && !phases.data) return <LoadingState label="Loading AI phases…" />;
 
