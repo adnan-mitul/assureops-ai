@@ -28,6 +28,7 @@ from .registry import constrained as registry_constrained
 WORKER_ID = f"{socket.gethostname()}:{os.getpid()}"
 LEASE_SECONDS = 180
 MAX_ATTEMPTS = 3
+MAX_QUEUED_PER_WORKSPACE = int(os.environ.get("AI_MAX_QUEUED_PER_WORKSPACE", "12"))
 BUDGET = {"A": 1500, "B": 1500, "C": 3000, "E": 1200, "F": 1500}
 
 
@@ -62,6 +63,9 @@ def request(s, app: Application, phase: str, refs: dict, actor: str) -> AiResult
     if phase not in PHASES or phase == "R":
         raise AiError("unsupported_phase", f"phase {phase} cannot be requested directly")
     p = PHASES[phase]
+    queued = s.scalar(select(func.count()).select_from(AiResult).where(AiResult.status.in_(["pending", "running"]), AiResult.shadow_of.is_(None))) or 0
+    if queued >= MAX_QUEUED_PER_WORKSPACE:  # fair admission: one workspace cannot fill the shared inference queue
+        raise AiError("queue_full", f"{queued} phase requests are already queued for this workspace; retry when some finish")
     row = AiResult(workspace_id=app.workspace_id, application_id=app.id, release_id=refs.get("release_id"), phase=phase, status="pending",
                    request={"refs": refs, "phase": phase, "prompt_version": p.prompt_version, "schema_version": p.schema_version,
                             "budget_tokens": BUDGET.get(phase, 600)},
@@ -189,12 +193,30 @@ def claim(workspace_id: str, result_id: str) -> int | None:
         return row[0] if row else None
 
 
+def cancel(s, row: AiResult, *, actor: str) -> bool:
+    """Stop a queued or running phase job. The fencing token moves on, so a reply still in flight
+    (private or external) is recorded as a stale call for cost accounting and never stored as output."""
+    if row.status not in ("pending", "running"):
+        return False
+    row.status, row.error = "cancelled", f"cancelled by {actor}"
+    row.fencing_token = (row.fencing_token or 0) + 1
+    row.lease_expires_at, row.updated_at = None, now()
+    return True
+
+
 def _usage_today(s, workspace_id: str) -> int:
     rows = s.scalars(select(ModelCall).where(ModelCall.provider == "groq", ModelCall.created_at > now() - 86400)).all()
     return sum((r.usage or {}).get("total_tokens") or 0 for r in rows)
 
 
 def execute(workspace_id: str, result_id: str) -> str:
+    outcome = _execute(workspace_id, result_id)
+    if outcome not in ("not_claimable", "stale_owner", "pending"):
+        _after(workspace_id, result_id)
+    return outcome
+
+
+def _execute(workspace_id: str, result_id: str) -> str:
     token = claim(workspace_id, result_id)
     if token is None:
         return "not_claimable"
@@ -205,7 +227,10 @@ def execute(workspace_id: str, result_id: str) -> str:
             data, ctx = build_input(s, row)
         except AiError as exc:
             return _finish(workspace_id, result_id, token, "unavailable", error=f"{exc.code}: {exc.detail}")
-        route = router.resolve(row.phase, external_allowed(workspace_id))
+        if row.shadow_of:
+            route = router.shadow_route(row.phase) or router.Route(row.phase, None, None, False, "shadow_ended: no shadow route for this phase")
+        else:
+            route = router.resolve(row.phase, external_allowed(workspace_id), key=result_id)
         used_today = _usage_today(s, workspace_id) if route.provider == "groq" else 0
     if not route.available:
         return _finish(workspace_id, result_id, token, "unavailable", error=route.reason, route=route)
@@ -304,6 +329,9 @@ def _finish(workspace_id, result_id, token, status, *, output=None, call=None, r
             row.model_call_id = mc.id
         if retry and row.attempts >= MAX_ATTEMPTS:
             status = "unavailable"
+        if row.shadow_of:  # a shadow run is evidence about the candidate only: never retried, reviewed or served
+            row.versions = {**row.versions, "shadow_outcome": "unavailable" if status == "pending" else status}
+            status = "shadow"
         row.status, row.error, row.updated_at, row.lease_owner = status, error, now(), None
         if output is not None:
             row.output = output
@@ -313,10 +341,35 @@ def _finish(workspace_id, result_id, token, status, *, output=None, call=None, r
             row.unknowns = unknowns
         if route is not None:
             row.versions = {**row.versions, "provider": route.provider, "model": route.model, "route": route.reason,
-                            "qualification": (route.qualification or {}).get("id")}
+                            "qualification": (route.qualification or {}).get("id"), "route_id": route.route_id}
+            row.route_stage = route.stage
         if status == "pending":
             s.add(Outbox(workspace_id=workspace_id, kind="ai_phase", ref_id=result_id))
         return status
+
+
+def _after(workspace_id: str, result_id: str):
+    """Count canary and shadow outcomes for promotion decisions, and queue a shadow run beside each served primary."""
+    from . import lifecycle
+
+    with tenant_session(workspace_id) as s:
+        row = s.get(AiResult, result_id)
+        stage, route_id = row.route_stage, (row.versions or {}).get("route_id")
+        outcome = (row.versions or {}).get("shadow_outcome") if row.shadow_of else row.status
+        primary_done = not row.shadow_of and row.status in ("proposed", "review_required")
+        spec = {"phase": row.phase, "request": row.request, "versions": {k: row.versions.get(k) for k in ("prompt", "schema", "candidate")},
+                "application_id": row.application_id, "release_id": row.release_id}
+    if stage in ("canary", "shadow") and route_id:
+        with platform_session() as p:
+            lifecycle.record_outcome(p, route_id, stage, valid=outcome == "proposed", invalid=outcome not in ("proposed", "review_required"))
+    if primary_done and router.shadow_route(spec["phase"]) is not None:
+        with tenant_session(workspace_id) as s:
+            shadow = AiResult(workspace_id=workspace_id, application_id=spec["application_id"], release_id=spec["release_id"], phase=spec["phase"],
+                              status="pending", request=spec["request"], versions=spec["versions"], requested_by="shadow", shadow_of=result_id,
+                              route_stage="shadow")
+            s.add(shadow)
+            s.flush()
+            s.add(Outbox(workspace_id=workspace_id, kind="ai_phase", ref_id=shadow.id))
 
 
 def _call_fields(call: dict) -> dict:
@@ -328,6 +381,8 @@ def _call_fields(call: dict) -> dict:
 
 def review(s, row: AiResult, *, decision: str, reviewer: str, note: str) -> dict:
     """Accepting a proposal only creates further proposals (edges, profile revisions) that keep their own reviews."""
+    if row.shadow_of:
+        raise AiError("shadow", "shadow results evaluate a candidate model and are never reviewed or applied")
     if row.status not in ("proposed", "review_required"):
         raise AiError("invalid_state", f"result is {row.status}")
     if row.requested_by == reviewer:

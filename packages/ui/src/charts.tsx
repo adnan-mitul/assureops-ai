@@ -9,6 +9,7 @@ export const RESULT_COLORS: Record<string, string> = {
   unverified: "#9ca3af",
   stale: "#fbbf24",
   unassessed: "#e5e7eb",
+  not_applicable: "#f3f4f6",
 };
 
 export type DonutControl = { id: string; name: string; result: string; evidence_validity: string };
@@ -26,8 +27,9 @@ export function TrendChart({ points }: { points: { label: string; support: numbe
   const last = points.at(-1)!;
   return (
     <div className="h-56" role="img" aria-label={`Evidence support ${last.support}%, coverage ${last.coverage}% after the latest assessment`}>
+      <div aria-hidden className="size-full">
       <ResponsiveContainer width="100%" height="100%">
-        <AreaChart data={points} margin={{ top: 16, right: 12, left: -16, bottom: 0 }}>
+        <AreaChart accessibilityLayer={false} data={points} margin={{ top: 16, right: 12, left: -16, bottom: 0 }}>
           <defs>
             <linearGradient id="supportFill" x1="0" y1="0" x2="0" y2="1">
               <stop offset="0%" stopColor="#15803d" stopOpacity={0.18} />
@@ -43,6 +45,7 @@ export function TrendChart({ points }: { points: { label: string; support: numbe
           <Area name="Evidence coverage" type="monotone" dataKey="coverage" stroke="#0369a1" strokeDasharray="4 3" strokeWidth={1.5} fill="none" dot={false} isAnimationActive={false} />
         </AreaChart>
       </ResponsiveContainer>
+      </div>
     </div>
   );
 }
@@ -51,14 +54,16 @@ export function ControlDonut({ controls }: { controls: DonutControl[] }) {
   const supported = controls.filter((c) => c.result === "supported" && c.evidence_validity === "current").length;
   return (
     <div className="relative size-44 shrink-0" role="img" aria-label={`${supported} of ${controls.length} controls supported with current evidence`}>
+      <div aria-hidden className="size-full">
       <ResponsiveContainer width="100%" height="100%">
-        <PieChart>
-          <Pie data={controls.map((c) => ({ name: c.name, value: 1 }))} dataKey="value" innerRadius={52} outerRadius={80} paddingAngle={2} stroke="none" isAnimationActive={false}>
+        <PieChart accessibilityLayer={false}>
+          <Pie rootTabIndex={-1} data={controls.map((c) => ({ name: c.name, value: 1 }))} dataKey="value" innerRadius={52} outerRadius={80} paddingAngle={2} stroke="none" isAnimationActive={false}>
             {controls.map((c) => <Cell key={c.id} fill={colorFor(c)} />)}
           </Pie>
         </PieChart>
       </ResponsiveContainer>
-      <div className="pointer-events-none absolute inset-0 grid place-items-center text-center">
+      </div>
+      <div aria-hidden className="pointer-events-none absolute inset-0 grid place-items-center text-center">
         <div>
           <p className="text-2xl font-bold">{supported}/{controls.length}</p>
           <p className="text-xs text-muted">Supported</p>

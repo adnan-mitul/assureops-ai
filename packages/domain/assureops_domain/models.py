@@ -69,8 +69,12 @@ class StaffRole(Base):
     __table_args__ = (UniqueConstraint("user_id", "role"),)
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("srl"))
     user_id: Mapped[str] = mapped_column(String)
-    role: Mapped[str] = mapped_column(String)  # analyst | senior_reviewer | case_manager | operator
+    role: Mapped[str] = mapped_column(String)  # admin | analyst | senior_reviewer | case_manager | operator
     active: Mapped[bool] = mapped_column(Boolean, default=True)
+    granted_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    granted_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    revoked_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    revoked_at: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class ServiceCredential(Base):
@@ -78,7 +82,7 @@ class ServiceCredential(Base):
 
     __tablename__ = "service_credentials"
     id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("svc"))
-    kind: Mapped[str] = mapped_column(String)  # runner | gateway | tool_server
+    kind: Mapped[str] = mapped_column(String)  # runner | gateway | tool_server | ci | relay
     workspace_id: Mapped[str] = mapped_column(String)
     application_id: Mapped[str] = mapped_column(String)
     environment: Mapped[str] = mapped_column(String)
@@ -158,6 +162,25 @@ class Application(Base):
     created_at: Mapped[float] = mapped_column(Float, default=now)
 
 
+class ApplicationGrant(Base):
+    """Application-scoped responsibility: a customer developer may change only the applications assigned to them.
+
+    Workspace membership still decides who may read. Owners write to every application of their workspace.
+    """
+
+    __tablename__ = "application_grants"
+    __table_args__ = tenant_keys(("application_id", "applications"))
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("agr"))
+    workspace_id: Mapped[str] = mapped_column(String)
+    application_id: Mapped[str] = mapped_column(String)
+    user_id: Mapped[str] = mapped_column(String)
+    granted_by: Mapped[str] = mapped_column(String)
+    granted_at: Mapped[float] = mapped_column(Float, default=now)
+    expires_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    revoked_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    revoked_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
 class CoverageContract(Base):
     __tablename__ = "coverage_contracts"
     __table_args__ = tenant_keys(("application_id", "applications"))
@@ -210,6 +233,8 @@ class Release(Base):
     profile_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
     connection_revision: Mapped[int | None] = mapped_column(Integer, nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=now)
+    # when this identity was last seen running; a redeployed earlier release becomes current again
+    last_collected_at: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
 class ChangeSet(Base):
@@ -489,6 +514,65 @@ class EvidenceRequest(Base):
     answered_at: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
+class RelayTask(Base):
+    """Work for a customer-run private connector (relay) that reaches targets the hosted service cannot.
+
+    The payload is encrypted at rest and handed out once: claiming wipes the ciphertext.
+    The result must echo the claim nonce; only the relay credential bound to this
+    application can claim or complete it. A missed deadline expires the task.
+    """
+
+    __tablename__ = "relay_tasks"
+    __table_args__ = tenant_keys(("application_id", "applications"))
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("rly"))
+    workspace_id: Mapped[str] = mapped_column(String)
+    application_id: Mapped[str] = mapped_column(String)
+    kind: Mapped[str] = mapped_column(String)  # step | verify
+    ref_id: Mapped[str] = mapped_column(String)  # job step id, or connection id for verification
+    fencing_token: Mapped[int | None] = mapped_column(Integer, nullable=True)
+    payload_ciphertext: Mapped[str | None] = mapped_column(Text, nullable=True)
+    payload_sha256: Mapped[str] = mapped_column(String)
+    status: Mapped[str] = mapped_column(String, default="queued")  # queued | claimed | completed | expired | cancelled
+    claim_nonce_hash: Mapped[str | None] = mapped_column(String, nullable=True)
+    claimed_by: Mapped[str | None] = mapped_column(String, nullable=True)  # relay credential id
+    result: Mapped[dict | None] = mapped_column(JSON, nullable=True)
+    error: Mapped[str | None] = mapped_column(Text, nullable=True)
+    created_at: Mapped[float] = mapped_column(Float, default=now)
+    deadline_at: Mapped[float] = mapped_column(Float)
+    claimed_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    completed_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
+class RiskAcceptance(Base):
+    """A time-limited, release-bound decision to ship despite one failed control.
+
+    It never changes the test result, finding or evidence: the control stays failed and
+    visible. It can move a non-critical failure out of the gate's blocking list only when
+    the application's reviewed profile allows that severity, a second person approved it,
+    it has not expired and no verified runtime violation exists for the control.
+    """
+
+    __tablename__ = "risk_acceptances"
+    __table_args__ = tenant_keys(("application_id", "applications"), ("release_id", "releases"))
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("rsk"))
+    workspace_id: Mapped[str] = mapped_column(String)
+    application_id: Mapped[str] = mapped_column(String)
+    release_id: Mapped[str] = mapped_column(String)
+    control_id: Mapped[str] = mapped_column(String)
+    severity: Mapped[str] = mapped_column(String)  # failure severity when proposed
+    reason: Mapped[str] = mapped_column(Text)
+    compensating_controls: Mapped[str] = mapped_column(Text)
+    status: Mapped[str] = mapped_column(String, default="proposed")  # proposed | active | rejected | revoked
+    requested_by: Mapped[str] = mapped_column(String)
+    decided_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    decision_note: Mapped[str | None] = mapped_column(Text, nullable=True)
+    expires_at: Mapped[float] = mapped_column(Float)
+    created_at: Mapped[float] = mapped_column(Float, default=now)
+    decided_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    revoked_by: Mapped[str | None] = mapped_column(String, nullable=True)
+    revoked_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+
+
 class CaseMessage(Base):
     __tablename__ = "case_messages"
     __table_args__ = tenant_keys(("case_id", "assessment_cases"))
@@ -714,6 +798,8 @@ class AiResult(Base):
     requested_by: Mapped[str] = mapped_column(String)
     created_at: Mapped[float] = mapped_column(Float, default=now)
     updated_at: Mapped[float] = mapped_column(Float, default=now)
+    route_stage: Mapped[str | None] = mapped_column(String, nullable=True)  # unmanaged | active | canary | shadow
+    shadow_of: Mapped[str | None] = mapped_column(String, nullable=True)  # shadow runs are never reviewable or shown to customers
 
 
 class DeploymentReceipt(Base):
@@ -748,6 +834,44 @@ class RepositoryBinding(Base):
     installation_id: Mapped[str | None] = mapped_column(String, nullable=True)
     created_by: Mapped[str] = mapped_column(String)
     created_at: Mapped[float] = mapped_column(Float, default=now)
+
+
+class ModelRouteStage(Base):
+    """Platform record: lifecycle stage of one exact model route for one phase. Counters only, no customer content.
+
+    development -> holdout -> shadow -> canary -> active; any non-active stage -> retired; active -> rolled_back on rollback.
+    """
+
+    __tablename__ = "model_route_stages"
+    __table_args__ = (UniqueConstraint("phase", "provider", "model"),)
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("mrs"))
+    phase: Mapped[str] = mapped_column(String)
+    provider: Mapped[str] = mapped_column(String)
+    model: Mapped[str] = mapped_column(String)
+    stage: Mapped[str] = mapped_column(String, default="development")
+    canary_percent: Mapped[int] = mapped_column(Integer, default=10)
+    qualification_id: Mapped[str | None] = mapped_column(String, nullable=True)
+    replaces_id: Mapped[str | None] = mapped_column(String, nullable=True)  # previous active route, restored by rollback
+    shadow_runs: Mapped[int] = mapped_column(Integer, default=0)
+    shadow_valid: Mapped[int] = mapped_column(Integer, default=0)
+    canary_runs: Mapped[int] = mapped_column(Integer, default=0)
+    canary_valid: Mapped[int] = mapped_column(Integer, default=0)
+    canary_invalid: Mapped[int] = mapped_column(Integer, default=0)
+    changed_by: Mapped[str] = mapped_column(String)
+    changed_at: Mapped[float] = mapped_column(Float, default=now)
+
+
+class ModelRouteEvent(Base):
+    """Stage history: who moved which route, from where to where, and why."""
+
+    __tablename__ = "model_route_events"
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("mre"))
+    route_id: Mapped[str] = mapped_column(String, index=True)
+    from_stage: Mapped[str | None] = mapped_column(String, nullable=True)
+    to_stage: Mapped[str] = mapped_column(String)
+    actor: Mapped[str] = mapped_column(String)
+    note: Mapped[str] = mapped_column(Text, default="")
+    at: Mapped[float] = mapped_column(Float, default=now)
 
 
 class ModelQualification(Base):
@@ -844,6 +968,7 @@ class Notification(Base):
     last_error: Mapped[str | None] = mapped_column(Text, nullable=True)
     created_at: Mapped[float] = mapped_column(Float, default=now)
     delivered_at: Mapped[float | None] = mapped_column(Float, nullable=True)
+    read_at: Mapped[float | None] = mapped_column(Float, nullable=True)  # in-app inbox; delivery state stays separate
 
 
 class GithubDelivery(Base):
@@ -861,5 +986,5 @@ TENANT_TABLES = [
     "incidents", "assessment_cases", "evidence_requests", "case_messages", "reports", "review_decisions",
     "report_publications", "readiness_points", "audit_events", "evidence_reviews",
     "application_profiles", "connections", "connector_secrets", "artifact_deletions", "source_documents", "model_calls",
-    "ai_results", "deployment_receipts", "repository_bindings", "analysis_runs",
+    "ai_results", "deployment_receipts", "repository_bindings", "analysis_runs", "application_grants", "risk_acceptances", "relay_tasks",
 ]

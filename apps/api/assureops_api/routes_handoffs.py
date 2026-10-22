@@ -1,12 +1,13 @@
 """Public inquiries, staff conversion into workspaces, invitations, member grants/revocation."""
 
 import re
+import time
 
 from fastapi import APIRouter, Header, Request
 from pydantic import BaseModel, Field
 from sqlalchemy import select
 
-from assureops_domain import cases, handoffs
+from assureops_domain import cases, grants, handoffs
 from assureops_domain.db import platform_session, tenant_session
 from assureops_domain.models import Inquiry, Invitation, Membership, StaffRole, User, Workspace
 
@@ -18,7 +19,8 @@ PORTAL = "http://localhost:3700"
 
 
 def _err(exc: handoffs.HandoffError):
-    return api_error({"not_found": 404, "wrong_account": 403, "last_owner": 409, "already_invited": 409}.get(exc.code, 422), exc.code, exc.detail)
+    return api_error({"not_found": 404, "wrong_account": 403, "self_grant": 403, "last_owner": 409, "last_admin": 409,
+                      "already_invited": 409}.get(exc.code, 422), exc.code, exc.detail)
 
 
 # ---------------- Public inquiry -> staff conversion ----------------
@@ -46,7 +48,7 @@ def submit_inquiry(body: InquiryIn, request: Request):
 
 @router.get("/staff/inquiries")
 def list_inquiries(caller: Caller = StaffCaller):
-    caller.require_staff("case_manager")
+    caller.require_staff("case_manager", "admin")
     with platform_session() as s:
         return [{"id": i.id, "company": i.company, "contact_email": i.contact_email, "message": i.message, "status": i.status,
                  "workspace_id": i.workspace_id, "created_at": i.created_at} for i in s.scalars(select(Inquiry).order_by(Inquiry.created_at.desc()))]
@@ -60,7 +62,7 @@ class ConvertIn(BaseModel):
 @router.post("/staff/inquiries/{inquiry_id}/convert", status_code=201)
 def convert_inquiry(inquiry_id: str, body: ConvertIn, caller: Caller = StaffCaller):
     """Creates the workspace and invites the contact as its owner; no staff access to tenant data is granted by this."""
-    caller.require_staff("case_manager")
+    caller.require_staff("case_manager", "admin")
     with platform_session() as s:
         inq = s.scalars(select(Inquiry).where(Inquiry.id == inquiry_id).with_for_update()).first()
         if inq is None or inq.status != "new":
@@ -93,6 +95,7 @@ def create_invitation(body: InviteIn, caller: Caller = CustomerCaller):
             inv, _ = handoffs.invite(s, workspace_id=caller.workspace_id, email=body.email, role=body.role, invited_by=caller.username, portal_origin=PORTAL)
         except handoffs.HandoffError as exc:
             raise _err(exc)
+        s.flush()  # assign the id before answering, so the owner can revoke this invitation
         result = {"id": inv.id, "email": inv.email, "role": inv.role, "expires_at": inv.expires_at}
     with tenant_session(caller.workspace_id) as s:
         cases.audit(s, workspace_id=caller.workspace_id, actor=caller.username, actor_kind="customer", action="invitation.create",
@@ -161,7 +164,58 @@ def change_member(username: str, body: RoleIn, caller: Caller = CustomerCaller):
         except handoffs.HandoffError as exc:
             raise _err(exc)
         result = {"user": username, "role": m.role, "active": m.active}
-    with tenant_session(caller.workspace_id) as s:
+    ended = 0
+    with tenant_session(caller.workspace_id) as s, platform_session() as p:
+        if body.role != "developer":  # assignments belong to developers; removal or another role ends them
+            from assureops_domain.models import ApplicationGrant
+
+            user = p.scalars(select(User).where(User.username == username)).first()
+            for g in s.scalars(select(ApplicationGrant).where(ApplicationGrant.user_id == (user.id if user else ""), ApplicationGrant.revoked_at.is_(None))):
+                g.revoked_at, g.revoked_by = time.time(), caller.username
+                ended += 1
         cases.audit(s, workspace_id=caller.workspace_id, actor=caller.username, actor_kind="customer",
-                    action="member.revoke" if body.role is None else "member.grant", target=username, detail={"role": body.role})
-    return result
+                    action="member.revoke" if body.role is None else "member.grant", target=username, detail={"role": body.role, "assignments_ended": ended})
+    return {**result, "assignments_ended": ended}
+
+
+# ---------------- Application-scoped developer assignment ----------------
+
+class AssignmentIn(BaseModel):
+    expires_at: float | None = None
+
+
+@router.get("/applications/{application_id}/developers")
+def list_application_developers(application_id: str, caller: Caller = CustomerCaller):
+    from . import services as svc
+
+    with tenant_session(caller.workspace_id) as s, platform_session() as p:
+        svc.get_application(s, application_id)
+        return grants.application_developers(s, p, application_id)
+
+
+@router.put("/applications/{application_id}/developers/{username}")
+def assign_application_developer(application_id: str, username: str, body: AssignmentIn | None = None, caller: Caller = CustomerCaller):
+    """Owner assigns a workspace developer to one application; the developer may then change only that application."""
+    caller.require_role("owner")
+    with tenant_session(caller.workspace_id) as s, platform_session() as p:
+        try:
+            g = grants.assign_developer(s, p, workspace_id=caller.workspace_id, application_id=application_id, username=username.lower(),
+                                        actor=caller.username, expires_at=(body.expires_at if body else None))
+        except handoffs.HandoffError as exc:
+            raise _err(exc)
+        cases.audit(s, workspace_id=caller.workspace_id, actor=caller.username, actor_kind="customer", action="application.assign",
+                    target=application_id, detail={"developer": username.lower(), "expires_at": g.expires_at})
+        return {"application_id": application_id, "user": username.lower(), "expires_at": g.expires_at, "active": True}
+
+
+@router.delete("/applications/{application_id}/developers/{username}")
+def unassign_application_developer(application_id: str, username: str, caller: Caller = CustomerCaller):
+    caller.require_role("owner")
+    with tenant_session(caller.workspace_id) as s, platform_session() as p:
+        removed = grants.unassign_developer(s, p, workspace_id=caller.workspace_id, application_id=application_id, username=username.lower(),
+                                            actor=caller.username)
+        if not removed:
+            raise api_error(404, "not_found", "no active assignment for that developer")
+        cases.audit(s, workspace_id=caller.workspace_id, actor=caller.username, actor_kind="customer", action="application.unassign",
+                    target=application_id, detail={"developer": username.lower()})
+        return {"application_id": application_id, "user": username.lower(), "active": False}

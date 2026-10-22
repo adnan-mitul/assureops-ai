@@ -10,5 +10,6 @@ never customer content.
 | [Runtime incident](runtime-incident.md) | new `assureops_incidents{state="open"}` |
 | [Evidence store outage or integrity failure](evidence-store.md) | evidence `unavailable` in readiness, S3 errors |
 | [Model route outage or bad output](model-routes.md) | `assureops_model_calls{status!="succeeded"}` rising |
+| [Private connector (relay)](private-connector.md) | relay tasks expiring (`relay_timeout` step errors) |
 | [Backup, restore and deletion](backup-restore.md) | scheduled drill, erasure request |
 | [Credential rotation and revocation](credentials.md) | suspected leak, staff departure |

@@ -34,9 +34,10 @@ def assignment(caller: Caller, case_id: str, *duties: str) -> CaseAssignment:
     with platform_session() as s:
         rows = s.scalars(select(CaseAssignment).where(CaseAssignment.case_id == case_id, CaseAssignment.staff_user_id == caller.user_id,
                                                       CaseAssignment.active.is_(True))).all()
-    match = next((a for a in rows if not duties or a.duty in duties), None)
+    needed = {"analyst": "analyst", "reviewer": "senior_reviewer"}
+    match = next((a for a in rows if (not duties or a.duty in duties) and needed.get(a.duty, a.duty) in caller.staff_roles), None)
     if match is None:
-        raise api_error(403, "not_assigned", "this case is not assigned to you")
+        raise api_error(403, "not_assigned", "this case is not assigned to you (or the role for that duty was revoked)")
     return match
 
 
@@ -97,7 +98,7 @@ class AssignIn(BaseModel):
 
 @router.post("/cases/{case_id}/assignments", status_code=201)
 def assign(case_id: str, body: AssignIn, caller: Caller = StaffCaller):
-    caller.require_staff("case_manager")
+    caller.require_staff("case_manager", "admin")
     with platform_session() as s:
         index = s.get(CaseIndex, case_id)
         user = s.scalars(select(User).where(User.username == body.staff_user, User.kind == "staff")).first()
@@ -152,7 +153,7 @@ def claim(case_id: str, caller: Caller = StaffCaller):
 
 @router.delete("/cases/{case_id}/assignments/{staff_user}")
 def revoke_assignment(case_id: str, staff_user: str, caller: Caller = StaffCaller):
-    caller.require_staff("case_manager")
+    caller.require_staff("case_manager", "admin")
     with platform_session() as s:
         user = s.scalars(select(User).where(User.username == staff_user)).first()
         rows = s.scalars(select(CaseAssignment).where(CaseAssignment.case_id == case_id, CaseAssignment.staff_user_id == (user.id if user else ""),
@@ -161,7 +162,46 @@ def revoke_assignment(case_id: str, staff_user: str, caller: Caller = StaffCalle
             raise api_error(404, "not_found", "no active assignment for that user on this case")
         for row in rows:
             row.active, row.revoked_at = False, time.time()
-        return {"revoked": len(rows)}
+        workspace_id = rows[0].workspace_id
+    with tenant_session(workspace_id) as s:
+        audit(s, workspace_id, caller, "case.unassign", case_id, {"staff_user": staff_user})
+    return {"revoked": len(rows)}
+
+
+class ReassignIn(BaseModel):
+    duty: str = Field(pattern=r"^(analyst|reviewer)$")
+    from_user: str
+    to_user: str
+
+
+@router.post("/cases/{case_id}/reassign")
+def reassign(case_id: str, body: ReassignIn, caller: Caller = StaffCaller):
+    """Move one duty from one person to another in a single transaction; separation of duties still holds."""
+    caller.require_staff("case_manager", "admin")
+    if body.from_user == body.to_user:
+        raise api_error(422, "same_user", "choose a different person")
+    with platform_session() as s:
+        users = {u.username: u for u in s.scalars(select(User).where(User.username.in_([body.from_user, body.to_user]), User.kind == "staff"))}
+        if len(users) != 2:
+            raise api_error(404, "not_found", "staff user not found")
+        current = s.scalars(select(CaseAssignment).where(CaseAssignment.case_id == case_id, CaseAssignment.staff_user_id == users[body.from_user].id,
+                                                         CaseAssignment.duty == body.duty, CaseAssignment.active.is_(True)).with_for_update()).first()
+        if current is None:
+            raise api_error(404, "not_found", f"{body.from_user} does not hold the {body.duty} duty on this case")
+        target = users[body.to_user]
+        needed = {"analyst": "analyst", "reviewer": "senior_reviewer"}[body.duty]
+        if not s.scalars(select(StaffRole).where(StaffRole.user_id == target.id, StaffRole.role == needed, StaffRole.active.is_(True))).first():
+            raise api_error(422, "missing_role", f"{body.to_user} lacks the {needed} role")
+        if s.scalars(select(CaseAssignment).where(CaseAssignment.case_id == case_id, CaseAssignment.staff_user_id == target.id,
+                                                  CaseAssignment.active.is_(True))).first():
+            raise api_error(422, "separation_of_duties", f"{body.to_user} already holds a duty on this case")
+        current.active, current.revoked_at = False, time.time()
+        s.add(CaseAssignment(case_id=case_id, workspace_id=current.workspace_id, staff_user_id=target.id, duty=body.duty,
+                             granted_by=f"reassign:{caller.username}"))
+        workspace_id = current.workspace_id
+    with tenant_session(workspace_id) as s:
+        audit(s, workspace_id, caller, "case.reassign", case_id, body.model_dump())
+    return {"ok": True, "duty": body.duty, "to": body.to_user}
 
 
 # ---------------- Case workspace ----------------
@@ -549,7 +589,9 @@ def governance(caller: Caller = StaffCaller):
 
     return {
         "profile": {"version": control_catalog()["catalog_id"] + "-" + control_catalog()["version"], "digest": canonical_hash(control_catalog())[:16],
-                    "controls": control_catalog()["controls"], "gate_policy": {"version": "per application profile", "blocking_severities": ["critical", "high"]},
+                    "controls": control_catalog()["controls"], "gate_policy": {"version": "per application profile", "blocking_severities": ["critical", "high"],
+                                    # the reducer's incomplete rule: evidence not current, or results not yet decided
+                                    "incomplete_when": ["stale", "unavailable", "unverified", "review_required"]},
                     "tests": [], "requirements": {}, "note": "Tests, gates and requirements are defined per application profile revision."},
         "model_routes": ai_routes.route_table(None), "qualification_records": qualifications,
         "staff_permissions": staff,

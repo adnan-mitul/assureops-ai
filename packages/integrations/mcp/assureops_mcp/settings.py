@@ -30,4 +30,9 @@ TOOLS_URL = get("TOOLS_MCP_URL", "http://127.0.0.1:8720/mcp")
 AGENT_URL = get("AGENT_URL", "http://127.0.0.1:8710")
 ENVIRONMENT = "staging"
 DOCS_PATH = PACKAGE / "docs.json"
-VAR_DIR = ROOT / "var"
+# Overrides let an isolated second copy run beside the reference stack (for example the change benchmark).
+VAR_DIR = Path(get("REFERENCE_VAR_DIR", str(ROOT / "var")))
+TOOLS_PORT = int(get("TOOLS_PORT", "8720"))
+AGENT_SOURCE_ID = get("AGENT_SOURCE_ID", "refund-agent-1")
+TOOLS_SOURCE_ID = get("TOOLS_SOURCE_ID", "refund-tools-1")
+EXTRA_RELEASES = get("AGENT_EXTRA_RELEASES", "")  # folder with additional release configurations (benchmark variants)

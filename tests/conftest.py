@@ -7,8 +7,8 @@ from sqlalchemy import delete
 
 from assureops_domain.db import platform_session, tenant_session
 from assureops_domain.models import (
-    AiResult, AnalysisRun, Application, ApplicationProfile, Approval, Assessment, Connection, ConnectorSecret, CoverageContract, DependencyEdge,
-    DeploymentReceipt, EventSource, Finding,
+    AiResult, AnalysisRun, Application, ApplicationGrant, ApplicationProfile, Approval, Assessment, AssessmentCase, CaseMessage, Connection, ConnectorSecret, CoverageContract, DependencyEdge,
+    DeploymentReceipt, EventSource, Finding, Invitation, Membership, Notification, RiskAcceptance, User,
     Incident, JobStep, LogicalAction, ModelCall, Release, RuntimeEvent, SourceDocument, TestRun, Workspace,
 )
 from assureops_domain.profile import canonical_hash, load_coverage_contract, load_profile_file, normalize
@@ -50,9 +50,10 @@ def workspace():
                                      source="coverage_contract", reviewer="test"))
     yield ws
     with tenant_session(ws) as s:
-        for model in (Incident, Finding, DeploymentReceipt, AnalysisRun, TestRun, JobStep, Assessment, LogicalAction, Approval, RuntimeEvent, Release,
+        for model in (RiskAcceptance, Incident, Finding, DeploymentReceipt, AnalysisRun, TestRun, JobStep, Assessment, LogicalAction, Approval, RuntimeEvent, Release,
                       DependencyEdge, AiResult,
-                      ModelCall, SourceDocument, Connection, ConnectorSecret, CoverageContract, ApplicationProfile, Application):
+                      ModelCall, SourceDocument, Connection, ConnectorSecret, CoverageContract, ApplicationProfile, ApplicationGrant,
+                      CaseMessage, AssessmentCase, Application):
             s.execute(delete(model))
     with platform_session() as s:
         s.execute(delete(EventSource).where(EventSource.workspace_id == ws))
@@ -67,3 +68,32 @@ def add_release(ws: str, version: str, overrides: dict | None = None) -> Release
         s.add(release)
         s.flush()
         return release
+
+
+def make_user(username: str, kind: str = "customer") -> User:
+    with platform_session() as s:
+        u = User(username=username, display_name=username.split("@")[0], kind=kind)
+        s.add(u)
+        s.flush()
+        s.expunge(u)
+        return u
+
+
+@pytest.fixture
+def people(workspace):
+    tag = uuid.uuid4().hex[:6]
+    made = {role: make_user(f"{role}-{tag}@acme.test") for role in ("owner", "developer", "reviewer", "viewer")}
+    with platform_session() as s:
+        for role, u in made.items():
+            s.add(Membership(workspace_id=workspace, user_id=u.id, role=role))
+    from assureops_api.auth import Caller
+
+    callers = {role: Caller(u.id, u.username, u.display_name, "customer", workspace_id=workspace, role=role, memberships={workspace: role})
+               for role, u in made.items()}
+    yield callers
+    with platform_session() as s:
+        ids = [u.id for u in made.values()]
+        s.execute(delete(Membership).where(Membership.user_id.in_(ids)))
+        s.execute(delete(Notification).where(Notification.workspace_id == workspace))
+        s.execute(delete(Invitation).where(Invitation.workspace_id == workspace))
+        s.execute(delete(User).where(User.id.in_(ids)))

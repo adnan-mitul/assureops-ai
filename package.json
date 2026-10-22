@@ -12,9 +12,12 @@
     "build": "npm --workspace apps/customer-web run build && npm --workspace apps/staff-web run build",
     "lint": "npm --workspace apps/customer-web run lint && npm --workspace apps/staff-web run lint",
     "typecheck": "npm --workspace apps/customer-web exec tsc -- --noEmit && npm --workspace apps/staff-web exec tsc -- --noEmit",
-    "test:e2e": "playwright test"
+    "test:e2e": "playwright test",
+    "gen:api": "openapi-typescript packages/ui/src/api/openapi.json -o packages/ui/src/api/schema.d.ts"
   },
   "devDependencies": {
-    "@playwright/test": "1.63.0"
+    "@axe-core/playwright": "4.13.0",
+    "@playwright/test": "1.63.0",
+    "openapi-typescript": "7.13.0"
   }
 }

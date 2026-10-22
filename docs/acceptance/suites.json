@@ -1,0 +1,45 @@
+{
+  "note": "Maps executed tests to the plan v6 section 3 acceptance suites. Case status comes from the latest recorded runs (pytest JUnit XML and the Playwright JSON report); manual entries carry a reviewed reason. The v5 case identifiers (T01-T20, L01-L12, M01-M16, RE01-RE06, UI01-UI08, GH01-GH06, CD01-CD10, PR01-PR12) need the v5 specification, which is not in this repository; until it is supplied, cases are grouped by suite and named by the test that provides the evidence.",
+  "suites": [
+    {"id": "C/T", "title": "Control coverage, authorization/isolation, approvals, retries, change impact, event ordering, truthful UI state",
+     "patterns": ["tests/integration/test_approvals", "tests/integration/test_evidence_validity", "tests/integration/test_runtime_events",
+                  "tests/integration/test_profiles_and_identity", "tests/integration/test_applicability", "tests/integration/test_risk_acceptance",
+                  "tests/integration/test_release_rollback", "tests/security/test_tenant_isolation", "tests/fault/", "tests/integration/test_attribution_and_poison",
+                  "tests/connectors/test_reconciliation"]},
+    {"id": "L/M", "title": "Private-model resource/failure/privacy and phase routing/output qualification",
+     "patterns": ["tests/ai/"],
+     "manual": [
+       {"case": "Phase qualification records (v1 and v2 suites)", "status": "pass", "evidence": "model_qualifications table; docs/work-items/v6-completion-status.md"},
+       {"case": "Phase D on the 300-pair v2 suite", "status": "fail", "evidence": "accuracy 0.92 (95% CI 0.884-0.946), 1 critical false support; route disabled"},
+       {"case": "Phase G on the 200-case v2 suite", "status": "fail", "evidence": "accuracy 0.73 (95% CI 0.665-0.787), 54 attacks missed; optional route disabled"},
+       {"case": "Phases A, B, E, F on the 200-case v2 suites", "status": "not_run", "evidence": "suites built; CPU runtime exceeds this environment; run with the CI models matrix (qualify_suite=v2)"}
+     ]},
+    {"id": "RE", "title": "REA schema/provenance/coverage and hostile-input boundaries",
+     "patterns": ["tests/integration/test_rea", "tests/security/test_rea"],
+     "manual": [
+       {"case": "REA on RefundDesk and DocVault snapshots", "status": "pass", "evidence": "scripts/run_ai_phases.py runs of 21 October (routes, identity match, Evidence recorded)"}
+     ]},
+    {"id": "UI", "title": "Customer/staff separation, assignments, visibility, review independence and accessible journeys",
+     "patterns": ["e2e/", "tests/security/test_access_revocation", "tests/integration/test_handoffs", "tests/integration/test_inbox"]},
+    {"id": "GH/CD", "title": "Customer release identity and secure platform promotion/rollback",
+     "patterns": ["tests/integration/test_release_gate"],
+     "manual": [
+       {"case": "Signed images, SBOM and provenance on main", "status": "pass", "evidence": "GitHub Actions run 39505978891 (images job)"},
+       {"case": "Local staged promotion, rollback, broken image stopped at staging", "status": "pass", "evidence": "scripts/deploy/local_promote.py drill (integration status, 21 October)"},
+       {"case": "Hosted staging/canary/production promotion", "status": "not_run", "evidence": "no hosted target configured (DEPLOY_ENABLED unset)"},
+       {"case": "GitHub App installation and webhooks from GitHub", "status": "not_run", "evidence": "no GitHub App registered; webhook handling is covered by signed-payload tests"}
+     ]},
+    {"id": "PR", "title": "Hosted failure, restore, revocation, evidence, overload and rollback behaviour",
+     "patterns": ["tests/security/test_retention", "tests/security/test_object_store", "tests/connectors/test_relay", "tests/connectors/test_engine_security"],
+     "manual": [
+       {"case": "Backup and restore drill (database and evidence objects)", "status": "pass", "evidence": "scripts/backup_restore_check.py"},
+       {"case": "Worker crash recovery", "status": "pass", "evidence": "scripts/load_recovery_check.py recovery: completed 129 s after the kill (lease 120 s), local"},
+       {"case": "Hosted overload, PITR and RTO/RPO", "status": "not_run", "evidence": "requires hosted infrastructure"}
+     ]},
+    {"id": "ONB", "title": "Invitations, application-scoped assignment, target verification, separate profiles, both demos through AssureOps",
+     "patterns": ["tests/integration/test_handoffs", "tests/security/test_access_revocation", "e2e/journey"],
+     "manual": [
+       {"case": "RefundDesk and DocVault R1 -> R2 -> R3 through AssureOps", "status": "pass", "evidence": "scripts/lab_journey.py runs (integration status, 21 October)"}
+     ]}
+  ]
+}

@@ -1,0 +1,869 @@
+{
+ "note": "Synthetic data only; no customer evidence. Relevant documents are the four notes of the queried topic.",
+ "phase": "R",
+ "suite": "v2",
+ "corpus": [
+  {
+   "id": "doc-refund-0",
+   "title": "Refund policy note 1",
+   "text": "Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-refund-1",
+   "title": "Refund policy note 2",
+   "text": "Note 2: Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-refund-2",
+   "title": "Refund policy note 3",
+   "text": "Note 3: Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-refund-3",
+   "title": "Refund policy note 4",
+   "text": "Note 4: Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-tenancy-0",
+   "title": "Tenancy policy note 1",
+   "text": "Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-tenancy-1",
+   "title": "Tenancy policy note 2",
+   "text": "Note 2: Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-tenancy-2",
+   "title": "Tenancy policy note 3",
+   "text": "Note 3: Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-tenancy-3",
+   "title": "Tenancy policy note 4",
+   "text": "Note 4: Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-secrets-0",
+   "title": "Secrets policy note 1",
+   "text": "Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-secrets-1",
+   "title": "Secrets policy note 2",
+   "text": "Note 2: Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-secrets-2",
+   "title": "Secrets policy note 3",
+   "text": "Note 3: Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-secrets-3",
+   "title": "Secrets policy note 4",
+   "text": "Note 4: Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-tools-0",
+   "title": "Tools policy note 1",
+   "text": "Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-tools-1",
+   "title": "Tools policy note 2",
+   "text": "Note 2: Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-tools-2",
+   "title": "Tools policy note 3",
+   "text": "Note 3: Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-tools-3",
+   "title": "Tools policy note 4",
+   "text": "Note 4: Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-grounding-0",
+   "title": "Grounding policy note 1",
+   "text": "Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-grounding-1",
+   "title": "Grounding policy note 2",
+   "text": "Note 2: Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-grounding-2",
+   "title": "Grounding policy note 3",
+   "text": "Note 3: Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-grounding-3",
+   "title": "Grounding policy note 4",
+   "text": "Note 4: Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-limits-0",
+   "title": "Limits policy note 1",
+   "text": "Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-limits-1",
+   "title": "Limits policy note 2",
+   "text": "Note 2: Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-limits-2",
+   "title": "Limits policy note 3",
+   "text": "Note 3: Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-limits-3",
+   "title": "Limits policy note 4",
+   "text": "Note 4: Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-retries-0",
+   "title": "Retries policy note 1",
+   "text": "Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-retries-1",
+   "title": "Retries policy note 2",
+   "text": "Note 2: Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-retries-2",
+   "title": "Retries policy note 3",
+   "text": "Note 3: Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-retries-3",
+   "title": "Retries policy note 4",
+   "text": "Note 4: Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-release-0",
+   "title": "Release policy note 1",
+   "text": "Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-release-1",
+   "title": "Release policy note 2",
+   "text": "Note 2: Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-release-2",
+   "title": "Release policy note 3",
+   "text": "Note 3: Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-release-3",
+   "title": "Release policy note 4",
+   "text": "Note 4: Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-injection-0",
+   "title": "Injection policy note 1",
+   "text": "Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-injection-1",
+   "title": "Injection policy note 2",
+   "text": "Note 2: Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-injection-2",
+   "title": "Injection policy note 3",
+   "text": "Note 3: Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-injection-3",
+   "title": "Injection policy note 4",
+   "text": "Note 4: Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-roles-0",
+   "title": "Roles policy note 1",
+   "text": "Only administrators may export customer records or change billing."
+  },
+  {
+   "id": "doc-roles-1",
+   "title": "Roles policy note 2",
+   "text": "Note 2: Only administrators may export customer records or change billing."
+  },
+  {
+   "id": "doc-roles-2",
+   "title": "Roles policy note 3",
+   "text": "Note 3: Only administrators may export customer records or change billing."
+  },
+  {
+   "id": "doc-roles-3",
+   "title": "Roles policy note 4",
+   "text": "Note 4: Only administrators may export customer records or change billing."
+  }
+ ],
+ "queries": [
+  {
+   "id": "q019",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers please",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q103",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers?",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q112",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers?",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q118",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q137",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers please",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q139",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q162",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers for our team",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q174",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q179",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers in production",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q181",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q202",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers?",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q204",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers in production",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q233",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers?",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q262",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers in production",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q280",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers in production",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q339",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers for our team",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q357",
+   "family": "secrets/are",
+   "q": "are api keys allowed in answers?",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q048",
+   "family": "release/traceable",
+   "q": "traceable deployments in production",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q065",
+   "family": "release/traceable",
+   "q": "traceable deployments please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q095",
+   "family": "release/traceable",
+   "q": "traceable deployments please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q119",
+   "family": "release/traceable",
+   "q": "traceable deployments please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q128",
+   "family": "release/traceable",
+   "q": "traceable deployments in production",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q147",
+   "family": "release/traceable",
+   "q": "traceable deployments",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q166",
+   "family": "release/traceable",
+   "q": "traceable deployments for our team",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q239",
+   "family": "release/traceable",
+   "q": "traceable deployments please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q246",
+   "family": "release/traceable",
+   "q": "traceable deployments please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q263",
+   "family": "release/traceable",
+   "q": "traceable deployments for our team",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q282",
+   "family": "release/traceable",
+   "q": "traceable deployments please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q290",
+   "family": "release/traceable",
+   "q": "traceable deployments",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q299",
+   "family": "release/traceable",
+   "q": "traceable deployments?",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q310",
+   "family": "release/traceable",
+   "q": "traceable deployments please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q338",
+   "family": "release/traceable",
+   "q": "traceable deployments?",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q343",
+   "family": "release/traceable",
+   "q": "traceable deployments in production",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q348",
+   "family": "release/traceable",
+   "q": "traceable deployments please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q387",
+   "family": "release/traceable",
+   "q": "traceable deployments please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q003",
+   "family": "refund/who",
+   "q": "who approves big refunds",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q012",
+   "family": "refund/who",
+   "q": "who approves big refunds in production",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q027",
+   "family": "refund/who",
+   "q": "who approves big refunds",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q039",
+   "family": "refund/who",
+   "q": "who approves big refunds for our team",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q067",
+   "family": "refund/who",
+   "q": "who approves big refunds please",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q109",
+   "family": "refund/who",
+   "q": "who approves big refunds please",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q143",
+   "family": "refund/who",
+   "q": "who approves big refunds",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q240",
+   "family": "refund/who",
+   "q": "who approves big refunds?",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q264",
+   "family": "refund/who",
+   "q": "who approves big refunds",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q271",
+   "family": "refund/who",
+   "q": "who approves big refunds",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q319",
+   "family": "refund/who",
+   "q": "who approves big refunds in production",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q324",
+   "family": "refund/who",
+   "q": "who approves big refunds?",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q336",
+   "family": "refund/who",
+   "q": "who approves big refunds please",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q337",
+   "family": "refund/who",
+   "q": "who approves big refunds?",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q393",
+   "family": "refund/who",
+   "q": "who approves big refunds please",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q005",
+   "family": "roles/who",
+   "q": "who can export customers in production",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q011",
+   "family": "roles/who",
+   "q": "who can export customers?",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q033",
+   "family": "roles/who",
+   "q": "who can export customers",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q038",
+   "family": "roles/who",
+   "q": "who can export customers please",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q056",
+   "family": "roles/who",
+   "q": "who can export customers please",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q060",
+   "family": "roles/who",
+   "q": "who can export customers for our team",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q228",
+   "family": "roles/who",
+   "q": "who can export customers for our team",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q395",
+   "family": "roles/who",
+   "q": "who can export customers",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q006",
+   "family": "grounding/must",
+   "q": "must answers cite sources in production",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q043",
+   "family": "grounding/must",
+   "q": "must answers cite sources please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  }
+ ]
+}

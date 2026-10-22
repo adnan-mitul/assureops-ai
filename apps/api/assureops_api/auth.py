@@ -118,6 +118,7 @@ class Service:
     workspace_id: str
     application_id: str
     environment: str
+    credential_id: str | None = None
 
 
 def service(*kinds: str):
@@ -129,7 +130,7 @@ def service(*kinds: str):
                                                              ServiceCredential.revoked.is_(False))).first()
         if cred is None or cred.kind not in kinds:
             raise api_error(403, "forbidden", "credential not valid for this operation")
-        return Service(cred.kind, cred.workspace_id, cred.application_id, cred.environment)
+        return Service(cred.kind, cred.workspace_id, cred.application_id, cred.environment, cred.id)
     return dependency
 
 

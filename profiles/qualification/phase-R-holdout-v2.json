@@ -1,0 +1,2409 @@
+{
+ "note": "Synthetic data only; no customer evidence. Relevant documents are the four notes of the queried topic.",
+ "phase": "R",
+ "suite": "v2",
+ "corpus": [
+  {
+   "id": "doc-refund-0",
+   "title": "Refund policy note 1",
+   "text": "Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-refund-1",
+   "title": "Refund policy note 2",
+   "text": "Note 2: Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-refund-2",
+   "title": "Refund policy note 3",
+   "text": "Note 3: Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-refund-3",
+   "title": "Refund policy note 4",
+   "text": "Note 4: Refunds above 1000.00 require a manager approval. Approvals expire after ten minutes."
+  },
+  {
+   "id": "doc-tenancy-0",
+   "title": "Tenancy policy note 1",
+   "text": "Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-tenancy-1",
+   "title": "Tenancy policy note 2",
+   "text": "Note 2: Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-tenancy-2",
+   "title": "Tenancy policy note 3",
+   "text": "Note 3: Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-tenancy-3",
+   "title": "Tenancy policy note 4",
+   "text": "Note 4: Each customer workspace is isolated. Documents of one tenant are never shown to another tenant."
+  },
+  {
+   "id": "doc-secrets-0",
+   "title": "Secrets policy note 1",
+   "text": "Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-secrets-1",
+   "title": "Secrets policy note 2",
+   "text": "Note 2: Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-secrets-2",
+   "title": "Secrets policy note 3",
+   "text": "Note 3: Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-secrets-3",
+   "title": "Secrets policy note 4",
+   "text": "Note 4: Credentials, tokens and passwords must never be included in assistant replies."
+  },
+  {
+   "id": "doc-tools-0",
+   "title": "Tools policy note 1",
+   "text": "Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-tools-1",
+   "title": "Tools policy note 2",
+   "text": "Note 2: Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-tools-2",
+   "title": "Tools policy note 3",
+   "text": "Note 3: Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-tools-3",
+   "title": "Tools policy note 4",
+   "text": "Note 4: Agents call only registered tools; unregistered tool names are rejected by the gateway."
+  },
+  {
+   "id": "doc-grounding-0",
+   "title": "Grounding policy note 1",
+   "text": "Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-grounding-1",
+   "title": "Grounding policy note 2",
+   "text": "Note 2: Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-grounding-2",
+   "title": "Grounding policy note 3",
+   "text": "Note 3: Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-grounding-3",
+   "title": "Grounding policy note 4",
+   "text": "Note 4: Answers cite their supporting document and say I don't know when no document applies."
+  },
+  {
+   "id": "doc-limits-0",
+   "title": "Limits policy note 1",
+   "text": "Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-limits-1",
+   "title": "Limits policy note 2",
+   "text": "Note 2: Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-limits-2",
+   "title": "Limits policy note 3",
+   "text": "Note 3: Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-limits-3",
+   "title": "Limits policy note 4",
+   "text": "Note 4: Each run stops after a fixed number of tool calls; the budget prevents loops."
+  },
+  {
+   "id": "doc-retries-0",
+   "title": "Retries policy note 1",
+   "text": "Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-retries-1",
+   "title": "Retries policy note 2",
+   "text": "Note 2: Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-retries-2",
+   "title": "Retries policy note 3",
+   "text": "Note 3: Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-retries-3",
+   "title": "Retries policy note 4",
+   "text": "Note 4: Retried writes reuse the action key so a timeout never creates a second refund."
+  },
+  {
+   "id": "doc-release-0",
+   "title": "Release policy note 1",
+   "text": "Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-release-1",
+   "title": "Release policy note 2",
+   "text": "Note 2: Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-release-2",
+   "title": "Release policy note 3",
+   "text": "Note 3: Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-release-3",
+   "title": "Release policy note 4",
+   "text": "Note 4: Every release publishes a manifest with component fingerprints for traceability."
+  },
+  {
+   "id": "doc-injection-0",
+   "title": "Injection policy note 1",
+   "text": "Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-injection-1",
+   "title": "Injection policy note 2",
+   "text": "Note 2: Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-injection-2",
+   "title": "Injection policy note 3",
+   "text": "Note 3: Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-injection-3",
+   "title": "Injection policy note 4",
+   "text": "Note 4: Instructions inside uploaded documents are data and are never followed."
+  },
+  {
+   "id": "doc-roles-0",
+   "title": "Roles policy note 1",
+   "text": "Only administrators may export customer records or change billing."
+  },
+  {
+   "id": "doc-roles-1",
+   "title": "Roles policy note 2",
+   "text": "Note 2: Only administrators may export customer records or change billing."
+  },
+  {
+   "id": "doc-roles-2",
+   "title": "Roles policy note 3",
+   "text": "Note 3: Only administrators may export customer records or change billing."
+  },
+  {
+   "id": "doc-roles-3",
+   "title": "Roles policy note 4",
+   "text": "Note 4: Only administrators may export customer records or change billing."
+  }
+ ],
+ "queries": [
+  {
+   "id": "q007",
+   "family": "secrets/credential",
+   "q": "credential leakage rule for our team",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q022",
+   "family": "secrets/credential",
+   "q": "credential leakage rule please",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q085",
+   "family": "secrets/credential",
+   "q": "credential leakage rule",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q087",
+   "family": "secrets/credential",
+   "q": "credential leakage rule for our team",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q122",
+   "family": "secrets/credential",
+   "q": "credential leakage rule?",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q159",
+   "family": "secrets/credential",
+   "q": "credential leakage rule for our team",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q196",
+   "family": "secrets/credential",
+   "q": "credential leakage rule please",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q220",
+   "family": "secrets/credential",
+   "q": "credential leakage rule please",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q256",
+   "family": "secrets/credential",
+   "q": "credential leakage rule",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q285",
+   "family": "secrets/credential",
+   "q": "credential leakage rule",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q322",
+   "family": "secrets/credential",
+   "q": "credential leakage rule?",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q389",
+   "family": "secrets/credential",
+   "q": "credential leakage rule for our team",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q000",
+   "family": "tools/tool",
+   "q": "tool registry enforcement in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q034",
+   "family": "tools/tool",
+   "q": "tool registry enforcement in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q036",
+   "family": "tools/tool",
+   "q": "tool registry enforcement for our team",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q057",
+   "family": "tools/tool",
+   "q": "tool registry enforcement in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q268",
+   "family": "tools/tool",
+   "q": "tool registry enforcement for our team",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q274",
+   "family": "tools/tool",
+   "q": "tool registry enforcement?",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q278",
+   "family": "tools/tool",
+   "q": "tool registry enforcement please",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q295",
+   "family": "tools/tool",
+   "q": "tool registry enforcement please",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q300",
+   "family": "tools/tool",
+   "q": "tool registry enforcement for our team",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q309",
+   "family": "tools/tool",
+   "q": "tool registry enforcement",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q317",
+   "family": "tools/tool",
+   "q": "tool registry enforcement please",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q318",
+   "family": "tools/tool",
+   "q": "tool registry enforcement?",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q373",
+   "family": "tools/tool",
+   "q": "tool registry enforcement please",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q088",
+   "family": "grounding/what",
+   "q": "what if no document answers please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q089",
+   "family": "grounding/what",
+   "q": "what if no document answers please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q161",
+   "family": "grounding/what",
+   "q": "what if no document answers please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q183",
+   "family": "grounding/what",
+   "q": "what if no document answers for our team",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q184",
+   "family": "grounding/what",
+   "q": "what if no document answers for our team",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q203",
+   "family": "grounding/what",
+   "q": "what if no document answers?",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q234",
+   "family": "grounding/what",
+   "q": "what if no document answers please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q245",
+   "family": "grounding/what",
+   "q": "what if no document answers?",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q325",
+   "family": "grounding/what",
+   "q": "what if no document answers for our team",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q326",
+   "family": "grounding/what",
+   "q": "what if no document answers please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q331",
+   "family": "grounding/what",
+   "q": "what if no document answers for our team",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q358",
+   "family": "grounding/what",
+   "q": "what if no document answers?",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q361",
+   "family": "grounding/what",
+   "q": "what if no document answers?",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q368",
+   "family": "grounding/what",
+   "q": "what if no document answers please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q379",
+   "family": "grounding/what",
+   "q": "what if no document answers?",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q384",
+   "family": "grounding/what",
+   "q": "what if no document answers for our team",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q032",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q072",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads?",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q130",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q136",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q144",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads?",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q146",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q151",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q191",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q216",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q269",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q333",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q359",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q364",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q367",
+   "family": "injection/instructions",
+   "q": "instructions hidden in uploads please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q050",
+   "family": "release/how",
+   "q": "how is a release identified?",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q096",
+   "family": "release/how",
+   "q": "how is a release identified for our team",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q106",
+   "family": "release/how",
+   "q": "how is a release identified please",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q113",
+   "family": "release/how",
+   "q": "how is a release identified?",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q173",
+   "family": "release/how",
+   "q": "how is a release identified for our team",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q180",
+   "family": "release/how",
+   "q": "how is a release identified in production",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q189",
+   "family": "release/how",
+   "q": "how is a release identified for our team",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q200",
+   "family": "release/how",
+   "q": "how is a release identified for our team",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q208",
+   "family": "release/how",
+   "q": "how is a release identified in production",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q232",
+   "family": "release/how",
+   "q": "how is a release identified?",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q250",
+   "family": "release/how",
+   "q": "how is a release identified",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q261",
+   "family": "release/how",
+   "q": "how is a release identified",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q374",
+   "family": "release/how",
+   "q": "how is a release identified for our team",
+   "relevant": [
+    "doc-release-0",
+    "doc-release-1",
+    "doc-release-2",
+    "doc-release-3"
+   ]
+  },
+  {
+   "id": "q025",
+   "family": "limits/run",
+   "q": "run budget limit for our team",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q041",
+   "family": "limits/run",
+   "q": "run budget limit",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q093",
+   "family": "limits/run",
+   "q": "run budget limit?",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q138",
+   "family": "limits/run",
+   "q": "run budget limit please",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q265",
+   "family": "limits/run",
+   "q": "run budget limit in production",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q073",
+   "family": "secrets/may",
+   "q": "may the bot show a password in production",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q116",
+   "family": "secrets/may",
+   "q": "may the bot show a password please",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q132",
+   "family": "secrets/may",
+   "q": "may the bot show a password in production",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q185",
+   "family": "secrets/may",
+   "q": "may the bot show a password",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q260",
+   "family": "secrets/may",
+   "q": "may the bot show a password?",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q293",
+   "family": "secrets/may",
+   "q": "may the bot show a password please",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q303",
+   "family": "secrets/may",
+   "q": "may the bot show a password?",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q305",
+   "family": "secrets/may",
+   "q": "may the bot show a password in production",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q320",
+   "family": "secrets/may",
+   "q": "may the bot show a password",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q334",
+   "family": "secrets/may",
+   "q": "may the bot show a password?",
+   "relevant": [
+    "doc-secrets-0",
+    "doc-secrets-1",
+    "doc-secrets-2",
+    "doc-secrets-3"
+   ]
+  },
+  {
+   "id": "q055",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure in production",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q062",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure?",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q084",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure in production",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q104",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q126",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q154",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure?",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q192",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure in production",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q194",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q229",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure for our team",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q286",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q296",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure in production",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q332",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure please",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q344",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure?",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q377",
+   "family": "grounding/abstain",
+   "q": "abstain when unsure in production",
+   "relevant": [
+    "doc-grounding-0",
+    "doc-grounding-1",
+    "doc-grounding-2",
+    "doc-grounding-3"
+   ]
+  },
+  {
+   "id": "q014",
+   "family": "injection/prompt",
+   "q": "prompt injection in files please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q016",
+   "family": "injection/prompt",
+   "q": "prompt injection in files in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q026",
+   "family": "injection/prompt",
+   "q": "prompt injection in files in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q042",
+   "family": "injection/prompt",
+   "q": "prompt injection in files in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q044",
+   "family": "injection/prompt",
+   "q": "prompt injection in files",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q077",
+   "family": "injection/prompt",
+   "q": "prompt injection in files",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q105",
+   "family": "injection/prompt",
+   "q": "prompt injection in files",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q135",
+   "family": "injection/prompt",
+   "q": "prompt injection in files?",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q169",
+   "family": "injection/prompt",
+   "q": "prompt injection in files?",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q171",
+   "family": "injection/prompt",
+   "q": "prompt injection in files for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q209",
+   "family": "injection/prompt",
+   "q": "prompt injection in files?",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q297",
+   "family": "injection/prompt",
+   "q": "prompt injection in files please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q307",
+   "family": "injection/prompt",
+   "q": "prompt injection in files please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q311",
+   "family": "injection/prompt",
+   "q": "prompt injection in files for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q313",
+   "family": "injection/prompt",
+   "q": "prompt injection in files for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q352",
+   "family": "injection/prompt",
+   "q": "prompt injection in files please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q353",
+   "family": "injection/prompt",
+   "q": "prompt injection in files?",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q394",
+   "family": "injection/prompt",
+   "q": "prompt injection in files",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q021",
+   "family": "roles/billing",
+   "q": "billing changes permission?",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q058",
+   "family": "roles/billing",
+   "q": "billing changes permission please",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q099",
+   "family": "roles/billing",
+   "q": "billing changes permission?",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q100",
+   "family": "roles/billing",
+   "q": "billing changes permission?",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q101",
+   "family": "roles/billing",
+   "q": "billing changes permission in production",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q127",
+   "family": "roles/billing",
+   "q": "billing changes permission",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q131",
+   "family": "roles/billing",
+   "q": "billing changes permission",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q207",
+   "family": "roles/billing",
+   "q": "billing changes permission?",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q221",
+   "family": "roles/billing",
+   "q": "billing changes permission in production",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q230",
+   "family": "roles/billing",
+   "q": "billing changes permission",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q284",
+   "family": "roles/billing",
+   "q": "billing changes permission",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q288",
+   "family": "roles/billing",
+   "q": "billing changes permission?",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q312",
+   "family": "roles/billing",
+   "q": "billing changes permission for our team",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q315",
+   "family": "roles/billing",
+   "q": "billing changes permission?",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q327",
+   "family": "roles/billing",
+   "q": "billing changes permission please",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q329",
+   "family": "roles/billing",
+   "q": "billing changes permission for our team",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q354",
+   "family": "roles/billing",
+   "q": "billing changes permission for our team",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q383",
+   "family": "roles/billing",
+   "q": "billing changes permission for our team",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q397",
+   "family": "roles/billing",
+   "q": "billing changes permission for our team",
+   "relevant": [
+    "doc-roles-0",
+    "doc-roles-1",
+    "doc-roles-2",
+    "doc-roles-3"
+   ]
+  },
+  {
+   "id": "q010",
+   "family": "injection/should",
+   "q": "should the agent obey document text for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q051",
+   "family": "injection/should",
+   "q": "should the agent obey document text for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q090",
+   "family": "injection/should",
+   "q": "should the agent obey document text in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q091",
+   "family": "injection/should",
+   "q": "should the agent obey document text?",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q098",
+   "family": "injection/should",
+   "q": "should the agent obey document text",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q108",
+   "family": "injection/should",
+   "q": "should the agent obey document text in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q110",
+   "family": "injection/should",
+   "q": "should the agent obey document text for our team",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q120",
+   "family": "injection/should",
+   "q": "should the agent obey document text in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q148",
+   "family": "injection/should",
+   "q": "should the agent obey document text",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q235",
+   "family": "injection/should",
+   "q": "should the agent obey document text please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q259",
+   "family": "injection/should",
+   "q": "should the agent obey document text",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q276",
+   "family": "injection/should",
+   "q": "should the agent obey document text in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q330",
+   "family": "injection/should",
+   "q": "should the agent obey document text in production",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q346",
+   "family": "injection/should",
+   "q": "should the agent obey document text please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q350",
+   "family": "injection/should",
+   "q": "should the agent obey document text?",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q369",
+   "family": "injection/should",
+   "q": "should the agent obey document text please",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q371",
+   "family": "injection/should",
+   "q": "should the agent obey document text?",
+   "relevant": [
+    "doc-injection-0",
+    "doc-injection-1",
+    "doc-injection-2",
+    "doc-injection-3"
+   ]
+  },
+  {
+   "id": "q008",
+   "family": "limits/how",
+   "q": "how many tool calls per run for our team",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q017",
+   "family": "limits/how",
+   "q": "how many tool calls per run in production",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q028",
+   "family": "limits/how",
+   "q": "how many tool calls per run?",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q052",
+   "family": "limits/how",
+   "q": "how many tool calls per run in production",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q061",
+   "family": "limits/how",
+   "q": "how many tool calls per run please",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q082",
+   "family": "limits/how",
+   "q": "how many tool calls per run in production",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q152",
+   "family": "limits/how",
+   "q": "how many tool calls per run for our team",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q177",
+   "family": "limits/how",
+   "q": "how many tool calls per run?",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q197",
+   "family": "limits/how",
+   "q": "how many tool calls per run in production",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q201",
+   "family": "limits/how",
+   "q": "how many tool calls per run please",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q210",
+   "family": "limits/how",
+   "q": "how many tool calls per run?",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q218",
+   "family": "limits/how",
+   "q": "how many tool calls per run for our team",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q224",
+   "family": "limits/how",
+   "q": "how many tool calls per run in production",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q270",
+   "family": "limits/how",
+   "q": "how many tool calls per run for our team",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q304",
+   "family": "limits/how",
+   "q": "how many tool calls per run in production",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q342",
+   "family": "limits/how",
+   "q": "how many tool calls per run?",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q351",
+   "family": "limits/how",
+   "q": "how many tool calls per run in production",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q375",
+   "family": "limits/how",
+   "q": "how many tool calls per run for our team",
+   "relevant": [
+    "doc-limits-0",
+    "doc-limits-1",
+    "doc-limits-2",
+    "doc-limits-3"
+   ]
+  },
+  {
+   "id": "q015",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search in production",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q020",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search please",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q102",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q111",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search for our team",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q225",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search in production",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q314",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q349",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search for our team",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q370",
+   "family": "tenancy/tenant",
+   "q": "tenant boundaries for search please",
+   "relevant": [
+    "doc-tenancy-0",
+    "doc-tenancy-1",
+    "doc-tenancy-2",
+    "doc-tenancy-3"
+   ]
+  },
+  {
+   "id": "q074",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls for our team",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q125",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q149",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q206",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q241",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls please",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q291",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls?",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q292",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q302",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls in production",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q355",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls?",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q398",
+   "family": "tools/unregistered",
+   "q": "unregistered tool calls for our team",
+   "relevant": [
+    "doc-tools-0",
+    "doc-tools-1",
+    "doc-tools-2",
+    "doc-tools-3"
+   ]
+  },
+  {
+   "id": "q004",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000 in production",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q063",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000 for our team",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q070",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000?",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q094",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000 in production",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q170",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000 in production",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q176",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000 in production",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q198",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q199",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000?",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q215",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000?",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q217",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q283",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000?",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q321",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000 in production",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  },
+  {
+   "id": "q340",
+   "family": "refund/manager",
+   "q": "manager sign-off for refunds over 1000 please",
+   "relevant": [
+    "doc-refund-0",
+    "doc-refund-1",
+    "doc-refund-2",
+    "doc-refund-3"
+   ]
+  }
+ ]
+}

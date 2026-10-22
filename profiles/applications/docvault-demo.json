@@ -16,7 +16,7 @@
   "evidence_freshness_days": 30,
   "note": "Per-application profile for the DocVault synthetic lab. C01-C10 are AssureOps internal control IDs.",
   "scope": {
-    "statement": "Document isolation, untrusted-instruction handling, sensitive-value disclosure, citation and abstention checks through the DocVault HTTP API. C03, C04, C07 and C08 have no tests in this profile and are reported as not assessed. These fixtures do not measure a real LLM's hallucination or injection rate."
+    "statement": "Document isolation, untrusted-instruction handling, sensitive-value disclosure, citation and abstention checks through the DocVault HTTP API. Controls without tests carry a reviewed applicability reason and stay visible. These fixtures do not measure a real LLM's hallucination or injection rate."
   },
   "coverage": {
     "reviewer": "reviewer@acme.test",
@@ -457,5 +457,23 @@
         "must_answer": true
       }
     }
-  ]
+  ],
+  "applicability": {
+    "C03": {
+      "status": "not_applicable",
+      "reason": "DocVault performs no consequential write or payment actions, so there is no action that an approval gate would protect."
+    },
+    "C04": {
+      "status": "not_assessed",
+      "reason": "The lab publishes no tool catalogue; requests stay on its own origin, but tool selection by a model is not observable."
+    },
+    "C07": {
+      "status": "not_assessed",
+      "reason": "The lab exposes no step, loop or time budget that a catalogue template can observe, so bounded execution is untested."
+    },
+    "C08": {
+      "status": "not_applicable",
+      "reason": "DocVault answers read-only questions and stores no new records, so duplicate-write and retry safety do not apply."
+    }
+  }
 }

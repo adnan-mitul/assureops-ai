@@ -23,7 +23,7 @@ export async function api<T>(path: string, init: RequestInit & { idempotencyKey?
   if (init.idempotencyKey) headers["Idempotency-Key"] = init.idempotencyKey;
   const response = await fetch(`/api${path}`, { ...init, headers, cache: "no-store" });
   if (response.status === 401) {
-    window.location.href = `/auth/login?returnTo=${encodeURIComponent(window.location.pathname)}`;
+    window.location.href = `/auth/login?returnTo=${encodeURIComponent(window.location.pathname + window.location.search)}`; // keep the query (e.g. an invitation token)
     throw new ApiError(401, "unauthenticated", "Redirecting to sign in…");
   }
   if (!response.ok) {
@@ -41,6 +41,8 @@ export async function api<T>(path: string, init: RequestInit & { idempotencyKey?
 
 export const post = <T,>(path: string, body: unknown = {}, idempotencyKey?: string) =>
   api<T>(path, { method: "POST", body: JSON.stringify(body), idempotencyKey });
+
+export const put = <T,>(path: string, body: unknown = {}) => api<T>(path, { method: "PUT", body: JSON.stringify(body) });
 
 export const del = <T,>(path: string) => api<T>(path, { method: "DELETE" });
 

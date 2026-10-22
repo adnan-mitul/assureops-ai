@@ -14,7 +14,7 @@ import socket
 from celery import Celery
 from sqlalchemy import select, text
 
-from assureops_domain import cases, connections, evidence_store, reducer
+from assureops_domain import cases, connections, evidence_store, reducer, relay
 from assureops_domain.config import settings
 from assureops_domain.db import tenant_session
 from assureops_domain.findings import record_test_outcome
@@ -101,6 +101,15 @@ def _run_reference(job, app_row, conn, p, test, step_id) -> dict:
             "evaluator_version": "reference-runner-1.0.0"}
 
 
+def _run_via_relay(workspace_id: str, application_id: str, step_id: str, token: int, capsule: dict, timeout: float, tick) -> dict:
+    """Queue the capsule for the customer's relay and wait; the step keeps its lease and fencing token meanwhile."""
+    with tenant_session(workspace_id) as s:
+        task = relay.enqueue(s, workspace_id=workspace_id, application_id=application_id, kind="step", ref_id=step_id, payload=capsule,
+                             deadline_seconds=timeout, fencing_token=token)
+        task_id = task.id
+    return relay.wait_for_result(workspace_id, task_id, timeout=timeout, on_tick=tick)
+
+
 @app.task(name="assureops.run_step", bind=True, max_retries=0)
 def run_step(self, workspace_id: str, step_id: str):
     with tenant_session(workspace_id) as s:
@@ -152,6 +161,8 @@ def run_step(self, workspace_id: str, step_id: str):
             outcome_raw = _run_reference(job, app_row, conn, p, test, step_id)
         elif "__error__" in capsule:
             outcome_raw = {"status": "error", "error": capsule["__error__"], "trials": []}
+        elif relay.is_relay(capsule["config"]):
+            outcome_raw = _run_via_relay(workspace_id, app_row.id, step_id, token, capsule, STEP_DEADLINE_PER_TRIAL * test["trials"], tick)
         else:
             outcome_raw = isolation.run_capsule(capsule, timeout=STEP_DEADLINE_PER_TRIAL * test["trials"], on_tick=tick)
         capsule = None  # drop decrypted credentials as soon as the runner returns
@@ -180,6 +191,7 @@ def run_step(self, workspace_id: str, step_id: str):
                   "frozen": {"profile": frozen["profile"], "connection": frozen.get("connection"), "test_digest": test["digest"],
                              "evaluator": outcome_raw.get("evaluator_version") or frozen["connection"].get("evaluator_version")},
                   "execution": {"mode": "in-process reference runner" if frozen["connection"]["adapter_id"] == "assureops-mcp-reference"
+                                else "customer relay (private connector)" if frozen["connection"].get("execution_mode") == "relay"
                                 else f"isolated {settings().runner_mode}", "worker": WORKER_ID, "fencing_token": token, "attempt": attempt,
                                 "run_tokens": current.run_tokens}}
         artifact = evidence_store.put_json(s, workspace_id, record)

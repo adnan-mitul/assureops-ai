@@ -1,0 +1,6 @@
+{
+  "planner": "llm",
+  "model": "qwen2.5-coder:1.5b",
+  "version": "1.0.0",
+  "note": "Model-driven release: a local LLM (Ollama, temperature 0) chooses tool calls; policies are those of R1"
+}

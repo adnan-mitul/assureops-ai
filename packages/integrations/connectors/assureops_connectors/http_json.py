@@ -20,7 +20,7 @@ from .http_client import Actors, TargetClient, TargetError, evidence_view
 DEFAULT_SCOPE = {"allowed_paths": [], "allowed_methods": ["GET", "POST"], "max_requests_per_test": 60}
 CONFIG_KEYS = {"base_url", "environment", "manifest_path", "health_path", "auth", "actors", "scope", "test_marker_header",
                "ownership", "events", "credential_probe", "action_evidence", "actor_identities", "lab",
-               "host_header", "runner_network", "request_timeout_seconds"}
+               "host_header", "runner_network", "request_timeout_seconds", "execution"}
 
 
 def _check(cid: str, status: str, detail: str) -> dict:

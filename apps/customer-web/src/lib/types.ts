@@ -28,8 +28,9 @@ export type ControlState = {
   name: string;
   family: string;
   weight: number;
-  result: "supported" | "failed" | "unverified" | "review_required" | "unassessed";
-  evidence_validity: "current" | "stale" | "unavailable";
+  result: "supported" | "failed" | "unverified" | "review_required" | "unassessed" | "not_applicable";
+  evidence_validity: "current" | "stale" | "unavailable" | "not_collected";
+  applicability?: { status: "not_applicable" | "not_assessed"; reason: string; reviewed: boolean };
   failure_severity: Severity | null;
   runtime_violation: boolean;
   passed: number;
@@ -87,6 +88,7 @@ export type ChangeSet = {
 
 export type Finding = {
   id: string;
+  application_id: string;
   control: string;
   control_name: string;
   test_id: string | null;
@@ -284,7 +286,9 @@ export type AssessmentCase = {
 export type Settings = {
   workspace: string;
   your_role: string;
+  you: string;
   members: { user: string; name: string; role: string }[];
+  your_applications: string[];
   applications: { id: string; name: string; mode: string; environment: string; target_url: string; tools_url: string; authorized_scope: Record<string, unknown> }[];
   profile: {
     version: string;

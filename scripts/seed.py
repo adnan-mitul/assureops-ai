@@ -21,11 +21,11 @@ from sqlalchemy import create_engine, select, text
 ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(ROOT / "packages" / "domain"))
 
-from assureops_domain import connections  # noqa: E402
+from assureops_domain import connections, grants  # noqa: E402
 from assureops_domain.config import _dev_env, settings  # noqa: E402
 from assureops_domain.db import platform_session, tenant_session  # noqa: E402
 from assureops_domain.models import (  # noqa: E402
-    Application, ApplicationProfile, Connection, EventSource, Membership, ServiceCredential, StaffRole, User, Workspace,
+    Application, ApplicationGrant, ApplicationProfile, Connection, EventSource, Membership, ServiceCredential, StaffRole, User, Workspace,
 )
 from assureops_domain.profile import load_profile_file  # noqa: E402
 
@@ -39,7 +39,7 @@ CUSTOMERS = [
 STAFF = [
     ("analyst@assureops.test", "Staff Analyst", ["analyst"]),
     ("reviewer@assureops.test", "Senior Reviewer", ["senior_reviewer"]),
-    ("manager@assureops.test", "Case Manager", ["case_manager"]),
+    ("manager@assureops.test", "Case Manager", ["case_manager", "admin"]),
     ("operator@assureops.test", "Platform Operator", ["operator"]),
 ]
 
@@ -101,6 +101,12 @@ def seed():
             )
             s.add(app)
             s.flush()
+        with platform_session() as p:  # the reference developer is assigned to the reference application
+            dev = p.scalars(select(User).where(User.username == "dev@acme.test")).first()
+            if grants.active_grant(s, app.id, dev.id) is None:
+                s.add(ApplicationGrant(workspace_id="acme", application_id=app.id, user_id=dev.id, granted_by="seed"))
+    with tenant_session("acme") as s:
+        app = s.get(Application, "refund-agent")
         if s.scalars(select(Connection).where(Connection.application_id == app.id)).first() is None:
             connections.create_connection(s, app, adapter_id="assureops-mcp-reference", actor="owner@acme.test", config={
                 "base_url": "http://127.0.0.1:8710", "tools_url": "http://127.0.0.1:8720/mcp", "environment": "staging",

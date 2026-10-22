@@ -89,7 +89,7 @@ export function Topbar({ user, subtitle, alerts, alertsHref, searchHref, searchP
           className="w-full rounded-lg border border-line bg-canvas py-2 pr-3 pl-9 text-sm outline-none focus:border-brand-600 focus:bg-surface" />
       </form>
       <div className="ml-auto flex items-center gap-5">
-        <Link href={alertsHref} className="relative rounded-lg p-1.5 text-gray-600 hover:bg-canvas" aria-label={`${alerts} items need attention`}>
+        <Link href={alertsHref} className="relative rounded-lg p-1.5 text-gray-600 hover:bg-canvas" aria-label={`Notifications: ${alerts} unread`}>
           <Bell className="size-5" aria-hidden />
           {alerts > 0 && <span className="absolute -top-0.5 -right-0.5 grid size-4 place-items-center rounded-full bg-red-600 text-[10px] font-semibold text-white">{alerts}</span>}
         </Link>
@@ -126,5 +126,14 @@ export function NoAccess({ portal, message }: { portal: string; message: string 
         </form>
       </div>
     </main>
+  );
+}
+
+/** First focusable element on every page: keyboard users jump past the navigation. */
+export function SkipLink() {
+  return (
+    <a href="#main" className="sr-only z-50 rounded-lg bg-brand-700 px-4 py-2 text-sm font-medium text-white focus:not-sr-only focus:fixed focus:top-3 focus:left-3">
+      Skip to main content
+    </a>
   );
 }

@@ -29,7 +29,7 @@ export function ViewAll({ href, label = "View all" }: { href: string; label?: st
 }
 
 export function Button({
-  children, onClick, variant = "secondary", disabled, className, type = "button",
+  children, onClick, variant = "secondary", disabled, className, type = "button", ariaLabel, pressed,
 }: {
   children: ReactNode;
   onClick?: () => void;
@@ -37,12 +37,16 @@ export function Button({
   disabled?: boolean;
   className?: string;
   type?: "button" | "submit";
+  ariaLabel?: string;
+  pressed?: boolean;
 }) {
   return (
     <button
       type={type}
       onClick={onClick}
       disabled={disabled}
+      aria-label={ariaLabel}
+      aria-pressed={pressed}
       className={clsx(
         "inline-flex items-center justify-center gap-2 rounded-lg px-3.5 py-2 text-sm font-medium transition-colors focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-brand-600 disabled:cursor-not-allowed disabled:opacity-60",
         variant === "primary" && "bg-brand-700 text-white hover:bg-brand-800",
@@ -89,6 +93,7 @@ const STATUS: Record<string, { label: string; style: string; icon: typeof Circle
   unverified: { label: "Unverified", style: NEUTRAL, icon: CircleHelp },
   review_required: { label: "Review required", style: WARN, icon: Clock3 },
   not_applicable: { label: "Not applicable", style: NEUTRAL, icon: CircleHelp },
+  pending_relay: { label: "Waiting for relay", style: NEUTRAL, icon: Clock3 },
   // evidence_validity
   current: { label: "Current", style: GOOD, icon: CircleCheck },
   stale: { label: "Stale", style: WARN, icon: Clock3 },
@@ -175,9 +180,10 @@ export function Td({ children, className }: { children?: ReactNode; className?: 
   return <td className={clsx("px-5 py-3 align-middle text-[13px] text-ink", className)}>{children}</td>;
 }
 
-export function TableWrap({ children, minWidth = "min-w-[560px]" }: { children: ReactNode; minWidth?: string }) {
+export function TableWrap({ children, minWidth = "min-w-[560px]", label = "Table" }: { children: ReactNode; minWidth?: string; label?: string }) {
+  // Focusable so keyboard users can scroll wide tables on small screens.
   return (
-    <div className="overflow-x-auto">
+    <div className="overflow-x-auto focus-visible:outline-2 focus-visible:outline-brand-600" tabIndex={0} role="region" aria-label={label}>
       <table className={clsx("w-full border-t border-line", minWidth)}>{children}</table>
     </div>
   );

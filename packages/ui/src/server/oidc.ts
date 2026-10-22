@@ -143,7 +143,7 @@ export function proxyHandler(c: PortalConfig) {
     const upstream = await fetch(`${c.apiUrl}/${target}${request.nextUrl.search}`, {
       method: request.method, headers, body: request.method === "GET" ? undefined : await request.text(), cache: "no-store",
     });
-    const body = await upstream.text();
+    const body = await upstream.arrayBuffer(); // binary-safe: evidence bundles are zip files
     return new NextResponse(body, {
       status: upstream.status,
       headers: {

@@ -45,6 +45,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--phases", nargs="+", default=["C", "D", "R"], choices=sorted(PINS))
     parser.add_argument("--out", type=Path, default=ROOT / "var" / "qualification")
+    parser.add_argument("--suite", default="v1", choices=["v1", "v2"])
     args = parser.parse_args()
     rows, failed = [], []
     for phase in args.phases:
@@ -58,7 +59,7 @@ def main():
                 continue
         out = args.out / f"phase-{phase}.json"
         proc = subprocess.run([sys.executable, "-u", str(ROOT / "scripts" / "qualify_phase.py"), "--phase", phase, "--provider", "private",
-                               "--model", pin["model"], "--json-out", str(out), "--require-qualified"])
+                               "--model", pin["model"], "--suite", args.suite, "--json-out", str(out), "--require-qualified"])
         result = json.loads(out.read_text()) if out.exists() else {}
         metrics = result.get("metrics", {})
         rows.append((phase, pin["model"], "qualified" if proc.returncode == 0 else "NOT qualified",

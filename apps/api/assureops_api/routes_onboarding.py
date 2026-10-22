@@ -15,6 +15,7 @@ from assureops_domain.models import ApplicationProfile, Artifact, Release, TestR
 from assureops_domain.profile import ProfileError, normalize
 
 from . import services as svc
+from .access import require_application_writer
 from .auth import Caller, CustomerCaller, api_error
 
 router = APIRouter(prefix="/v1", tags=["onboarding"])
@@ -59,6 +60,7 @@ def create_connection(application_id: str, body: ConnectionIn, caller: Caller = 
         raise api_error(422, "invalid_connection", "send credentials in `actors`, not inside config")
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, application_id)
+        require_application_writer(s, caller, app.id)
         refs = {}
         try:
             for name, cred in body.actors.items():
@@ -94,6 +96,7 @@ def verify_connection(application_id: str, caller: Caller = CustomerCaller):
     caller.require_role(*WRITE_ROLES)
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, application_id)
+        require_application_writer(s, caller, app.id)
         conn = connections.latest_connection(s, app.id)
         if conn is None:
             raise api_error(404, "not_connected", "this application has no connection yet")
@@ -146,6 +149,7 @@ def propose_profile(application_id: str, body: ProfileIn, caller: Caller = Custo
     caller.require_role(*WRITE_ROLES)
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, application_id)
+        require_application_writer(s, caller, app.id)
         try:
             row = connections.propose_profile(s, app, body.profile, source="analyst", actor=caller.username)
         except connections.OnboardingError as exc:
@@ -166,6 +170,7 @@ def propose_baseline(application_id: str, body: BaselineIn, caller: Caller = Cus
 
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, application_id)
+        require_application_writer(s, caller, app.id)
         release = svc.latest_release(s, app.id)
         conn = connections.latest_connection(s, app.id)
         components = sorted(release.manifest["components"]) if release else []
@@ -360,6 +365,7 @@ def analyze_snapshot(application_id: str, release_id: str, body: SnapshotIn, cal
         release = s.get(Release, release_id)
         if release is None or release.application_id != application_id:
             raise api_error(404, "not_found", "release not found")
+        require_application_writer(s, caller, application_id)
         artifact = evidence_store.put_bytes(s, caller.workspace_id, data, "application/zip")
         run = AnalysisRun(workspace_id=caller.workspace_id, application_id=application_id, release_id=release.id, snapshot_artifact_id=artifact.id,
                           snapshot_sha256=artifact.sha256, code_map=body.code_map, requested_by=caller.username)

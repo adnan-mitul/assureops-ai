@@ -17,7 +17,7 @@ from assureops_domain.events import coverage
 from assureops_domain.models import (
     Application, ApplicationProfile, Artifact, Assessment, AssessmentCase, CaseMessage, ChangeSet, ConnectorSecret, CoverageContract,
     EvidenceRequest, EvidenceReview, Finding, FindingReview, Incident, JobStep, Outbox, ReadinessPoint, Release, Report, ReportPublication,
-    RuntimeEvent, TestRun, Workspace,
+    RuntimeEvent, TestRun, Workspace, now,
 )
 from assureops_domain.profile import (
     ProfileError, canonical_hash, control_catalog, coverage_contract_for, for_application, profile_version, try_for_application,
@@ -49,7 +49,9 @@ def get_application(s: Session, application_id: str) -> Application:
 
 
 def latest_release(s: Session, application_id: str) -> Release | None:
-    return s.scalars(select(Release).where(Release.application_id == application_id).order_by(Release.created_at.desc())).first()
+    """The release currently running: the identity collected most recently (a rollback makes an earlier one current again)."""
+    return s.scalars(select(Release).where(Release.application_id == application_id)
+                     .order_by(func.coalesce(Release.last_collected_at, Release.created_at).desc(), Release.created_at.desc())).first()
 
 
 def previous_release(s: Session, release: Release) -> Release | None:
@@ -98,10 +100,13 @@ def collect_release(s: Session, app: Application, actor: str, *, source_commit: 
     existing = s.scalars(select(Release).where(Release.application_id == app.id, Release.version == manifest["release"],
                                                Release.manifest_hash == manifest_hash)).first()
     if existing:
-        return {"release": release_json(existing), "created": False, "gaps": existing.collection_gaps}
+        current = latest_release(s, app.id)
+        existing.last_collected_at = now()
+        return {"release": release_json(existing), "created": False, "gaps": existing.collection_gaps,
+                "reactivated": current is not None and current.id != existing.id}
     if s.scalars(select(Release).where(Release.application_id == app.id, Release.version == manifest["release"])).first():
         gaps.append(f"version label {manifest['release']} was already used with different components; identity is ambiguous")
-    release = Release(workspace_id=app.workspace_id, application_id=app.id, version=manifest["release"], manifest=manifest,
+    release = Release(workspace_id=app.workspace_id, application_id=app.id, version=manifest["release"], manifest=manifest, last_collected_at=now(),
                       manifest_hash=manifest_hash, collection_gaps=gaps, collection_status="partial" if gaps else "complete", collected_by=actor,
                       source_commit=source_commit, artifact_digest=artifact_digest, profile_revision=p["revision"], connection_revision=conn.revision)
     s.add(release)
@@ -148,7 +153,8 @@ def create_assessment(s: Session, app: Application, release: Release, scope: str
         "environment": app.environment,
         "profile": {"revision": p["revision"], "version": profile_version(p), "digest": p["digest"]},
         "connection": {"revision": conn.revision, "adapter_id": conn.adapter_id, "adapter_version": conn.adapter_version,
-                       "evaluator_version": adapter.evaluator_version},
+                       "evaluator_version": adapter.evaluator_version,
+                       "execution_mode": "relay" if ((conn.config or {}).get("execution") or {}).get("mode") == "relay" else "platform"},
         "edge_revision": reducer.edge_revision(edges),
         "tests": {tid: p["tests_by_id"][tid] for tid in tests},
     }
@@ -220,7 +226,7 @@ def change_json(c: ChangeSet) -> dict:
 # ---------------- Findings and evidence ----------------
 
 def finding_json(f: Finding, s: Session, detail: bool = False) -> dict:
-    data = {"id": f.id, "control": f.control_id, "control_name": control_name(f.control_id), "test_id": f.test_id,
+    data = {"id": f.id, "application_id": f.application_id, "control": f.control_id, "control_name": control_name(f.control_id), "test_id": f.test_id,
             "source": f.source, "severity": f.severity, "title": f.title, "description": f.description, "state": f.state,
             "revision": f.revision, "first_release": f.first_release, "last_release": f.last_release, "evidence_refs": f.evidence_refs,
             "resolution": f.resolution, "remediation_note": f.remediation_note, "created_at": ts(f.created_at), "updated_at": ts(f.updated_at)}

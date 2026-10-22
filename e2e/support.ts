@@ -33,10 +33,14 @@ export function totp(username: string, at = Date.now()): string {
   return String((digest.readUInt32BE(offset) & 0x7fffffff) % 1_000_000).padStart(6, "0");
 }
 
-// Avoid submitting a code in the last seconds of its period.
-async function freshPeriod() {
+// One-time codes are single-use: never submit the same user's code twice in one 30 s period,
+// and avoid the last seconds of a period.
+const lastPeriod = new Map<string, number>();
+async function freshPeriod(username: string) {
+  const period = () => Math.floor(Date.now() / 1000 / 30);
   const remaining = 30 - (Math.floor(Date.now() / 1000) % 30);
-  if (remaining < 6) await new Promise((r) => setTimeout(r, (remaining + 1) * 1000));
+  if (remaining < 6 || lastPeriod.get(username) === period()) await new Promise((r) => setTimeout(r, (remaining + 1) * 1000));
+  lastPeriod.set(username, period());
 }
 
 export async function submitPassword(page: Page, username: string, secret = password()) {
@@ -56,7 +60,7 @@ export async function staffSignIn(page: Page, username: string, path = "/work-qu
   await page.goto(`${STAFF_URL}${path}`);
   await submitPassword(page, username);
   await expect(page.locator("#otp")).toBeVisible();
-  await freshPeriod();
+  await freshPeriod(username);
   await page.locator("#otp").fill(totp(username));
   await page.locator("#kc-login").click();
   await expect(page).toHaveURL(new RegExp(`^${STAFF_URL}`));

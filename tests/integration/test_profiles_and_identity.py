@@ -28,7 +28,10 @@ def test_unassessed_controls_are_visible_and_never_supported(workspace):
         p = for_application(s, app_id)
         state = reducer.readiness(s, app_id, release, p)
     unassessed = {c["id"] for c in state["controls"] if c["result"] == "unassessed"}
-    assert unassessed == {"C04", "C05", "C06", "C07", "C09"} == set(state["gate"]["unassessed"])
+    not_applicable = {c["id"] for c in state["controls"] if c["result"] == "not_applicable"}
+    assert unassessed == {"C06", "C07"} and not_applicable == {"C04", "C05", "C09"} == set(state["gate"]["not_applicable"])
+    assert unassessed | not_applicable == set(state["gate"]["unassessed"])  # both stay visible as outside the tested scope
+    assert all(c["applicability"]["reviewed"] for c in state["controls"] if c["id"] in unassessed | not_applicable)
     assert state["scores"]["controls_assessed"] == 5 and state["gate"]["scope_limited"]
     assert "not assessed" in state["gate"]["reason"]
     assert state["scores"]["evidence_coverage_pct"] == 0  # nothing tested yet; unassessed never adds coverage
@@ -99,10 +102,10 @@ def test_changed_test_definition_blocks_reuse(workspace):
     with tenant_session(workspace) as s:
         edges = reducer.accepted_edges(s, f"{workspace}-app", p)
     mapped = {c for comps in edges.values() for c in comps}
-    good = _run(workspace, r1, "T-C09-01", p["tests_by_id"]["T-C09-01"]["digest"])
-    old = _run(workspace, r1, "T-C09-01", "different-definition")
-    assert reducer._reusable(good, r1, r2, edges["T-C09-01"], p["tests_by_id"]["T-C09-01"], mapped, p)
-    assert not reducer._reusable(old, r1, r2, edges["T-C09-01"], p["tests_by_id"]["T-C09-01"], mapped, p)
+    good = _run(workspace, r1, "T-C09-02", p["tests_by_id"]["T-C09-02"]["digest"])
+    old = _run(workspace, r1, "T-C09-02", "different-definition")
+    assert reducer._reusable(good, r1, r2, edges["T-C09-02"], p["tests_by_id"]["T-C09-02"], mapped, p)
+    assert not reducer._reusable(old, r1, r2, edges["T-C09-02"], p["tests_by_id"]["T-C09-02"], mapped, p)
 
 
 def test_vault_encrypts_and_never_describes_values(workspace):

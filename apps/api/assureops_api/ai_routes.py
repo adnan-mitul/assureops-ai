@@ -11,6 +11,7 @@ from assureops_domain.db import platform_session, tenant_session
 from assureops_domain.models import AiResult, Incident, Release, Report, SourceDocument, Workspace
 
 from . import services as svc
+from .access import require_application_writer
 from .auth import Caller, CustomerCaller, api_error
 
 router = APIRouter(prefix="/v1", tags=["ai"])
@@ -123,6 +124,7 @@ def request_phase(application_id: str, phase: str, body: PhaseIn, caller: Caller
     check("ai_phase", caller.workspace_id, limit=60, window_seconds=3600)
     with tenant_session(caller.workspace_id) as s:
         app = svc.get_application(s, application_id)
+        require_application_writer(s, caller, app.id, "reviewer")
         refs = {k: v for k, v in body.model_dump().items() if v is not None}
         phase = phase.upper()
         if phase == "B":
@@ -147,7 +149,7 @@ def request_phase(application_id: str, phase: str, body: PhaseIn, caller: Caller
         try:
             row = service.request(s, app, phase, refs, caller.username)
         except service.AiError as exc:
-            raise api_error(422, exc.code, exc.detail)
+            raise api_error(429 if exc.code == "queue_full" else 422, exc.code, exc.detail)
         return service.result_json(row)
 
 
@@ -157,7 +159,7 @@ def list_results(application_id: str, caller: Caller = CustomerCaller):
 
     with tenant_session(caller.workspace_id) as s:
         svc.get_application(s, application_id)
-        return [service.result_json(r) for r in s.scalars(select(AiResult).where(AiResult.application_id == application_id)
+        return [service.result_json(r) for r in s.scalars(select(AiResult).where(AiResult.application_id == application_id, AiResult.shadow_of.is_(None))
                                                          .order_by(AiResult.created_at.desc()).limit(50))]
 
 
@@ -180,3 +182,18 @@ def review_result(result_id: str, body: AiReviewIn, caller: Caller = CustomerCal
         except service.AiError as exc:
             raise api_error(403 if exc.code == "separation_of_duties" else 409, exc.code, exc.detail)
         return {**service.result_json(row), "effects": effects}
+
+
+@router.post("/ai/results/{result_id}/cancel")
+def cancel_result(result_id: str, caller: Caller = CustomerCaller):
+    from assureops_ai import service
+
+    with tenant_session(caller.workspace_id) as s:
+        row = s.scalars(select(AiResult).where(AiResult.id == result_id).with_for_update()).first()
+        if row is None:
+            raise api_error(404, "not_found", "result not found")
+        require_application_writer(s, caller, row.application_id, "reviewer")
+        cancelled = service.cancel(s, row, actor=caller.username)
+        cases.audit(s, workspace_id=caller.workspace_id, actor=caller.username, actor_kind="customer", action="ai.cancel", target=row.id,
+                    detail={"phase": row.phase, "cancelled": cancelled})
+        return {**service.result_json(row), "cancelled": cancelled}

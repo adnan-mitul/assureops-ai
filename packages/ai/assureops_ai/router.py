@@ -6,6 +6,7 @@ pinned model is qualified. A failing private route never turns into an
 external call: unavailability is reported as such.
 """
 
+import hashlib
 import os
 import re
 from dataclasses import dataclass
@@ -34,6 +35,8 @@ class Route:
     reason: str
     external: bool = False
     qualification: dict | None = None
+    stage: str = "unmanaged"  # unmanaged (environment-configured) | active | canary | shadow
+    route_id: str | None = None
 
 
 def private_model(phase: str) -> str:
@@ -61,7 +64,46 @@ def groq_model(phase_id: str) -> str:
     return settings().groq_model_f if phase_id == "F" and settings().groq_model_f else env(f"GROQ_MODEL_{phase_id}")
 
 
-def resolve(phase_id: str, external_allowed: bool) -> Route:
+def _bucket(key: str) -> int:
+    return int(hashlib.sha256(key.encode()).hexdigest()[:8], 16) % 100
+
+
+def _managed(phase_id: str) -> dict:
+    from assureops_domain.models import ModelRouteStage
+
+    with platform_session() as s:
+        rows = s.scalars(select(ModelRouteStage).where(ModelRouteStage.phase == phase_id,
+                                                       ModelRouteStage.stage.in_(["active", "canary", "shadow"]))).all()
+        return {r.stage: {"id": r.id, "provider": r.provider, "model": r.model, "percent": r.canary_percent} for r in rows}
+
+
+def resolve(phase_id: str, external_allowed: bool, key: str | None = None) -> Route:
+    """Serving route for one request. A managed active route (lifecycle) replaces the environment-configured one; a canary
+    serves a stable fraction of requests (by `key`). Every candidate still needs its current qualification record."""
+    managed = _managed(phase_id)
+    pick, stage = managed.get("active"), "active"
+    canary = managed.get("canary")
+    if canary and key is not None and _bucket(key) < canary["percent"]:
+        pick, stage = canary, "canary"
+    if pick is None:
+        return _resolve(phase_id, external_allowed, private_model(phase_id), groq_model(phase_id))
+    route = _resolve(phase_id, external_allowed, pick["model"] if pick["provider"] == "private" else "",
+                     pick["model"] if pick["provider"] == "groq" else "")
+    route.stage, route.route_id = stage, pick["id"]
+    return route
+
+
+def shadow_route(phase_id: str) -> Route | None:
+    """The shadow candidate (private only): it sees the same inputs, its outputs are never served or reviewed."""
+    shadow = _managed(phase_id).get("shadow")
+    if not shadow or shadow["provider"] != "private":
+        return None
+    route = _resolve(phase_id, False, shadow["model"], "")
+    route.stage, route.route_id = "shadow", shadow["id"]
+    return route
+
+
+def _resolve(phase_id: str, external_allowed: bool, model: str, gm: str) -> Route:
     """Qualified private route first; an approved external route only for workspaces that allow it.
 
     Choosing a provider happens here, from qualification and policy. A private route that is qualified but down
@@ -70,7 +112,7 @@ def resolve(phase_id: str, external_allowed: bool) -> Route:
     phase = PHASES[phase_id]
     cfg = settings()
     url_key = {"generate": "PRIVATE_INFERENCE_URL", "embed": "PRIVATE_EMBED_URL", "classify": "PRIVATE_CLASSIFY_URL"}[phase.kind]
-    private_url, model = env(url_key), private_model(phase_id)
+    private_url = env(url_key)
     private = None
     if private_url and model:
         q = qualification(phase_id, "private", model)
@@ -80,7 +122,6 @@ def resolve(phase_id: str, external_allowed: bool) -> Route:
                         "not_qualified: private model failed or lacks a current qualification record" if q else
                         "not_qualified: private model has no qualification record", qualification=q)
     if "groq" in phase.external_approved:
-        gm = groq_model(phase_id)
         external = None
         if not cfg.groq_enabled:
             external = Route(phase_id, "groq", gm or None, False, "provider_disabled: GROQ_ENABLED is false", external=True)

@@ -49,8 +49,10 @@ def create_connection(session: Session, app: Application, *, adapter_id: str, co
             raise OnboardingError("invalid_connection", "; ".join(problems))
     from assureops_connectors.egress import EgressDenied, check_target
 
-    try:
-        check_target(config["base_url"], allow_private=settings().allow_private_targets)
+    from .relay import is_relay
+
+    try:  # a relay runs inside the customer's network, so its private target is authorized by them; metadata addresses never are
+        check_target(config["base_url"], allow_private=settings().allow_private_targets or is_relay(config))
     except EgressDenied as exc:
         raise OnboardingError("destination_denied", str(exc))
     revision = (session.scalar(select(func.max(Connection.revision)).where(Connection.application_id == app.id)) or 0) + 1
@@ -71,8 +73,10 @@ def spec_for(session: Session, conn: Connection, *, with_credentials: bool):
     creds, problems = ({}, [])
     if with_credentials:
         creds, problems = vault.credentials_for(session, conn.application_id, conn.config.get("actors") or {})
+    from .relay import is_relay
+
     spec = base.ConnectionSpec(adapter_id=conn.adapter_id, revision=conn.revision, config=conn.config, credentials=creds,
-                               allow_private=settings().allow_private_targets)
+                               allow_private=settings().allow_private_targets or is_relay(conn.config))
     return spec, problems
 
 
@@ -81,6 +85,17 @@ def verify(session: Session, app: Application, conn: Connection, p: dict | None)
     if conn.status == "revoked":
         raise OnboardingError("revoked", "this connection was revoked")
     spec, problems = spec_for(session, conn, with_credentials=True)
+    from . import relay
+
+    if relay.is_relay(conn.config) and not problems:
+        # The network checks run in the customer's relay; the profile-scope check runs here when its result arrives.
+        task = relay.enqueue(session, workspace_id=conn.workspace_id, application_id=conn.application_id, kind="verify", ref_id=conn.id,
+                             payload={"kind": "verify", "adapter_id": conn.adapter_id, "connection_revision": conn.revision, "config": conn.config,
+                                      "credentials": spec.credentials, "allow_private": True},
+                             deadline_seconds=600)
+        conn.verification = {"status": "pending_relay", "relay_task": task.id, "checks": [], "gaps": ["waiting for the private connector to run the checks"]}
+        conn.status = "pending_relay"
+        return conn.verification
     result = adapters().get(conn.adapter_id).validate_connection(spec, p)
     if problems:
         result["checks"].append({"id": "credential_store", "status": "fail", "detail": "; ".join(problems)})
@@ -199,3 +214,25 @@ def run_tokens(step_id: str, trials: int) -> list[str]:
     """Unforgeable per-trial tokens (HMAC with a platform key the runner never sees)."""
     key = (settings().run_token_key or settings().secret_key or "dev").encode()
     return ["ao-" + hmac.new(key, f"{step_id}:{i}".encode(), hashlib.sha256).hexdigest()[:12] for i in range(trials)]
+
+
+def apply_relay_verification(session: Session, conn: Connection, result: dict, p: dict | None) -> dict:
+    """Store a relay's network checks and add the platform-side profile-scope check (static, no network).
+
+    The status is recomputed here from the checks; a relay's own status label is never trusted.
+    """
+    checks = [c for c in (result.get("checks") or []) if isinstance(c, dict) and c.get("status") in ("pass", "fail", "gap")]
+    if not checks:
+        checks = [{"id": "relay", "status": "fail", "detail": "the relay returned no connection checks"}]
+    out = {"checks": checks, "gaps": sorted({str(g) for g in (result.get("gaps") or [])}),
+           "capabilities": dict(result.get("capabilities") or {}), "executed_by": "relay"}
+    adapter = adapters().get(conn.adapter_id)
+    if p is not None and hasattr(adapter, "profile_compatibility"):
+        spec, _ = spec_for(session, conn, with_credentials=False)
+        blocked = adapter.profile_compatibility(spec, p)
+        out["capabilities"].update(tests_runnable=len(p["tests"]) - len(blocked), tests_blocked=blocked)
+        out["checks"].append({"id": "profile_scope", "status": "fail" if blocked else "pass",
+                              "detail": f"{len(blocked)} tests cannot run within this connection" if blocked else "every profile test fits the authorized scope"})
+    out["status"] = "failed" if any(c["status"] == "fail" for c in out["checks"]) else "verified"
+    conn.verification, conn.status, conn.verified_at = out, out["status"], now()
+    return out

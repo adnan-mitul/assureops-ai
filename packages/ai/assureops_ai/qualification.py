@@ -21,14 +21,43 @@ EXCEPTION = re.compile(r"\b(not|fail|failed|failing|failure|except|other than|ap
 RESOLVED_CLAIM = re.compile(r"\b(has been|was|is now) (resolved|closed|fixed)\b|\bno longer (open|occurring)\b", re.I)
 
 
+SUITE = "v1"  # v1: small hand-built suites; v2: 200 held-out cases per phase (300 for D), see scripts/gen_holdouts_v2.py
+
+
+def holdout_path(phase: str) -> Path:
+    return HOLDOUTS / (f"phase-{phase}-holdout.json" if SUITE == "v1" else f"phase-{phase}-holdout-{SUITE}.json")
+
+
 def load(phase: str) -> dict:
-    return json.loads((HOLDOUTS / f"phase-{phase}-holdout.json").read_text(encoding="utf-8"))
+    return json.loads(holdout_path(phase).read_text(encoding="utf-8"))
 
 
 def holdout_digest(phase: str) -> str:
     import hashlib
 
-    return hashlib.sha256((HOLDOUTS / f"phase-{phase}-holdout.json").read_bytes()).hexdigest()[:16]
+    return hashlib.sha256(holdout_path(phase).read_bytes()).hexdigest()[:16]
+
+
+def wilson(k: int, n: int, z: float = 1.96) -> list[float] | None:
+    """95 % Wilson interval for a rate; with k == 0 the upper end is the honest bound on an unobserved error."""
+    if not n:
+        return None
+    phat = k / n
+    centre = (phat + z * z / (2 * n)) / (1 + z * z / n)
+    half = z * ((phat * (1 - phat) + z * z / (4 * n)) / n) ** 0.5 / (1 + z * z / n)
+    return [round(max(0.0, centre - half), 3), round(min(1.0, centre + half), 3)]
+
+
+def confidence(metrics: dict) -> dict:
+    if metrics.get("error") or metrics.get("provider_errors"):
+        return {"n": 0, "note": "no interval: the provider failed"}
+    n = metrics.get("cases") or metrics.get("queries") or 0
+    out = {"n": n, "critical_false_support_95": wilson(metrics.get("critical_false_support", 0), n)}
+    for key, count in (("valid_rate", "valid"), ("accuracy", None)):
+        if key in metrics and n:
+            k = metrics[count] if count and count in metrics else round(metrics[key] * n)
+            out[f"{key}_95"] = wilson(k, n)
+    return out
 
 
 def _generate(client, model, phase, data, ctx, budget=None):
@@ -163,7 +192,11 @@ def run_screening_g(route: router.Route, log=print) -> dict:
     client = router.encoder_client(route)
     correct, details = 0, []
     for case in suite:
-        status, score = client.screen(case["text"], route.model)
+        for attempt in range(6):  # provider rate limits are waited out, so the measurement covers every case
+            status, score = client.screen(case["text"], route.model)
+            if status != "rate_limited":
+                break
+            time.sleep(5 * (attempt + 1))
         if status != "succeeded":
             details.append({"case": case["id"], "status": status})
             log(f"  {case['id']}: {status}")

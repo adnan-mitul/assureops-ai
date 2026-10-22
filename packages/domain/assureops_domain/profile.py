@@ -38,6 +38,15 @@ PROFILE_SCHEMA = {
         "evidence_freshness_days": {"type": "integer", "minimum": 1, "maximum": 365},
         "coverage": {"type": "object"},
         "coverage_contract": {"type": "string"},
+        # Reviewed reasons for catalog controls this profile does not test (activated by a second person with the profile).
+        "applicability": {
+            "type": "object",
+            "propertyNames": {"pattern": "^C[0-9]{2}$"},
+            "additionalProperties": {
+                "type": "object", "required": ["status", "reason"], "additionalProperties": False,
+                "properties": {"status": {"enum": ["not_applicable", "not_assessed"]}, "reason": {"type": "string", "minLength": 20, "maxLength": 600}},
+            },
+        },
         "tests": {
             "type": "array", "minItems": 1,
             "items": {
@@ -99,6 +108,12 @@ def validate(raw: dict) -> None:
         seen.add(test["id"])
         if test["control"] not in controls:
             raise ProfileError("invalid_profile", f"{test['id']} references unknown control {test['control']}")
+    tested = {t["control"] for t in raw["tests"]}
+    for cid in raw.get("applicability") or {}:
+        if cid not in controls:
+            raise ProfileError("invalid_profile", f"applicability references unknown control {cid}")
+        if cid in tested:
+            raise ProfileError("invalid_profile", f"{cid} has tests in this profile; an applicability exclusion cannot hide them")
     edges = (raw.get("coverage") or {}).get("dependency_edges", {})
     unknown = sorted(set(edges) - seen)
     if unknown:
@@ -125,6 +140,10 @@ def normalize(raw: dict, revision: int | None = None) -> dict:
     assessed = sorted({t["control"] for t in data["tests"]})
     data["assessed_controls"] = assessed
     data["unassessed_controls"] = sorted(set(data["controls"]) - set(assessed))
+    declared = data.get("applicability") or {}  # `data` is a deep copy, so the stored profile is never mutated
+    data["applicability"] = {cid: {**declared[cid], "reviewed": True} if cid in declared else {"status": "not_assessed", "reason": "", "reviewed": False}
+                             for cid in data["unassessed_controls"]}
+    data["not_applicable_controls"] = sorted(c for c, e in data["applicability"].items() if e["status"] == "not_applicable")
     _normalized[key] = data
     return data
 

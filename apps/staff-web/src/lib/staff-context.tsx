@@ -32,6 +32,7 @@ export function StaffProvider({ children }: { children: ReactNode }) {
 export const useStaff = () => useContext(StaffContext);
 
 export const ROLE_LABEL: Record<string, string> = {
+  admin: "Admin",
   analyst: "Analyst",
   senior_reviewer: "Senior reviewer",
   case_manager: "Case manager",

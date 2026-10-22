@@ -229,7 +229,7 @@ async def github_webhook(request: Request, x_hub_signature_256: str | None = Hea
         p.add(GithubDelivery(id=x_github_delivery, event=x_github_event or "unknown"))
     payload = json.loads(raw or b"{}")
     repo = ((payload.get("repository") or {}).get("full_name") or "").lower()
-    sha = payload.get("after") or (payload.get("deployment") or {}).get("sha") or ((payload.get("check_suite") or {}).get("head_sha"))
+    sha, status_sha, notes = commit_under_test(x_github_event, payload)
     with platform_session() as p:
         route = p.get(RepositoryRoute, repo) if repo else None
     if route is None:
@@ -237,8 +237,27 @@ async def github_webhook(request: Request, x_hub_signature_256: str | None = Hea
     with tenant_session(route.workspace_id) as s:
         app = s.get(Application, route.application_id)
         result, release = evaluate(s, app, sha, None) if sha and len(sha) == 40 else ({"decision": "deny", "reasons": ["no commit SHA"]}, None)
+        result["reasons"] = notes + result.get("reasons", [])
         cases.audit(s, workspace_id=route.workspace_id, actor=f"github:{repo}", actor_kind="service", action=f"github.{x_github_event}",
-                    target=sha or "-", detail={"decision": result["decision"], "reasons": result.get("reasons", [])})
-    status = post_commit_status(repo, sha, result["decision"], result.get("reasons", [])) if sha and len(sha) == 40 else {"posted": False}
-    return {"status": "evaluated", "event": x_github_event, "commit_sha": sha, "decision": result["decision"], "reasons": result.get("reasons", []),
-            "commit_status": status}
+                    target=sha or "-", detail={"decision": result["decision"], "reasons": result["reasons"], "status_sha": status_sha})
+    status = post_commit_status(repo, status_sha, result["decision"], result["reasons"]) if status_sha and len(status_sha) == 40 else {"posted": False}
+    return {"status": "evaluated", "event": x_github_event, "commit_sha": sha, "status_sha": status_sha, "decision": result["decision"],
+            "reasons": result["reasons"], "commit_status": status}
+
+
+def commit_under_test(event: str | None, payload: dict) -> tuple[str | None, str | None, list[str]]:
+    """Which exact commit a decision is about, and where its status is shown.
+
+    A pull request is judged on its merge candidate (head merged into the current base), never on
+    an approval of the head alone: a moved base changes the code that would ship. The status is
+    shown on the head commit, where GitHub displays pull-request checks.
+    """
+    if event == "pull_request":
+        pr = payload.get("pull_request") or {}
+        head = (pr.get("head") or {}).get("sha")
+        merge = pr.get("merge_commit_sha")
+        if not merge:
+            return None, head, ["GitHub has not computed the merge candidate yet; the pull request cannot inherit the head commit's assessment"]
+        return merge, head, [f"pull request #{pr.get('number')}: evaluated merge candidate {merge[:12]} (head {str(head)[:12]})"]
+    sha = payload.get("after") or (payload.get("deployment") or {}).get("sha") or ((payload.get("check_suite") or {}).get("head_sha"))
+    return sha, sha, []

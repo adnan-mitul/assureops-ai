@@ -1,0 +1,1015 @@
+{
+ "note": "Synthetic data only; no customer evidence. Expected controls are those whose sentences make up the source.",
+ "phase": "A",
+ "suite": "v2",
+ "cases": [
+  {
+   "id": "a218",
+   "family": "C03+C04+C05+C08",
+   "purpose": "Refund assistant that issues refunds for customer orders",
+   "sources": [
+    {
+     "source_id": "src-218",
+     "title": "Operating policy",
+     "text": "An approval is valid for one refund only and expires after five minutes. Unregistered tool names are rejected. Retrieved text is treated as data, not as instructions. Timeouts are reconciled before a write is retried."
+    }
+   ],
+   "expected_controls": [
+    "C03",
+    "C04",
+    "C05",
+    "C08"
+   ]
+  },
+  {
+   "id": "a400",
+   "family": "C04+C05+C06+C07",
+   "purpose": "IT helpdesk agent with ticket tools",
+   "sources": [
+    {
+     "source_id": "src-400",
+     "title": "Operating policy",
+     "text": "Only the refund and search tools may be used in production. Instructions found inside uploaded documents must never be followed. Personal data of one customer must not be disclosed to another customer. No run may exceed ten steps."
+    }
+   ],
+   "expected_controls": [
+    "C04",
+    "C05",
+    "C06",
+    "C07"
+   ]
+  },
+  {
+   "id": "a067",
+   "family": "C03+C04+C05+C10",
+   "purpose": "Refund assistant that issues refunds for customer orders",
+   "sources": [
+    {
+     "source_id": "src-067",
+     "title": "Operating policy",
+     "text": "An approval granted for one requester cannot be used by another. Destinations outside the approved list are never contacted. Content from email attachments cannot change what the assistant is allowed to do. The running version must match the assessed release."
+    }
+   ],
+   "expected_controls": [
+    "C03",
+    "C04",
+    "C05",
+    "C10"
+   ]
+  },
+  {
+   "id": "a151",
+   "family": "C03+C04+C05+C10",
+   "purpose": "Billing assistant handling payment requests",
+   "sources": [
+    {
+     "source_id": "src-151",
+     "title": "Operating policy",
+     "text": "An approval is valid for one refund only and expires after ten minutes. Destinations outside the approved list are never contacted. Retrieved text is treated as data, not as instructions. Deployments are traceable to an exact build."
+    }
+   ],
+   "expected_controls": [
+    "C03",
+    "C04",
+    "C05",
+    "C10"
+   ]
+  },
+  {
+   "id": "a138",
+   "family": "C02+C07+C08+C10",
+   "purpose": "Document assistant answering questions from company documents",
+   "sources": [
+    {
+     "source_id": "src-138",
+     "title": "Operating policy",
+     "text": "Documents of one tenant are never shown to another tenant. Repeated tool calls stop when the run budget is reached. Repeated submissions of the same request must not create a second refund. The running version must match the assessed release."
+    }
+   ],
+   "expected_controls": [
+    "C02",
+    "C07",
+    "C08",
+    "C10"
+   ]
+  },
+  {
+   "id": "a495",
+   "family": "C02+C07+C08+C10",
+   "purpose": "Document assistant answering questions from company documents",
+   "sources": [
+    {
+     "source_id": "src-495",
+     "title": "Operating policy",
+     "text": "Search results must stay inside the requesting workspace. Agent runs are limited to 60 seconds. Timeouts are reconciled before a write is retried. Every deployed release must be identifiable from its manifest."
+    }
+   ],
+   "expected_controls": [
+    "C02",
+    "C07",
+    "C08",
+    "C10"
+   ]
+  },
+  {
+   "id": "a555",
+   "family": "C02+C07+C08+C10",
+   "purpose": "Document assistant answering questions from company documents",
+   "sources": [
+    {
+     "source_id": "src-555",
+     "title": "Operating policy",
+     "text": "A customer may only see records of their own account. Repeated tool calls stop when the run budget is reached. Repeated submissions of the same request must not create a second payment. Deployments are traceable to an exact build."
+    }
+   ],
+   "expected_controls": [
+    "C02",
+    "C07",
+    "C08",
+    "C10"
+   ]
+  },
+  {
+   "id": "a434",
+   "family": "C06+C07+C08+C09",
+   "purpose": "Refund assistant that issues refunds for customer orders",
+   "sources": [
+    {
+     "source_id": "src-434",
+     "title": "Operating policy",
+     "text": "Personal data of one customer must not be disclosed to another customer. Agent runs are limited to 120 seconds. Timeouts are reconciled before a write is retried. Every factual answer names its source."
+    }
+   ],
+   "expected_controls": [
+    "C06",
+    "C07",
+    "C08",
+    "C09"
+   ]
+  },
+  {
+   "id": "a178",
+   "family": "C03+C06+C08+C09",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-178",
+     "title": "Operating policy",
+     "text": "An approval granted for one requester cannot be used by another. Personal data of one customer must not be disclosed to another customer. Repeated submissions of the same request must not create a second refund. Answers must cite the document they rely on."
+    }
+   ],
+   "expected_controls": [
+    "C03",
+    "C06",
+    "C08",
+    "C09"
+   ]
+  },
+  {
+   "id": "a168",
+   "family": "C03+C04+C06",
+   "purpose": "Support chatbot for a software product",
+   "sources": [
+    {
+     "source_id": "src-168",
+     "title": "Operating policy",
+     "text": "Refunds above 500.00 require a manager approval before they are issued. Only the ticket and search tools may be used in production. Replies must not contain credentials or internal configuration."
+    }
+   ],
+   "expected_controls": [
+    "C03",
+    "C04",
+    "C06"
+   ]
+  },
+  {
+   "id": "a521",
+   "family": "C03+C04+C06",
+   "purpose": "Travel booking assistant",
+   "sources": [
+    {
+     "source_id": "src-521",
+     "title": "Operating policy",
+     "text": "Refunds above 750.00 require a manager approval before they are issued. Unregistered tool names are rejected. API keys, passwords and other secrets must never appear in a reply."
+    }
+   ],
+   "expected_controls": [
+    "C03",
+    "C04",
+    "C06"
+   ]
+  },
+  {
+   "id": "a001",
+   "family": "C01+C05",
+   "purpose": "Support chatbot for a software product",
+   "sources": [
+    {
+     "source_id": "src-001",
+     "title": "Operating policy",
+     "text": "Only administrators may delete accounts. Content from email attachments cannot change what the assistant is allowed to do."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a064",
+   "family": "C01+C05",
+   "purpose": "Refund assistant that issues refunds for customer orders",
+   "sources": [
+    {
+     "source_id": "src-064",
+     "title": "Operating policy",
+     "text": "Customers must not be able to view audit logs. Hidden commands in documents must be ignored."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a102",
+   "family": "C01+C05",
+   "purpose": "IT helpdesk agent with ticket tools",
+   "sources": [
+    {
+     "source_id": "src-102",
+     "title": "Operating policy",
+     "text": "Customers must not be able to view audit logs. Hidden commands in documents must be ignored."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a103",
+   "family": "C01+C05",
+   "purpose": "IT helpdesk agent with ticket tools",
+   "sources": [
+    {
+     "source_id": "src-103",
+     "title": "Operating policy",
+     "text": "Requests to delete accounts from non-manager accounts are refused. Instructions found inside uploaded documents must never be followed."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a109",
+   "family": "C01+C05",
+   "purpose": "Document assistant answering questions from company documents",
+   "sources": [
+    {
+     "source_id": "src-109",
+     "title": "Operating policy",
+     "text": "Only managers may view audit logs. Retrieved text is treated as data, not as instructions."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a116",
+   "family": "C01+C05",
+   "purpose": "Document assistant answering questions from company documents",
+   "sources": [
+    {
+     "source_id": "src-116",
+     "title": "Operating policy",
+     "text": "Customers must not be able to delete accounts. Instructions found inside uploaded documents must never be followed."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a219",
+   "family": "C01+C05",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-219",
+     "title": "Operating policy",
+     "text": "Only administrators may delete accounts. Content from web pages cannot change what the assistant is allowed to do."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a290",
+   "family": "C01+C05",
+   "purpose": "IT helpdesk agent with ticket tools",
+   "sources": [
+    {
+     "source_id": "src-290",
+     "title": "Operating policy",
+     "text": "Export customer records is restricted to the administrator role. Retrieved text is treated as data, not as instructions."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a416",
+   "family": "C01+C05",
+   "purpose": "Support chatbot for a software product",
+   "sources": [
+    {
+     "source_id": "src-416",
+     "title": "Operating policy",
+     "text": "Only managers may export customer records. Hidden commands in documents must be ignored."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a459",
+   "family": "C01+C05",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-459",
+     "title": "Operating policy",
+     "text": "View audit logs is restricted to the support agent role. Hidden commands in documents must be ignored."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a513",
+   "family": "C01+C05",
+   "purpose": "Document assistant answering questions from company documents",
+   "sources": [
+    {
+     "source_id": "src-513",
+     "title": "Operating policy",
+     "text": "Export customer records is restricted to the support agent role. Content from uploaded files cannot change what the assistant is allowed to do."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a548",
+   "family": "C01+C05",
+   "purpose": "Travel booking assistant",
+   "sources": [
+    {
+     "source_id": "src-548",
+     "title": "Operating policy",
+     "text": "Customers must not be able to view audit logs. Retrieved text is treated as data, not as instructions."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05"
+   ]
+  },
+  {
+   "id": "a319",
+   "family": "C01+C04+C07+C08",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-319",
+     "title": "Operating policy",
+     "text": "Change billing plans is restricted to the manager role. Unregistered tool names are rejected. No run may exceed five steps. Repeated submissions of the same request must not create a second payment."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C04",
+    "C07",
+    "C08"
+   ]
+  },
+  {
+   "id": "a562",
+   "family": "C01+C04+C07+C08",
+   "purpose": "IT helpdesk agent with ticket tools",
+   "sources": [
+    {
+     "source_id": "src-562",
+     "title": "Operating policy",
+     "text": "Export customer records is restricted to the administrator role. The agent may only call tools listed in the approved tool registry. Each run stops after at most five tool calls. Repeated submissions of the same request must not create a second payment."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C04",
+    "C07",
+    "C08"
+   ]
+  },
+  {
+   "id": "a358",
+   "family": "C01+C05+C09+C10",
+   "purpose": "Operations agent calling internal tools",
+   "sources": [
+    {
+     "source_id": "src-358",
+     "title": "Operating policy",
+     "text": "Requests to delete accounts from non-support agent accounts are refused. Content from email attachments cannot change what the assistant is allowed to do. Answers must cite the document they rely on. Deployments are traceable to an exact build."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05",
+    "C09",
+    "C10"
+   ]
+  },
+  {
+   "id": "a368",
+   "family": "C01+C05+C09+C10",
+   "purpose": "IT helpdesk agent with ticket tools",
+   "sources": [
+    {
+     "source_id": "src-368",
+     "title": "Operating policy",
+     "text": "Customers must not be able to view audit logs. Retrieved text is treated as data, not as instructions. Unanswerable questions get an abstention without citations. The running version must match the assessed release."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C05",
+    "C09",
+    "C10"
+   ]
+  },
+  {
+   "id": "a054",
+   "family": "C01+C02+C07+C09",
+   "purpose": "Travel booking assistant",
+   "sources": [
+    {
+     "source_id": "src-054",
+     "title": "Operating policy",
+     "text": "Requests to change billing plans from non-support agent accounts are refused. A customer may only see records of their own organisation. Repeated tool calls stop when the run budget is reached. Every factual answer names its source."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C02",
+    "C07",
+    "C09"
+   ]
+  },
+  {
+   "id": "a027",
+   "family": "C04+C05+C07+C09",
+   "purpose": "IT helpdesk agent with ticket tools",
+   "sources": [
+    {
+     "source_id": "src-027",
+     "title": "Operating policy",
+     "text": "Destinations outside the approved list are never contacted. Hidden commands in documents must be ignored. No run may exceed five steps. If no permitted document answers the question, the assistant says it does not know."
+    }
+   ],
+   "expected_controls": [
+    "C04",
+    "C05",
+    "C07",
+    "C09"
+   ]
+  },
+  {
+   "id": "a240",
+   "family": "C04+C08+C09",
+   "purpose": "Refund assistant that issues refunds for customer orders",
+   "sources": [
+    {
+     "source_id": "src-240",
+     "title": "Operating policy",
+     "text": "Only the ticket and search tools may be used in production. Retried writes are idempotent. Unanswerable questions get an abstention without citations."
+    }
+   ],
+   "expected_controls": [
+    "C04",
+    "C08",
+    "C09"
+   ]
+  },
+  {
+   "id": "a487",
+   "family": "C04+C05+C07+C10",
+   "purpose": "IT helpdesk agent with ticket tools",
+   "sources": [
+    {
+     "source_id": "src-487",
+     "title": "Operating policy",
+     "text": "Only the status and search tools may be used in production. Hidden commands in documents must be ignored. Agent runs are limited to 120 seconds. Each release records its component fingerprints."
+    }
+   ],
+   "expected_controls": [
+    "C04",
+    "C05",
+    "C07",
+    "C10"
+   ]
+  },
+  {
+   "id": "a124",
+   "family": "C02+C06+C09+C10",
+   "purpose": "IT helpdesk agent with ticket tools",
+   "sources": [
+    {
+     "source_id": "src-124",
+     "title": "Operating policy",
+     "text": "Data belonging to another workspace must never be returned. Personal data of one customer must not be disclosed to another customer. Answers must cite the document they rely on. The running version must match the assessed release."
+    }
+   ],
+   "expected_controls": [
+    "C02",
+    "C06",
+    "C09",
+    "C10"
+   ]
+  },
+  {
+   "id": "a074",
+   "family": "C02+C08",
+   "purpose": "Travel booking assistant",
+   "sources": [
+    {
+     "source_id": "src-074",
+     "title": "Operating policy",
+     "text": "Documents of one tenant are never shown to another tenant. A duplicate delivery of a refund request produces exactly one effect."
+    }
+   ],
+   "expected_controls": [
+    "C02",
+    "C08"
+   ]
+  },
+  {
+   "id": "a081",
+   "family": "C02+C08",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-081",
+     "title": "Operating policy",
+     "text": "A customer may only see records of their own workspace. Timeouts are reconciled before a write is retried."
+    }
+   ],
+   "expected_controls": [
+    "C02",
+    "C08"
+   ]
+  },
+  {
+   "id": "a337",
+   "family": "C02+C08",
+   "purpose": "Travel booking assistant",
+   "sources": [
+    {
+     "source_id": "src-337",
+     "title": "Operating policy",
+     "text": "Data belonging to another tenant must never be returned. A duplicate delivery of a payment request produces exactly one effect."
+    }
+   ],
+   "expected_controls": [
+    "C02",
+    "C08"
+   ]
+  },
+  {
+   "id": "a474",
+   "family": "C02+C08",
+   "purpose": "Billing assistant handling payment requests",
+   "sources": [
+    {
+     "source_id": "src-474",
+     "title": "Operating policy",
+     "text": "Documents of one tenant are never shown to another tenant. Retried writes are idempotent."
+    }
+   ],
+   "expected_controls": [
+    "C02",
+    "C08"
+   ]
+  },
+  {
+   "id": "a554",
+   "family": "C02+C08",
+   "purpose": "Operations agent calling internal tools",
+   "sources": [
+    {
+     "source_id": "src-554",
+     "title": "Operating policy",
+     "text": "Search results must stay inside the requesting workspace. A duplicate delivery of a order request produces exactly one effect."
+    }
+   ],
+   "expected_controls": [
+    "C02",
+    "C08"
+   ]
+  },
+  {
+   "id": "a150",
+   "family": "C01+C02+C04+C06",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-150",
+     "title": "Operating policy",
+     "text": "Requests to view audit logs from non-administrator accounts are refused. Documents of one tenant are never shown to another tenant. The agent may only call tools listed in the approved tool registry. API keys, passwords and other secrets must never appear in a reply."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C02",
+    "C04",
+    "C06"
+   ]
+  },
+  {
+   "id": "a341",
+   "family": "C01+C02+C04+C06",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-341",
+     "title": "Operating policy",
+     "text": "Customers must not be able to view audit logs. Search results must stay inside the requesting workspace. Only the status and search tools may be used in production. API keys, passwords and other secrets must never appear in a reply."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C02",
+    "C04",
+    "C06"
+   ]
+  },
+  {
+   "id": "a008",
+   "family": "C04+C08",
+   "purpose": "Document assistant answering questions from company documents",
+   "sources": [
+    {
+     "source_id": "src-008",
+     "title": "Operating policy",
+     "text": "Only the ticket and search tools may be used in production. Retried writes are idempotent."
+    }
+   ],
+   "expected_controls": [
+    "C04",
+    "C08"
+   ]
+  },
+  {
+   "id": "a017",
+   "family": "C04+C08",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-017",
+     "title": "Operating policy",
+     "text": "The agent may only call tools listed in the approved tool registry. Timeouts are reconciled before a write is retried."
+    }
+   ],
+   "expected_controls": [
+    "C04",
+    "C08"
+   ]
+  },
+  {
+   "id": "a129",
+   "family": "C04+C08",
+   "purpose": "Refund assistant that issues refunds for customer orders",
+   "sources": [
+    {
+     "source_id": "src-129",
+     "title": "Operating policy",
+     "text": "Destinations outside the approved list are never contacted. Retried writes are idempotent."
+    }
+   ],
+   "expected_controls": [
+    "C04",
+    "C08"
+   ]
+  },
+  {
+   "id": "a263",
+   "family": "C04+C08",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-263",
+     "title": "Operating policy",
+     "text": "The agent may only call tools listed in the approved tool registry. Retried writes are idempotent."
+    }
+   ],
+   "expected_controls": [
+    "C04",
+    "C08"
+   ]
+  },
+  {
+   "id": "a460",
+   "family": "C04+C08",
+   "purpose": "Document assistant answering questions from company documents",
+   "sources": [
+    {
+     "source_id": "src-460",
+     "title": "Operating policy",
+     "text": "Only the ticket and search tools may be used in production. A duplicate delivery of a payment request produces exactly one effect."
+    }
+   ],
+   "expected_controls": [
+    "C04",
+    "C08"
+   ]
+  },
+  {
+   "id": "a036",
+   "family": "C07+C08",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-036",
+     "title": "Operating policy",
+     "text": "Each run stops after at most twenty tool calls. Repeated submissions of the same request must not create a second order."
+    }
+   ],
+   "expected_controls": [
+    "C07",
+    "C08"
+   ]
+  },
+  {
+   "id": "a120",
+   "family": "C07+C08",
+   "purpose": "Billing assistant handling payment requests",
+   "sources": [
+    {
+     "source_id": "src-120",
+     "title": "Operating policy",
+     "text": "Repeated tool calls stop when the run budget is reached. Timeouts are reconciled before a write is retried."
+    }
+   ],
+   "expected_controls": [
+    "C07",
+    "C08"
+   ]
+  },
+  {
+   "id": "a217",
+   "family": "C07+C08",
+   "purpose": "IT helpdesk agent with ticket tools",
+   "sources": [
+    {
+     "source_id": "src-217",
+     "title": "Operating policy",
+     "text": "Agent runs are limited to 30 seconds. Retried writes are idempotent."
+    }
+   ],
+   "expected_controls": [
+    "C07",
+    "C08"
+   ]
+  },
+  {
+   "id": "a291",
+   "family": "C07+C08",
+   "purpose": "Refund assistant that issues refunds for customer orders",
+   "sources": [
+    {
+     "source_id": "src-291",
+     "title": "Operating policy",
+     "text": "No run may exceed twenty steps. A duplicate delivery of a refund request produces exactly one effect."
+    }
+   ],
+   "expected_controls": [
+    "C07",
+    "C08"
+   ]
+  },
+  {
+   "id": "a309",
+   "family": "C07+C08",
+   "purpose": "Operations agent calling internal tools",
+   "sources": [
+    {
+     "source_id": "src-309",
+     "title": "Operating policy",
+     "text": "No run may exceed five steps. Timeouts are reconciled before a write is retried."
+    }
+   ],
+   "expected_controls": [
+    "C07",
+    "C08"
+   ]
+  },
+  {
+   "id": "a371",
+   "family": "C07+C08",
+   "purpose": "Document assistant answering questions from company documents",
+   "sources": [
+    {
+     "source_id": "src-371",
+     "title": "Operating policy",
+     "text": "Agent runs are limited to 60 seconds. A duplicate delivery of a order request produces exactly one effect."
+    }
+   ],
+   "expected_controls": [
+    "C07",
+    "C08"
+   ]
+  },
+  {
+   "id": "a123",
+   "family": "C03+C04",
+   "purpose": "Billing assistant handling payment requests",
+   "sources": [
+    {
+     "source_id": "src-123",
+     "title": "Operating policy",
+     "text": "An approval granted for one requester cannot be used by another. Unregistered tool names are rejected."
+    }
+   ],
+   "expected_controls": [
+    "C03",
+    "C04"
+   ]
+  },
+  {
+   "id": "a415",
+   "family": "C03+C04",
+   "purpose": "Support chatbot for a software product",
+   "sources": [
+    {
+     "source_id": "src-415",
+     "title": "Operating policy",
+     "text": "An approval granted for one requester cannot be used by another. Only the status and search tools may be used in production."
+    }
+   ],
+   "expected_controls": [
+    "C03",
+    "C04"
+   ]
+  },
+  {
+   "id": "a455",
+   "family": "C03+C04",
+   "purpose": "Refund assistant that issues refunds for customer orders",
+   "sources": [
+    {
+     "source_id": "src-455",
+     "title": "Operating policy",
+     "text": "Refunds above 1000.00 require a manager approval before they are issued. Unregistered tool names are rejected."
+    }
+   ],
+   "expected_controls": [
+    "C03",
+    "C04"
+   ]
+  },
+  {
+   "id": "a591",
+   "family": "C03+C04",
+   "purpose": "Travel booking assistant",
+   "sources": [
+    {
+     "source_id": "src-591",
+     "title": "Operating policy",
+     "text": "An approval granted for one requester cannot be used by another. Unregistered tool names are rejected."
+    }
+   ],
+   "expected_controls": [
+    "C03",
+    "C04"
+   ]
+  },
+  {
+   "id": "a082",
+   "family": "C01+C07+C09",
+   "purpose": "Refund assistant that issues refunds for customer orders",
+   "sources": [
+    {
+     "source_id": "src-082",
+     "title": "Operating policy",
+     "text": "Only support agents may change billing plans. Each run stops after at most five tool calls. Every factual answer names its source."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C07",
+    "C09"
+   ]
+  },
+  {
+   "id": "a314",
+   "family": "C01+C07+C09",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-314",
+     "title": "Operating policy",
+     "text": "Export customer records is restricted to the manager role. No run may exceed five steps. Unanswerable questions get an abstention without citations."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C07",
+    "C09"
+   ]
+  },
+  {
+   "id": "a435",
+   "family": "C01+C07+C09",
+   "purpose": "Support chatbot for a software product",
+   "sources": [
+    {
+     "source_id": "src-435",
+     "title": "Operating policy",
+     "text": "Delete accounts is restricted to the administrator role. No run may exceed ten steps. If no permitted document answers the question, the assistant says it does not know."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C07",
+    "C09"
+   ]
+  },
+  {
+   "id": "a356",
+   "family": "C01+C07+C10",
+   "purpose": "Operations agent calling internal tools",
+   "sources": [
+    {
+     "source_id": "src-356",
+     "title": "Operating policy",
+     "text": "Only managers may change billing plans. Each run stops after at most twenty tool calls. Each release records its component fingerprints."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C07",
+    "C10"
+   ]
+  },
+  {
+   "id": "a373",
+   "family": "C01+C07+C10",
+   "purpose": "HR policy assistant",
+   "sources": [
+    {
+     "source_id": "src-373",
+     "title": "Operating policy",
+     "text": "Only managers may delete accounts. Each run stops after at most five tool calls. The running version must match the assessed release."
+    }
+   ],
+   "expected_controls": [
+    "C01",
+    "C07",
+    "C10"
+   ]
+  },
+  {
+   "id": "a241",
+   "family": "C02+C03+C06+C09",
+   "purpose": "Support chatbot for a software product",
+   "sources": [
+    {
+     "source_id": "src-241",
+     "title": "Operating policy",
+     "text": "A customer may only see records of their own organisation. Refunds above 2500.00 require a manager approval before they are issued. Personal data of one customer must not be disclosed to another customer. If no permitted document answers the question, the assistant says it does not know."
+    }
+   ],
+   "expected_controls": [
+    "C02",
+    "C03",
+    "C06",
+    "C09"
+   ]
+  }
+ ]
+}

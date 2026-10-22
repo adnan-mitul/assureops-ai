@@ -6,6 +6,7 @@ baseline on the same queries; until then results come from here alone.
 """
 
 import math
+import os
 import re
 from dataclasses import dataclass
 
@@ -80,8 +81,14 @@ def index(sources: list[dict]) -> BM25:
     return BM25(chunks)
 
 
+# Enablement decision (scripts/retrieval_decision.py, 22 Oct 2026): selected on the v2 development split, dense BGE
+# reached recall@3 1.0 against 0.717 for reciprocal-rank fusion and 0.417 for BM25; held-out: dense 0.94, fusion 0.865,
+# BM25 0.805. RETRIEVAL_METHOD=hybrid restores fusion.
+METHOD = os.environ.get("RETRIEVAL_METHOD", "dense")
+
+
 def hybrid_search(sources: list[dict], query: str, k: int = 5) -> tuple[str, list[tuple[float, Chunk]]]:
-    """BM25 plus BGE dense retrieval fused by reciprocal rank, used only while phase R is qualified; otherwise BM25 alone."""
+    """Dense BGE ranking (or BM25+BGE fusion) while phase R is qualified; otherwise the BM25 lexical baseline, labelled as such."""
     idx = index(sources)
     lexical = idx.search(query, k=max(k, 10))
     try:
@@ -105,6 +112,8 @@ def hybrid_search(sources: list[dict], query: str, k: int = 5) -> tuple[str, lis
         return "bm25 (embedding service unavailable)", lexical[:k]
     q = qv.parsed["result"][0]
     dense = sorted(((sum(a * b for a, b in zip(q, d)), i) for i, d in enumerate(vectors)), reverse=True)
+    if METHOD == "dense":
+        return f"dense {route.model}", [(round(score, 5), idx.chunks[i]) for score, i in dense[:k]]
     fused: dict[int, float] = {}
     positions = {id(c): i for i, c in enumerate(idx.chunks)}
     for rank, (_, chunk) in enumerate(lexical):

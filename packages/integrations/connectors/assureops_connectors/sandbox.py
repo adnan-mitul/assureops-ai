@@ -56,13 +56,23 @@ def execute(capsule: dict) -> dict:
         return {"status": "error", "error": f"InvalidTest: {exc}", "trials": trials}
 
 
+def verify(capsule: dict) -> dict:
+    """Network checks of connection verification, for a relay inside the customer network (no profile: the platform checks scope)."""
+    from .base import ConnectionSpec, get
+
+    spec = ConnectionSpec(adapter_id=capsule["adapter_id"], revision=capsule["connection_revision"], config=capsule["config"],
+                          credentials=capsule.get("credentials", {}), allow_private=capsule.get("allow_private", False))
+    return get(spec.adapter_id).validate_connection(spec, None)
+
+
 def main():
     raw = sys.stdin.buffer.read(LIMIT_STDIN + 1)
     if len(raw) > LIMIT_STDIN:
         print(json.dumps({"status": "error", "error": "capsule too large"}))
         return 2
     try:
-        result = execute(json.loads(raw))
+        capsule = json.loads(raw)
+        result = verify(capsule) if capsule.get("kind") == "verify" else execute(capsule)
     except Exception as exc:  # never leak capsule contents (credentials) in the error
         result = {"status": "error", "error": f"RunnerCrash: {exc.__class__.__name__}"}
     sys.stdout.write(json.dumps(result))

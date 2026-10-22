@@ -60,9 +60,29 @@ def deliver_notifications() -> int:
         return handoffs.deliver_pending(s)
 
 
+MAINTENANCE_EVERY = 24 * 3600
+
+
+def evidence_maintenance(apply: bool = True) -> dict:
+    """Daily: tombstone evidence past retention (holds respected) and reconcile rows with stored objects (report only)."""
+    from assureops_domain import retention
+
+    with platform_session() as s:
+        workspaces = [w.id for w in s.scalars(select(Workspace))]
+    summary = {}
+    for ws in workspaces:
+        with tenant_session(ws) as s:
+            purge = retention.purge_expired(s, actor="retention-job", dry_run=not apply)
+            check = retention.reconcile(s, ws)
+        summary[ws] = {"purged": len(purge["purged"]), "on_hold": len(purge["on_hold"]), "missing": len(check["missing"]),
+                       "corrupt": len(check["corrupt"]), "orphans": len(check["orphans"])}
+    return summary
+
+
 def main():
     print("outbox dispatcher running")
     last_reconcile = 0.0
+    last_maintenance = 0.0
     while True:
         try:
             dispatched = dispatch_once()
@@ -70,6 +90,9 @@ def main():
                 reconcile_once()
                 deliver_notifications()
                 last_reconcile = time.time()
+            if time.time() - last_maintenance > MAINTENANCE_EVERY:
+                last_maintenance = time.time()  # set first: one failing workspace must not retry the sweep every second
+                print(f"evidence maintenance: {evidence_maintenance()}")
         except Exception as exc:  # keep the loop alive; state stays in PostgreSQL
             print(f"dispatcher error: {exc}")
             dispatched = 0

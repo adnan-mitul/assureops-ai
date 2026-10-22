@@ -15,6 +15,27 @@ import type { Duty, Governance, QueueItem } from "@/lib/types";
 
 const KNOWN_STAFF = ["analyst@assureops.test", "reviewer@assureops.test"];
 
+function ReassignInline({ caseId, duty, from, staff, run, busy }: {
+  caseId: string; duty: Duty; from: string; staff: string[];
+  run: (key: string, fn: () => Promise<unknown>, success?: string) => Promise<unknown>; busy: string | null;
+}) {
+  const [to, setTo] = useState("");
+  const options = staff.filter((s) => s !== from);
+  return (
+    <span className="inline-flex items-center gap-1">
+      <label className="sr-only" htmlFor={`re-${caseId}-${from}`}>Reassign the {duty} duty of {from} to</label>
+      <select id={`re-${caseId}-${from}`} value={to} onChange={(e) => setTo(e.target.value)} className={`${inputClass} w-52 py-1 text-xs`}>
+        <option value="">Reassign to…</option>
+        {options.map((s) => <option key={s} value={s}>{s}</option>)}
+      </select>
+      <Button className="px-2 py-1 text-xs" disabled={!to || busy !== null}
+        onClick={() => run(`re-${from}`, () => post(`/v1/staff/cases/${caseId}/reassign`, { duty, from_user: from, to_user: to }), `Moved the ${duty} duty from ${from} to ${to}.`)}>
+        {busy === `re-${from}` ? "Moving…" : "Move"}
+      </Button>
+    </span>
+  );
+}
+
 function AssignForm({ item, staff, onDone }: { item: QueueItem; staff: string[]; onDone: () => void }) {
   const [user, setUser] = useState(staff[0] ?? "");
   const [duty, setDuty] = useState<Duty>("analyst");
@@ -38,6 +59,7 @@ function AssignForm({ item, staff, onDone }: { item: QueueItem; staff: string[];
                       <X className="size-3" aria-hidden /> {action.busy === `revoke-${a.user}` ? "Revoking…" : "Revoke"}
                     </Button>
                   )}
+                  {a.user && <ReassignInline caseId={item.case_id} duty={a.duty} from={a.user} staff={staff} run={action.run} busy={action.busy} />}
                 </li>
               ))}
             </ul>
