@@ -3139,6 +3139,79 @@
     ]
    }
   },
+  "/v1/applications/{application_id}/profiles/ai-plan": {
+   "post": {
+    "description": "Assemble one proposed profile revision from this application's accepted phase A and C proposals; another person activates it.",
+    "operationId": "build_ai_plan_v1_applications__application_id__profiles_ai_plan_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "application_id",
+      "required": true,
+      "schema": {
+       "title": "Application Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-workspace-id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Workspace-Id"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Build Ai Plan",
+    "tags": [
+     "ai"
+    ]
+   }
+  },
   "/v1/applications/{application_id}/profiles/baseline": {
    "post": {
     "description": "Template-based starter profile from declared facts; it still needs an independent review.",
