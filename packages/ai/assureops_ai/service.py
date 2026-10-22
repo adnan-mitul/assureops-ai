@@ -137,7 +137,7 @@ def build_input(s, row: AiResult) -> tuple[dict, dict]:
 
         conn = connections.latest_connection(s, app.id)
         actors = sorted((conn.config.get("actors") or {}) if conn else {})
-        data = {"requirements": requirements, "templates": templates.catalogue(), "actors": actors,
+        data = {"requirements": requirements, "templates": templates.proposable_catalogue(), "actors": actors,
                 "allowed_paths": (conn.config.get("scope") or {}).get("allowed_paths", []) if conn else []}
         return data, {"actors": actors, "templates": [t["id"] for t in data["templates"]]}
     if row.phase == "E":
@@ -363,6 +363,13 @@ def _finish(workspace_id, result_id, token, status, *, output=None, call=None, r
             row.route_stage = route.stage
         if status == "pending":
             s.add(Outbox(workspace_id=workspace_id, kind="ai_phase", ref_id=result_id))
+        if status in ("proposed", "review_required"):
+            from assureops_domain import notices
+
+            notices.change(s, s.get(Application, row.application_id), subject=f"Phase {row.phase} proposal waits for review",
+                           body=(f"The {PHASES[row.phase].name.replace('_', ' ')} proposal requested by {row.requested_by} is ready"
+                                 + (" with unsupported claims (it can only be rejected and requested again)." if status == "review_required"
+                                    else ". A reviewer other than the requester accepts or rejects it on the AI page.")))
         return status
 
 

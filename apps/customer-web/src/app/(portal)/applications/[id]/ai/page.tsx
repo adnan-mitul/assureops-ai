@@ -17,7 +17,7 @@ type Report = { report_id: string; release: string; state: string };
 type Run = { id: string; test_id: string; release: string; outcome: string };
 type Monitoring = { incidents: { id: string; control: string; state: string; title: string }[] };
 type PlanResult = { revision: number; plan: { tests: number; controls_tested: string[]; controls_not_assessed: string[]; requirements: number;
-  skipped: { result: string; name: string | null; reason: string }[] } };
+  skipped: { result: string; name: string | null; reason: string }[]; needs_facts: { name: string | null; template: string; missing: string[] }[] } };
 
 const PHASE_HELP: Record<string, string> = {
   A: "Extract requirements with quoted spans from approved sources.",
@@ -56,6 +56,8 @@ function AiView() {
   const [ciToken, setCiToken] = useState<string | null>(null);
   const [repo, setRepo] = useState("");
   const [plan, setPlan] = useState<PlanResult | null>(null);
+  const [facts, setFacts] = useState("{}");
+  const factsValid = (() => { try { const v = JSON.parse(facts); return typeof v === "object" && v !== null && !Array.isArray(v); } catch { return false; } })();
   const acceptedA = results.data?.filter((r) => r.phase === "A" && r.status === "accepted").length ?? 0;
   const acceptedC = results.data?.filter((r) => r.phase === "C" && r.status === "accepted").length ?? 0;
 
@@ -163,16 +165,22 @@ function AiView() {
             Assembles one proposed profile revision from the accepted phase A requirements and phase C tests, plus the release identity check.
             Controls without an accepted test stay visible as not assessed. A different person reviews and activates it on the Connect page.
           </p>
+          <Field label="Declared application facts (JSON; filled into tests that need them)">
+            <textarea className={`${inputClass} h-20 font-mono text-xs`} value={facts} onChange={(e) => setFacts(e.target.value)}
+              placeholder={'{"reply_path": "reply", "markers": ["INV-"], "expect_contains": ["14 days"], "canaries": ["sk-test-..."]}'} />
+          </Field>
+          <p className="mt-1 text-xs text-muted">Facts a model cannot know: markers, expect_contains, reply_path, abstention_patterns, canaries, ledger, match, list_path.</p>
           <div className="mt-3 flex flex-wrap items-center gap-2">
-            <Button variant="primary" disabled={!!action.busy || acceptedC === 0}
-              onClick={() => action.run("plan", async () => setPlan(await post<PlanResult>(`${base}/profiles/ai-plan`, {})))}>Build test plan</Button>
+            <Button variant="primary" disabled={!!action.busy || acceptedC === 0 || !factsValid}
+              onClick={() => action.run("plan", async () => setPlan(await post<PlanResult>(`${base}/profiles/ai-plan`, { facts: JSON.parse(facts) })))}>Build test plan</Button>
             {acceptedC === 0 && <span className="text-xs text-muted">Run C and have a reviewer accept its proposal first.</span>}
           </div>
           {plan && (
             <div className="mt-3"><Notice tone="success">
               Revision {plan.revision} proposed with {plan.plan.tests} tests covering {plan.plan.controls_tested.join(", ")}.
               Not assessed: {plan.plan.controls_not_assessed.join(", ") || "none"}.
-              {plan.plan.skipped.length > 0 && ` ${plan.plan.skipped.length} proposed test(s) no longer match the catalogue and were left out.`}{" "}
+              {plan.plan.skipped.length > 0 && ` ${plan.plan.skipped.length} proposed test(s) no longer match the catalogue and were left out.`}
+              {plan.plan.needs_facts.length > 0 && ` ${plan.plan.needs_facts.length} test(s) wait for facts: ${Array.from(new Set(plan.plan.needs_facts.flatMap((n) => n.missing))).join(", ")}.`}{" "}
               <a className="underline" href={`/applications/${encodeURIComponent(appId)}/connect`}>Review and activate</a>
             </Notice></div>)}
         </Card>)}

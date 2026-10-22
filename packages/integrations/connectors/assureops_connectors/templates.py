@@ -117,6 +117,39 @@ def catalogue() -> list[dict]:
     return [{"id": tid, "title": t["title"], "description": t.get("description", ""), "schema": t["schema"]} for tid, t in TEMPLATES.items()]
 
 
+# Phase C may propose any template, including free-form scenarios (each must pass the scenario engine's own checks before review);
+# only the release identity test is left out, because the plan adds it itself.
+NOT_PROPOSABLE = {"manifest_identity"}
+
+
+def proposable_catalogue() -> list[dict]:
+    return [t for t in catalogue() if t["id"] not in NOT_PROPOSABLE]
+
+
+# Arguments that are facts about one application (which text marks protected data, where the reply sits, what a correct
+# answer contains, which ledger records an effect). A model cannot know them from requirements, so a proposal may leave them
+# out; the developer declares them when building the test plan. Defaults apply only where a generic value is safe.
+DECLARED_FACTS = {"markers", "expect_contains", "reply_path", "abstention_patterns", "canaries", "ledger", "match", "list_path"}
+FACT_DEFAULTS = {"abstention_patterns": ["don't know", "do not know", "cannot find", "can't find", "not able to answer", "no information",
+                                         "unable to answer"]}
+
+
+def validate_proposal(template: str, args: dict) -> None:
+    """Like validate_args, but declared facts may be missing (they are added when the plan is built)."""
+    if template not in TEMPLATES:
+        raise TemplateError(f"template {template!r} is not in the permitted catalogue")
+    schema = copy.deepcopy(TEMPLATES[template]["schema"])
+    schema["required"] = [k for k in schema.get("required", []) if k not in DECLARED_FACTS]
+    try:
+        jsonschema.validate(args, schema)
+    except jsonschema.ValidationError as exc:
+        raise TemplateError(f"{template} arguments invalid at {'/'.join(map(str, exc.absolute_path)) or 'args'}: {exc.message}")
+
+
+def missing_facts(template: str, args: dict) -> list[str]:
+    return [k for k in TEMPLATES[template]["schema"].get("required", []) if k in DECLARED_FACTS and k not in args]
+
+
 def validate_args(template: str, args: dict) -> None:
     if template not in TEMPLATES:
         raise TemplateError(f"template {template!r} is not in the permitted catalogue")

@@ -7,7 +7,7 @@ from sqlalchemy import delete
 
 from assureops_domain.db import platform_session, tenant_session
 from assureops_domain.models import (
-    AiResult, AnalysisRun, Application, ApplicationGrant, ApplicationProfile, Approval, Assessment, AssessmentCase, CaseMessage, Connection, ConnectorSecret, CoverageContract, DependencyEdge,
+    AiResult, AnalysisRun, AppNotice, Application, ApplicationGrant, ApplicationProfile, Approval, Assessment, AssessmentCase, CaseMessage, Connection, ConnectorSecret, CoverageContract, DependencyEdge,
     DeploymentReceipt, EventSource, Finding, Invitation, Membership, Notification, RiskAcceptance, User,
     Incident, JobStep, LogicalAction, ModelCall, Release, RuntimeEvent, SourceDocument, TestRun, Workspace,
 )
@@ -51,7 +51,7 @@ def workspace():
     yield ws
     with tenant_session(ws) as s:
         for model in (RiskAcceptance, Incident, Finding, DeploymentReceipt, AnalysisRun, TestRun, JobStep, Assessment, LogicalAction, Approval, RuntimeEvent, Release,
-                      DependencyEdge, AiResult,
+                      DependencyEdge, AiResult, AppNotice,
                       ModelCall, SourceDocument, Connection, ConnectorSecret, CoverageContract, ApplicationProfile, ApplicationGrant,
                       CaseMessage, AssessmentCase, Application):
             s.execute(delete(model))

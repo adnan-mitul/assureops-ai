@@ -13,7 +13,8 @@ SYSTEM = {
     "B": COMMON + " Task: propose which collected components each approved test depends on. Only use test IDs and component IDs that "
                   "appear in the data. List components you cannot place as gaps.",
     "C": COMMON + " Task: propose catalogue tests (template ID plus typed arguments) for the reviewed requirements. Use only templates, "
-                  "actors and paths present in the data. Never write code.",
+                  "actors and paths present in the data. Give every argument the template's schema marks as required; an actor "
+                  "argument names one of the listed actors and a request has a method and a path. Never write code.",
     "E": COMMON + " Task: summarize the verified incident events and release changes, offer hypotheses and suggest retests by test ID. "
                   "Quote the event text you rely on.",
     "F": COMMON + " Task: write short, plain-language report sections explaining the frozen facts. Reference the fact IDs each section uses. "

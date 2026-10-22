@@ -47,8 +47,8 @@ def main():
     parser.add_argument("--record", action="store_true")
     parser.add_argument("--json-out", type=Path, help="also write the metrics and per-case outcomes to this file")
     parser.add_argument("--require-qualified", action="store_true", help="exit non-zero unless the phase qualifies (CI)")
-    parser.add_argument("--suite", default="v1", choices=["v1", "compact", "standard", "v2", "v3", "quick"],
-                        help="compact: 50 stratified v2 cases (CPU-served models); standard: 75, the routine qualification tier; "
+    parser.add_argument("--suite", default="v1", choices=["v1", "mini", "compact", "standard", "v2", "v3", "quick"],
+                        help="mini: 10 stratified v2 cases (fastest qualification); compact: 50 (CPU-served models); standard: 75, the routine qualification tier; "
                              "v2: 200 held-out cases per phase "
                              "(300 for D), release grade; v3: fresh D set; quick: 20 v2 cases, recorded as a quick check")
     args = parser.parse_args()

@@ -514,6 +514,21 @@ class EvidenceRequest(Base):
     answered_at: Mapped[float | None] = mapped_column(Float, nullable=True)
 
 
+class AppNotice(Base):
+    """One entry on an application's notice board: posted by a member, or by the platform for a change (see notices.py)."""
+
+    __tablename__ = "app_notices"
+    __table_args__ = tenant_keys(("application_id", "applications"))
+    id: Mapped[str] = mapped_column(String, primary_key=True, default=lambda: new_id("ntc"))
+    workspace_id: Mapped[str] = mapped_column(String)
+    application_id: Mapped[str] = mapped_column(String)
+    author: Mapped[str] = mapped_column(String)  # a username, or "assureops" for change notices
+    kind: Mapped[str] = mapped_column(String, default="notice")  # notice | change
+    subject: Mapped[str] = mapped_column(String)
+    body: Mapped[str] = mapped_column(Text)
+    created_at: Mapped[float] = mapped_column(Float, default=now)
+
+
 class RelayTask(Base):
     """Work for a customer-run private connector (relay) that reaches targets the hosted service cannot.
 

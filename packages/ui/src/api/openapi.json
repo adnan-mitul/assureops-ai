@@ -729,6 +729,28 @@
     "title": "MessageIn",
     "type": "object"
    },
+   "NoticeIn": {
+    "properties": {
+     "body": {
+      "maxLength": 4000,
+      "minLength": 1,
+      "title": "Body",
+      "type": "string"
+     },
+     "subject": {
+      "maxLength": 200,
+      "minLength": 3,
+      "title": "Subject",
+      "type": "string"
+     }
+    },
+    "required": [
+     "subject",
+     "body"
+    ],
+    "title": "NoticeIn",
+    "type": "object"
+   },
    "PhaseIn": {
     "properties": {
      "claims": {
@@ -833,6 +855,17 @@
      }
     },
     "title": "PhaseIn",
+    "type": "object"
+   },
+   "PlanIn": {
+    "properties": {
+     "facts": {
+      "additionalProperties": true,
+      "title": "Facts",
+      "type": "object"
+     }
+    },
+    "title": "PlanIn",
     "type": "object"
    },
    "ProfileDecisionIn": {
@@ -2915,6 +2948,160 @@
     ]
    }
   },
+  "/v1/applications/{application_id}/notices": {
+   "get": {
+    "description": "The application's notice board: member posts and the platform's change notices, newest first.",
+    "operationId": "list_notices_v1_applications__application_id__notices_get",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "application_id",
+      "required": true,
+      "schema": {
+       "title": "Application Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-workspace-id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Workspace-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "List Notices",
+    "tags": [
+     "customer"
+    ]
+   },
+   "post": {
+    "description": "Post to the board; owners, reviewers and the assigned developers are notified in the portal, by mail and by webhook.",
+    "operationId": "post_notice_v1_applications__application_id__notices_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "application_id",
+      "required": true,
+      "schema": {
+       "title": "Application Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-workspace-id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Workspace-Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/NoticeIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Post Notice",
+    "tags": [
+     "customer"
+    ]
+   }
+  },
   "/v1/applications/{application_id}/overview": {
    "get": {
     "operationId": "application_overview_v1_applications__application_id__overview_get",
@@ -3186,6 +3373,23 @@
       }
      }
     ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "anyOf": [
+         {
+          "$ref": "#/components/schemas/PlanIn"
+         },
+         {
+          "type": "null"
+         }
+        ],
+        "title": "Body"
+       }
+      }
+     }
+    },
     "responses": {
      "201": {
       "content": {

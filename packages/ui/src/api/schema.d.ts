@@ -286,6 +286,30 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/applications/{application_id}/notices": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * List Notices
+         * @description The application's notice board: member posts and the platform's change notices, newest first.
+         */
+        get: operations["list_notices_v1_applications__application_id__notices_get"];
+        put?: never;
+        /**
+         * Post Notice
+         * @description Post to the board; owners, reviewers and the assigned developers are notified in the portal, by mail and by webhook.
+         */
+        post: operations["post_notice_v1_applications__application_id__notices_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/applications/{application_id}/overview": {
         parameters: {
             query?: never;
@@ -2403,6 +2427,13 @@ export interface components {
             /** Body */
             body: string;
         };
+        /** NoticeIn */
+        NoticeIn: {
+            /** Body */
+            body: string;
+            /** Subject */
+            subject: string;
+        };
         /** PhaseIn */
         PhaseIn: {
             /** Claims */
@@ -2421,6 +2452,13 @@ export interface components {
             source_ids?: string[] | null;
             /** Texts */
             texts?: string[] | null;
+        };
+        /** PlanIn */
+        PlanIn: {
+            /** Facts */
+            facts?: {
+                [key: string]: unknown;
+            };
         };
         /** ProfileDecisionIn */
         ProfileDecisionIn: {
@@ -3345,6 +3383,78 @@ export interface operations {
             };
         };
     };
+    list_notices_v1_applications__application_id__notices_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-workspace-id"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    post_notice_v1_applications__application_id__notices_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-workspace-id"?: string | null;
+            };
+            path: {
+                application_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["NoticeIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     application_overview_v1_applications__application_id__overview_get: {
         parameters: {
             query?: never;
@@ -3463,7 +3573,11 @@ export interface operations {
             };
             cookie?: never;
         };
-        requestBody?: never;
+        requestBody?: {
+            content: {
+                "application/json": components["schemas"]["PlanIn"] | null;
+            };
+        };
         responses: {
             /** @description Successful Response */
             201: {

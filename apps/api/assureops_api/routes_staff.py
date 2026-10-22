@@ -326,7 +326,10 @@ def staff_message(case_id: str, body: StaffMessageIn, caller: Caller = StaffCall
     a = assignment(caller, case_id)
     with tenant_session(a.workspace_id) as s:
         s.add(CaseMessage(workspace_id=a.workspace_id, case_id=case_id, author=caller.username, author_kind="staff", visibility=body.visibility, body=body.body))
-        return {"ok": True}
+        from assureops_domain import notices
+
+        return {"ok": True, "notified": notices.case_message(s, s.get(AssessmentCase, case_id), author=caller.username, author_kind="staff",
+                                                             visibility=body.visibility, body=body.body)}
 
 
 @router.get("/cases/{case_id}/evidence/{run_id}")

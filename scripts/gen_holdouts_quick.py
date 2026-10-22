@@ -1,11 +1,15 @@
 """Derive the smaller qualification tiers from the v2 held-out suites.
 
-    python scripts/gen_holdouts_quick.py     # writes profiles/qualification/phase-<X>-holdout-{quick,compact,standard}.json
+    python scripts/gen_holdouts_quick.py     # writes profiles/qualification/phase-<X>-holdout-{mini,quick,compact,standard}.json
 
 quick (20 cases per phase): every control (A, B, C, E), gate state and failed control (F), label (D, G) or query
 family (R) appears at least twice where 20 cases allow it. Zero critical errors in 20 cases only bounds the true
 rate below about 16 % (Wilson, 95 %), so a quick run is recorded as a quick check: it can switch a route off when
 it finds a critical error, never qualify one.
+
+mini (10 cases per phase): the smallest qualification tier, chosen by the project owner for speed on CPU hosts. Zero critical
+errors in 10 cases only bounds the true rate below about 27.8 %, so mini qualifies a route for development use; compact,
+standard or v2 give stronger evidence.
 
 compact (50 cases per phase): the qualification tier for CPU-served private models (zero critical bounds the rate
 below about 7.1 %); every key at least four times where it can.
@@ -27,9 +31,9 @@ sys.path.insert(0, str(ROOT / "packages" / "ai"))
 from assureops_ai.qualification import stratified  # noqa: E402
 
 OUT = ROOT / "profiles" / "qualification"
-BOUND = {"compact": "7.1 %", "standard": "4.9 %"}
+BOUND = {"mini": "27.8 %", "compact": "7.1 %", "standard": "4.9 %"}
 # tier -> (cases, per-key minimum, per-phase overrides); classifiers get balanced labels rather than the minimum
-TIERS = {"quick": (20, 2, {"D": 7, "G": 10}), "compact": (50, 4, {"D": 17, "G": 25}), "standard": (75, 6, {"D": 25, "G": 38})}
+TIERS = {"mini": (10, 1, {"D": 4, "G": 5}), "quick": (20, 2, {"D": 7, "G": 10}), "compact": (50, 4, {"D": 17, "G": 25}), "standard": (75, 6, {"D": 25, "G": 38})}
 CONTROL = re.compile(r"C\d\d")
 
 KEYS = {

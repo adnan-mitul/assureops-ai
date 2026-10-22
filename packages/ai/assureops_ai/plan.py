@@ -29,7 +29,9 @@ def _profile_id(application_id: str) -> str:
     return f"{slug[:56]}-ai"
 
 
-def assemble(s, app, *, actor: str) -> tuple[ApplicationProfile, dict]:
+def assemble(s, app, *, actor: str, facts: dict | None = None) -> tuple[ApplicationProfile, dict]:
+    """`facts`: the developer's declared application facts (templates.DECLARED_FACTS), filled into proposals that left them out."""
+    facts = {k: v for k, v in (facts or {}).items() if k in templates.DECLARED_FACTS and v not in (None, "", [])}
     conn = connections.latest_connection(s, app.id)
     if conn is None:
         raise AiError("no_connection", "connect the application before building its test plan")
@@ -47,14 +49,25 @@ def assemble(s, app, *, actor: str) -> tuple[ApplicationProfile, dict]:
     tests = [{"id": "AI-C10-IDENTITY", "control": "C10", "severity": "high", "trials": 1, "name": "Running release matches the assessed manifest",
               "expected": "live manifest release and every component fingerprint equal the assessed release", "template": "manifest_identity",
               "args": {}, "mandatory": True}]
-    seen, per_control, skipped = set(), {}, []
+    seen, per_control, skipped, needs_facts = set(), {}, [], []
     for row in proposals:
         for t in row.output.get("tests", []):
-            key = (t["template"], json.dumps(t.get("args") or {}, sort_keys=True))
-            if key in seen or t["template"] == "manifest_identity":
+            if t["template"] not in templates.TEMPLATES or t["template"] == "manifest_identity":
+                continue
+            args = dict(t.get("args") or {})
+            missing = templates.missing_facts(t["template"], args)
+            for k in missing:
+                if k in facts or k in templates.FACT_DEFAULTS:
+                    args[k] = facts.get(k, templates.FACT_DEFAULTS.get(k))
+            still = templates.missing_facts(t["template"], args)
+            if still:  # visible, never silently dropped: declare the facts and rebuild
+                needs_facts.append({"result": row.id, "name": t.get("name"), "template": t["template"], "missing": still})
+                continue
+            key = (t["template"], json.dumps(args, sort_keys=True))
+            if key in seen:
                 continue
             try:
-                templates.validate_args(t["template"], t.get("args") or {})
+                templates.validate_args(t["template"], args)
             except templates.TemplateError as exc:  # validated when proposed; a catalogue change since then drops it visibly
                 skipped.append({"result": row.id, "name": t.get("name"), "reason": str(exc)})
                 continue
@@ -64,7 +77,10 @@ def assemble(s, app, *, actor: str) -> tuple[ApplicationProfile, dict]:
             tests.append({"id": f"AI-{t['control']}-{per_control[t['control']]:02d}", "control": t["control"], "severity": t.get("severity", "medium"),
                           "trials": 1, "name": t["name"][:160],
                           "expected": f"{title} (phase C proposal {row.id}, accepted by {row.reviewer})", "template": t["template"],
-                          "args": t.get("args") or {}, "requires_review": True})
+                          "args": args, "requires_review": True})
+    if len(tests) == 1 and needs_facts:
+        keys = sorted({k for n in needs_facts for k in n["missing"]})
+        raise AiError("needs_facts", f"declare these application facts to build the plan: {', '.join(keys)}")
     tested = {t["control"] for t in tests}
     statements = [{"control": q["control"], "statement": q["statement"], "source": f"phase A {r.id}"}
                   for r in accepted if r.phase == "A" for q in r.output.get("requirements", [])]
@@ -88,6 +104,7 @@ def assemble(s, app, *, actor: str) -> tuple[ApplicationProfile, dict]:
     }
     row = connections.propose_profile(s, app, raw, source="ai", actor=actor)
     summary = {"revision": row.revision, "tests": len(tests), "controls_tested": sorted(tested), "controls_not_assessed": sorted(applicability),
-               "requirements": len(statements), "proposals_used": [r.id for r in proposals], "skipped": skipped}
+               "requirements": len(statements), "proposals_used": [r.id for r in proposals], "skipped": skipped,
+               "needs_facts": needs_facts, "facts_used": sorted(facts)}
     cases.audit(s, workspace_id=app.workspace_id, actor=actor, actor_kind="customer", action="profile.ai_plan", target=app.id, detail=summary)
     return row, summary

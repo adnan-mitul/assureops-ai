@@ -29,7 +29,7 @@ A person who proposes something (a profile, a risk acceptance, an AI request) ne
      2. A reviewer accepts the requirements.
      3. Run **C**. It proposes tests from the permitted catalogue.
      4. A reviewer accepts those.
-     5. Choose **Build test plan**, which assembles one proposed revision with the release identity check.
+     5. Enter the **declared application facts** a model cannot know: which text marks protected data (`markers`), what a correct answer contains (`expect_contains`), where the reply sits in the response (`reply_path`), seeded secrets (`canaries`). Then choose **Build test plan**, which assembles one proposed revision with the release identity check. Tests still missing a fact are listed rather than included.
      6. A different person activates it on **Connect**. Every AI-added test asks for a reviewer's acceptance of its passing evidence.
    - **Baseline** from a few declared facts (endpoints, a known answer, protected resources) on **Connect**.
    - **JSON** written by an analyst.
@@ -44,6 +44,13 @@ A person who proposes something (a profile, a risk acceptance, an AI request) ne
 
 - **Evidence support / coverage** are percentages of *assessed evidence*. They are not a safety score.
 - **Gate** is `ready`, `incomplete` or `blocked`. Critical and high failures block. Stale, unverified or unreviewed evidence makes the gate incomplete.
+- **Notice board and notifications**: every application has a **Notice board** (Applications → Notice board). AssureOps posts a change notice when:
+  - a release is submitted, with its changed components and how many tests must be re-run;
+  - a profile or test plan waits for a second person to activate it;
+  - an AI proposal waits for review;
+  - an assessment finishes, with its gate and evidence scores.
+
+  Owners, developers and reviewers can also post notices for the team. Each notice reaches the application's owners, reviewers and assigned developers (never its author) under **Notifications**. The dispatcher also delivers it by e-mail (SMTP, or `var/mail` locally) and as a signed webhook (`NOTIFY_WEBHOOK_URL`, for Slack or Teams relays). Case messages notify the other side of the case. Internal staff notes never notify customers.
 - **Risk acceptance** (owners, developers and reviewers) is release-bound, expires within 90 days and needs a second person to approve it. It never covers a critical failure or a verified runtime violation. It changes the gate only if your reviewed profile allows that severity. The failure itself stays visible.
 - **AI proposals** (requirements, dependency links, tests, explanations) are suggestions. Someone other than the requester accepts or rejects them, and acceptance only creates further proposals.
 

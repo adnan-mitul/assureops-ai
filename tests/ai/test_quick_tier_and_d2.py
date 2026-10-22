@@ -78,3 +78,19 @@ def test_scenario_arguments_must_be_runnable():
                    {**ok, "assert": [{"step": "missing", "op": "eq"}]}):
         with pytest.raises(templates.TemplateError):
             templates.validate_args("scenario", broken)
+
+
+def test_phase_c_may_propose_runnable_scenarios_but_not_the_identity_test():
+    from assureops_ai import validation
+    from assureops_connectors import templates
+
+    offered = [t["id"] for t in templates.proposable_catalogue()]
+    assert "scenario" in offered and "manifest_identity" not in offered and "auth_required" in offered
+    ctx = {"actors": [], "templates": offered}
+    scenario = {"template": "scenario", "control": "C01", "name": "Free-form", "args": {
+        "steps": [{"name": "ask", "method": "POST", "path": "/chat"}], "assert": [{"step": "ask", "op": "eq", "value": 200}]}}
+    assert validation.c_test_problem(scenario, ctx) is None
+    broken = {**scenario, "args": {"steps": [{"actor": "customer", "path": "/refunds"}], "assert": [{"type": "response"}]}}
+    assert "scenario" in validation.c_test_problem(broken, ctx)
+    identity = {"template": "manifest_identity", "control": "C10", "name": "Identity", "args": {}}
+    assert "not offered" in validation.c_test_problem(identity, ctx)

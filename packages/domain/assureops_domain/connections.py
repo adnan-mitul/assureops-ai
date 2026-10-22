@@ -156,6 +156,11 @@ def propose_profile(session: Session, app: Application, raw: dict, *, source: st
                              status="proposed", source=source, proposed_by=actor)
     session.add(row)
     session.flush()
+    from . import notices
+
+    notices.change(session, app, subject=f"Profile revision {revision} waits for activation",
+                   body=f"{actor} proposed profile revision {revision} ({source}, {len(p['tests'])} tests). An owner or reviewer other than "
+                        f"{actor} must review and activate it on the Connect page.")
     return row
 
 

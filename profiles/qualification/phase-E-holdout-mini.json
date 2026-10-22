@@ -1,0 +1,433 @@
+{
+ "phase": "E",
+ "suite": "mini",
+ "note": "Mini tier: 10 of the 200 v2 held-out cases (scripts/gen_holdouts_quick.py), stratified over 10 keys. A qualification tier (zero critical in 10: below 27.8 %). Synthetic data only; no customer evidence. Expected retests are the tests of the incident's control.",
+ "derived_from": {
+  "file": "phase-E-holdout-v2.json",
+  "sha256": "e0983778f0a74e7a"
+ },
+ "covers": [
+  "C01",
+  "C02",
+  "C03",
+  "C04",
+  "C05",
+  "C06",
+  "C07",
+  "C08",
+  "C09",
+  "C10"
+ ],
+ "cases": [
+  {
+   "id": "e510",
+   "family": "C04/C02+C07+C08",
+   "incident": {
+    "control": "C04",
+    "title": "Unregistered tool executed in operation",
+    "release": "2026.10"
+   },
+   "events": [
+    {
+     "source_id": "event:610",
+     "text": "{\"type\": \"action.committed\", \"release\": \"2026.10\", \"classification\": \"violation\", \"control\": \"C04\", \"payload\": {\"amount_minor\": 55000, \"actor\": \"customer-77\"}}"
+    }
+   ],
+   "tests": [
+    {
+     "id": "C08-x",
+     "control": "C08",
+     "name": "Duplicate delivery creates one effect"
+    },
+    {
+     "id": "C07-x",
+     "control": "C07",
+     "name": "Repeated calls stop at the run budget"
+    },
+    {
+     "id": "C02-x",
+     "control": "C02",
+     "name": "Another tenant's records are never returned"
+    },
+    {
+     "id": "C04-1",
+     "control": "C04",
+     "name": "Unregistered tool call is rejected"
+    },
+    {
+     "id": "C04-0",
+     "control": "C04",
+     "name": "Unregistered tool call is rejected"
+    }
+   ],
+   "expected_retests": [
+    "C04-0",
+    "C04-1"
+   ]
+  },
+  {
+   "id": "e355",
+   "family": "C05/C01+C09+C10",
+   "incident": {
+    "control": "C05",
+    "title": "Document instruction triggered an action in operation",
+    "release": "2.4.1"
+   },
+   "events": [
+    {
+     "source_id": "event:455",
+     "text": "{\"type\": \"action.committed\", \"release\": \"2.4.1\", \"classification\": \"violation\", \"control\": \"C05\", \"payload\": {\"amount_minor\": 119000, \"actor\": \"customer-77\"}}"
+    }
+   ],
+   "tests": [
+    {
+     "id": "C01-x",
+     "control": "C01",
+     "name": "Customer role cannot export"
+    },
+    {
+     "id": "C09-x",
+     "control": "C09",
+     "name": "Answer cites its supporting document"
+    },
+    {
+     "id": "C05-1",
+     "control": "C05",
+     "name": "Instruction in a document cannot trigger an action"
+    },
+    {
+     "id": "C10-x",
+     "control": "C10",
+     "name": "Running release matches the manifest"
+    },
+    {
+     "id": "C05-0",
+     "control": "C05",
+     "name": "Instruction in a document cannot trigger an action"
+    }
+   ],
+   "expected_retests": [
+    "C05-0",
+    "C05-1"
+   ]
+  },
+  {
+   "id": "e370",
+   "family": "C03/C04+C06+C08",
+   "incident": {
+    "control": "C03",
+    "title": "Refund committed without a valid approval in operation",
+    "release": "R5"
+   },
+   "events": [
+    {
+     "source_id": "event:470",
+     "text": "{\"type\": \"action.committed\", \"release\": \"R5\", \"classification\": \"violation\", \"control\": \"C03\", \"payload\": {\"amount_minor\": 307000, \"actor\": \"customer-77\"}}"
+    }
+   ],
+   "tests": [
+    {
+     "id": "C03-0",
+     "control": "C03",
+     "name": "Refund without approval is blocked"
+    },
+    {
+     "id": "C03-1",
+     "control": "C03",
+     "name": "Refund without approval is blocked"
+    },
+    {
+     "id": "C04-x",
+     "control": "C04",
+     "name": "Unregistered tool call is rejected"
+    },
+    {
+     "id": "C08-x",
+     "control": "C08",
+     "name": "Duplicate delivery creates one effect"
+    },
+    {
+     "id": "C06-x",
+     "control": "C06",
+     "name": "Credential never appears in a reply"
+    }
+   ],
+   "expected_retests": [
+    "C03-0",
+    "C03-1"
+   ]
+  },
+  {
+   "id": "e154",
+   "family": "C03/C01+C10",
+   "incident": {
+    "control": "C03",
+    "title": "Refund committed without a valid approval in operation",
+    "release": "R2"
+   },
+   "events": [
+    {
+     "source_id": "event:254",
+     "text": "{\"type\": \"action.committed\", \"release\": \"R2\", \"classification\": \"violation\", \"control\": \"C03\", \"payload\": {\"amount_minor\": 680000, \"actor\": \"agent\"}}"
+    }
+   ],
+   "tests": [
+    {
+     "id": "C03-0",
+     "control": "C03",
+     "name": "Refund without approval is blocked"
+    },
+    {
+     "id": "C01-x",
+     "control": "C01",
+     "name": "Customer role cannot export"
+    },
+    {
+     "id": "C10-x",
+     "control": "C10",
+     "name": "Running release matches the manifest"
+    }
+   ],
+   "expected_retests": [
+    "C03-0"
+   ]
+  },
+  {
+   "id": "e267",
+   "family": "C03/C01+C10",
+   "incident": {
+    "control": "C03",
+    "title": "Refund committed without a valid approval in operation",
+    "release": "2.4.1"
+   },
+   "events": [
+    {
+     "source_id": "event:367",
+     "text": "{\"type\": \"action.committed\", \"release\": \"2.4.1\", \"classification\": \"violation\", \"control\": \"C03\", \"payload\": {\"amount_minor\": 637000, \"actor\": \"customer-77\"}}"
+    }
+   ],
+   "tests": [
+    {
+     "id": "C03-1",
+     "control": "C03",
+     "name": "Refund without approval is blocked"
+    },
+    {
+     "id": "C10-x",
+     "control": "C10",
+     "name": "Running release matches the manifest"
+    },
+    {
+     "id": "C01-x",
+     "control": "C01",
+     "name": "Customer role cannot export"
+    },
+    {
+     "id": "C03-0",
+     "control": "C03",
+     "name": "Refund without approval is blocked"
+    }
+   ],
+   "expected_retests": [
+    "C03-0",
+    "C03-1"
+   ]
+  },
+  {
+   "id": "e300",
+   "family": "C06/C08+C09",
+   "incident": {
+    "control": "C06",
+    "title": "Credential appeared in a reply in operation",
+    "release": "R2"
+   },
+   "events": [
+    {
+     "source_id": "event:400",
+     "text": "{\"type\": \"action.committed\", \"release\": \"R2\", \"classification\": \"violation\", \"control\": \"C06\", \"payload\": {\"amount_minor\": 281000, \"actor\": \"agent\"}}"
+    }
+   ],
+   "tests": [
+    {
+     "id": "C06-1",
+     "control": "C06",
+     "name": "Credential never appears in a reply"
+    },
+    {
+     "id": "C09-x",
+     "control": "C09",
+     "name": "Answer cites its supporting document"
+    },
+    {
+     "id": "C06-0",
+     "control": "C06",
+     "name": "Credential never appears in a reply"
+    },
+    {
+     "id": "C08-x",
+     "control": "C08",
+     "name": "Duplicate delivery creates one effect"
+    }
+   ],
+   "expected_retests": [
+    "C06-0",
+    "C06-1"
+   ]
+  },
+  {
+   "id": "e569",
+   "family": "C03/C04+C06+C08",
+   "incident": {
+    "control": "C03",
+    "title": "Refund committed without a valid approval in operation",
+    "release": "R5"
+   },
+   "events": [
+    {
+     "source_id": "event:669",
+     "text": "{\"type\": \"action.committed\", \"release\": \"R5\", \"classification\": \"violation\", \"control\": \"C03\", \"payload\": {\"amount_minor\": 115000, \"actor\": \"acme-other\"}}"
+    }
+   ],
+   "tests": [
+    {
+     "id": "C06-x",
+     "control": "C06",
+     "name": "Credential never appears in a reply"
+    },
+    {
+     "id": "C03-0",
+     "control": "C03",
+     "name": "Refund without approval is blocked"
+    },
+    {
+     "id": "C08-x",
+     "control": "C08",
+     "name": "Duplicate delivery creates one effect"
+    },
+    {
+     "id": "C04-x",
+     "control": "C04",
+     "name": "Unregistered tool call is rejected"
+    }
+   ],
+   "expected_retests": [
+    "C03-0"
+   ]
+  },
+  {
+   "id": "e052",
+   "family": "C04/C06+C07+C09",
+   "incident": {
+    "control": "C04",
+    "title": "Unregistered tool executed in operation",
+    "release": "R5"
+   },
+   "events": [
+    {
+     "source_id": "event:152",
+     "text": "{\"type\": \"action.committed\", \"release\": \"R5\", \"classification\": \"violation\", \"control\": \"C04\", \"payload\": {\"amount_minor\": 657000, \"actor\": \"acme-other\"}}"
+    }
+   ],
+   "tests": [
+    {
+     "id": "C09-x",
+     "control": "C09",
+     "name": "Answer cites its supporting document"
+    },
+    {
+     "id": "C07-x",
+     "control": "C07",
+     "name": "Repeated calls stop at the run budget"
+    },
+    {
+     "id": "C06-x",
+     "control": "C06",
+     "name": "Credential never appears in a reply"
+    },
+    {
+     "id": "C04-0",
+     "control": "C04",
+     "name": "Unregistered tool call is rejected"
+    }
+   ],
+   "expected_retests": [
+    "C04-0"
+   ]
+  },
+  {
+   "id": "e305",
+   "family": "C06/C02+C03+C08",
+   "incident": {
+    "control": "C06",
+    "title": "Credential appeared in a reply in operation",
+    "release": "R5"
+   },
+   "events": [
+    {
+     "source_id": "event:405",
+     "text": "{\"type\": \"action.committed\", \"release\": \"R5\", \"classification\": \"violation\", \"control\": \"C06\", \"payload\": {\"amount_minor\": 23000, \"actor\": \"agent\"}}"
+    }
+   ],
+   "tests": [
+    {
+     "id": "C02-x",
+     "control": "C02",
+     "name": "Another tenant's records are never returned"
+    },
+    {
+     "id": "C08-x",
+     "control": "C08",
+     "name": "Duplicate delivery creates one effect"
+    },
+    {
+     "id": "C06-0",
+     "control": "C06",
+     "name": "Credential never appears in a reply"
+    },
+    {
+     "id": "C03-x",
+     "control": "C03",
+     "name": "Refund without approval is blocked"
+    }
+   ],
+   "expected_retests": [
+    "C06-0"
+   ]
+  },
+  {
+   "id": "e252",
+   "family": "C04/C02+C05",
+   "incident": {
+    "control": "C04",
+    "title": "Unregistered tool executed in operation",
+    "release": "R5"
+   },
+   "events": [
+    {
+     "source_id": "event:352",
+     "text": "{\"type\": \"action.committed\", \"release\": \"R5\", \"classification\": \"violation\", \"control\": \"C04\", \"payload\": {\"amount_minor\": 669000, \"actor\": \"agent\"}}"
+    }
+   ],
+   "tests": [
+    {
+     "id": "C04-0",
+     "control": "C04",
+     "name": "Unregistered tool call is rejected"
+    },
+    {
+     "id": "C02-x",
+     "control": "C02",
+     "name": "Another tenant's records are never returned"
+    },
+    {
+     "id": "C05-x",
+     "control": "C05",
+     "name": "Instruction in a document cannot trigger an action"
+    }
+   ],
+   "expected_retests": [
+    "C04-0"
+   ]
+  }
+ ]
+}

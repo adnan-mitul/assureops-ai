@@ -112,3 +112,32 @@ def test_accepting_c_without_a_profile_keeps_the_proposal_for_the_plan(workspace
         assert effects == {"plan_input": True} and row.status == "accepted"
         assert s.scalars(select(ApplicationProfile).where(ApplicationProfile.application_id == generic_app)).first() is None
     assert ai_routes.build_ai_plan(generic_app, caller=people["owner"])["plan"]["tests"] == 2
+
+
+def test_declared_facts_complete_proposals_that_could_not_know_them(workspace, generic_app, people):
+    owner = people["owner"]
+    _accepted(workspace, generic_app, "C", {"tests": [
+        {"template": "data_not_disclosed", "control": "C02", "name": "Other tenant sees no invoices", "args": {"actor": "other_tenant", "request": CHAT}},
+        {"template": "abstains_when_unsupported", "control": "C09", "name": "Abstains", "args": {"actor": "customer", "request": CHAT}}],
+        "unknowns": []}, "someone")
+    with pytest.raises(HTTPException) as exc:  # nothing runnable without the facts: say which ones
+        ai_routes.build_ai_plan(generic_app, ai_routes.PlanIn(), caller=owner)
+    assert exc.value.detail["code"] == "needs_facts" and "markers" in exc.value.detail["message"] and "reply_path" in exc.value.detail["message"]
+    built = ai_routes.build_ai_plan(generic_app, ai_routes.PlanIn(facts={"markers": ["INV-"], "unknown_key": "ignored"}), caller=owner)
+    plan = built["plan"]
+    assert plan["tests"] == 2 and plan["controls_tested"] == ["C02", "C10"] and plan["facts_used"] == ["markers"]
+    assert plan["needs_facts"] == [{"result": plan["needs_facts"][0]["result"], "name": "Abstains", "template": "abstains_when_unsupported",
+                                    "missing": ["reply_path"]}]  # abstention patterns have a safe default; the reply path does not
+    with tenant_session(workspace) as s:
+        raw = s.scalars(select(ApplicationProfile).where(ApplicationProfile.application_id == generic_app)).one().profile
+    assert next(t for t in raw["tests"] if t["control"] == "C02")["args"]["markers"] == ["INV-"]
+
+
+def test_phase_c_proposals_may_leave_out_declared_facts_but_nothing_else():
+    from assureops_ai import validation
+
+    ctx = {"actors": ["customer"], "templates": []}
+    assert validation.c_test_problem({"template": "data_not_disclosed", "control": "C02", "name": "n",
+                                      "args": {"actor": "customer", "request": CHAT}}, ctx) is None
+    assert "request" in validation.c_test_problem({"template": "data_not_disclosed", "control": "C02", "name": "n",
+                                                   "args": {"actor": "customer", "markers": ["X"]}}, ctx)

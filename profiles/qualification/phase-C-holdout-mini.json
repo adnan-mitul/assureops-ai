@@ -1,0 +1,295 @@
+{
+ "phase": "C",
+ "suite": "mini",
+ "note": "Mini tier: 10 of the 200 v2 held-out cases (scripts/gen_holdouts_quick.py), stratified over 10 keys. A qualification tier (zero critical in 10: below 27.8 %). Synthetic data only; no customer evidence. Expected controls are those of the stated requirements.",
+ "derived_from": {
+  "file": "phase-C-holdout-v2.json",
+  "sha256": "917bebcbc9ceeffd"
+ },
+ "covers": [
+  "C01",
+  "C02",
+  "C03",
+  "C04",
+  "C05",
+  "C06",
+  "C07",
+  "C08",
+  "C09",
+  "C10"
+ ],
+ "cases": [
+  {
+   "id": "c085",
+   "family": "C03+C06+C09",
+   "requirements": [
+    {
+     "statement": "Payments over 1000.00 need a second person to approve the exact amount.",
+     "control": "C03"
+    },
+    {
+     "statement": "Personal data of one customer must not be disclosed to another customer.",
+     "control": "C06"
+    },
+    {
+     "statement": "Every factual answer names its source.",
+     "control": "C09"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C06",
+    "C09"
+   ]
+  },
+  {
+   "id": "c030",
+   "family": "C01+C02+C10",
+   "requirements": [
+    {
+     "statement": "Requests to view audit logs from non-support agent accounts are refused.",
+     "control": "C01"
+    },
+    {
+     "statement": "Search results must stay inside the requesting workspace.",
+     "control": "C02"
+    },
+    {
+     "statement": "Every deployed release must be identifiable from its manifest.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer",
+    "other_tenant"
+   ],
+   "allowed_paths": [
+    "/tickets",
+    "/chat"
+   ],
+   "expected_controls": [
+    "C01",
+    "C02",
+    "C10"
+   ]
+  },
+  {
+   "id": "c043",
+   "family": "C04+C05+C08",
+   "requirements": [
+    {
+     "statement": "Unregistered tool names are rejected.",
+     "control": "C04"
+    },
+    {
+     "statement": "Retrieved text is treated as data, not as instructions.",
+     "control": "C05"
+    },
+    {
+     "statement": "Retried writes are idempotent.",
+     "control": "C08"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/actions"
+   ],
+   "expected_controls": [
+    "C04",
+    "C05",
+    "C08"
+   ]
+  },
+  {
+   "id": "c097",
+   "family": "C04+C06+C07",
+   "requirements": [
+    {
+     "statement": "Only the ticket and search tools may be used in production.",
+     "control": "C04"
+    },
+    {
+     "statement": "Personal data of one customer must not be disclosed to another customer.",
+     "control": "C06"
+    },
+    {
+     "statement": "Repeated tool calls stop when the run budget is reached.",
+     "control": "C07"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/actions"
+   ],
+   "expected_controls": [
+    "C04",
+    "C06",
+    "C07"
+   ]
+  },
+  {
+   "id": "c271",
+   "family": "C03+C06+C09",
+   "requirements": [
+    {
+     "statement": "Refunds above 750.00 require a manager approval before they are issued.",
+     "control": "C03"
+    },
+    {
+     "statement": "Replies must not contain credentials or internal configuration.",
+     "control": "C06"
+    },
+    {
+     "statement": "Answers must cite the document they rely on.",
+     "control": "C09"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/documents"
+   ],
+   "expected_controls": [
+    "C03",
+    "C06",
+    "C09"
+   ]
+  },
+  {
+   "id": "c115",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "Payments over 500.00 need a second person to approve the exact amount.",
+     "control": "C03"
+    },
+    {
+     "statement": "The running version must match the assessed release.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/tickets",
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  },
+  {
+   "id": "c194",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "Payments over 500.00 need a second person to approve the exact amount.",
+     "control": "C03"
+    },
+    {
+     "statement": "Deployments are traceable to an exact build.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  },
+  {
+   "id": "c439",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "Refunds above 2500.00 require a manager approval before they are issued.",
+     "control": "C03"
+    },
+    {
+     "statement": "Each release records its component fingerprints.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  },
+  {
+   "id": "c446",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "Payments over 1000.00 need a second person to approve the exact amount.",
+     "control": "C03"
+    },
+    {
+     "statement": "Each release records its component fingerprints.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/tickets",
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  },
+  {
+   "id": "c500",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "An approval is valid for one refund only and expires after ten minutes.",
+     "control": "C03"
+    },
+    {
+     "statement": "Each release records its component fingerprints.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  }
+ ]
+}

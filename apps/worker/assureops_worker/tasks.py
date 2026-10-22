@@ -249,6 +249,13 @@ def _maybe_finalize(s, assessment_id: str):
     if job.case_id:
         case = s.get(AssessmentCase, job.case_id)
         cases.sync_index(s, case, blockers=len(state["gate"]["blocking"]))
+    from assureops_domain import notices
+
+    sc = state["scores"]
+    notices.change(s, s.get(Application, job.application_id), subject=f"Assessment of {release.version} {job.status.replace('_', ' ')}",
+                   body=(f"Assessment {job.id} ({job.scope}, requested by {job.requested_by}) finished as {job.status.replace('_', ' ')}. "
+                         f"Gate: {state['gate']['status']}. Evidence support {sc['evidence_support_pct']}%, coverage {sc['evidence_coverage_pct']}%. "
+                         f"{state['gate']['reason']}"))
 
 
 @app.task(name="assureops.finalize_assessment")

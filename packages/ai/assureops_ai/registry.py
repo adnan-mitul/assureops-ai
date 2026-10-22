@@ -72,7 +72,7 @@ PHASES: dict[str, Phase] = {p.id: p for p in [
     Phase("B", "dependency_mapping", "generate", "microsoft/Phi-4-mini-instruct", "3.8B",
           "Requirements, collected manifest components and observations -> proposed component links and explicit gaps", "B-2", "B-2"),
     Phase("C", "test_proposal", "generate", "Qwen/Qwen2.5-Coder-1.5B-Instruct", "1.54B",
-          "Reviewed requirements and the permitted catalogue -> template IDs with typed arguments", "C-2", "C-2"),
+          "Reviewed requirements and the permitted catalogue -> template IDs with typed arguments", "C-3", "C-2"),
     Phase("D", "semantic_evaluation", "classify", "cross-encoder/nli-deberta-v3-small", "~0.1B",
           "Atomic claim/premise pairs -> entailment/contradiction/neutral signals beside actual test outcomes", "D-2", "D-2"),
     Phase("E", "incident_analysis", "generate", "microsoft/Phi-4-mini-instruct", "3.8B",

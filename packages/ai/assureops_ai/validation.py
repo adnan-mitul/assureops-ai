@@ -104,14 +104,18 @@ def validate(phase: str, output: dict, ctx: dict) -> dict:
 
 
 def c_test_problem(test: dict, ctx: dict) -> str | None:
-    """Why one proposed phase C test cannot run as written (catalogue arguments, declared actors), or None."""
+    """Why one proposed phase C test cannot become a runnable test once its declared facts are added, or None."""
     from assureops_connectors import templates
 
+    if ctx.get("templates") and test["template"] not in ctx["templates"]:
+        return f"{test['name']}: template {test['template']} was not offered for proposals"
     try:
-        templates.validate_args(test["template"], test["args"])
-        used = templates.actors_used(test["template"], test["args"])
+        templates.validate_proposal(test["template"], test["args"])  # declared facts may be left for the developer
+        if test["template"] == "scenario":
+            templates.validate_args("scenario", test["args"])  # a scenario declares everything itself: it must be runnable as written
     except templates.TemplateError as exc:
         return f"{test['name']}: {exc}"
+    used = {test["args"]["actor"]} if "actor" in test["args"] else set(test["args"].get("actors") or [])  # named templates: one actor argument
     if used - set(ctx["actors"]) - {"anonymous", "invalid"}:
         return f"{test['name']}: undeclared actors {sorted(used - set(ctx['actors']))}"
     return None

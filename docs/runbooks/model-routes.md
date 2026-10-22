@@ -28,6 +28,7 @@ Staff **Governance → Model route lifecycle** (operators and admins change stag
 | Tier | Command | Cases | What a result means |
 |---|---|---|---|
 | quick | `qualify_phase.py --phase X --provider ... --model ... --suite quick --record` | 20 per phase, a stratified subset of v2 (`scripts/gen_holdouts_quick.py`) | A routine check. A pass is stored as `quick_check` and never qualifies a route or replaces its qualification. A critical error is stored as `not_qualified` and switches the route off. Zero critical errors in 20 cases only bounds the true rate below about 16 % (95 %). |
+| mini | `--suite mini` | 10 per phase, stratified from v2 | The fastest qualification, chosen by the project owner for CPU hosts. Zero critical errors in 10 bounds the rate only below about 27.8 %. Use compact or larger before relying on a route. |
 | compact | `--suite compact` | 50 per phase, stratified from v2 | The routine qualification tier (used for every phase since 22 October). Zero critical errors bounds the rate below about 7.1 %. |
 | standard | `--suite standard` | 75 per phase, stratified from v2 | A stronger routine tier (below about 4.9 %); G-2 is qualified on it. |
 | v2 | `--suite v2` | 200 held out (300 for D) | Release-grade evidence, for a faster machine. Zero critical errors bounds the rate below about 1.9 % (1.3 % with 300 cases). |

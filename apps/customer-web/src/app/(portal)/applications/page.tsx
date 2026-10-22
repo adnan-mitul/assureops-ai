@@ -3,7 +3,7 @@
 import { post, useAction, usePoll } from "@assureops/ui/client";
 import { ApiErrorBanner, Button, Card, EmptyState, ErrorBanner, Field, LoadingState, StatusBadge, inputClass } from "@assureops/ui/components";
 import { pct } from "@assureops/ui/format";
-import { ArrowRight, Bot, GitBranch, PlugZap, Plus } from "lucide-react";
+import { ArrowRight, Bot, GitBranch, Megaphone, PlugZap, Plus } from "lucide-react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
@@ -94,6 +94,9 @@ export default function ApplicationsPage() {
               </Link>
               <Link href={`/applications/${encodeURIComponent(a.id)}/ai`} className="inline-flex items-center gap-2 rounded-lg border border-line px-3.5 py-2 text-sm font-medium hover:bg-canvas">
                 <Bot className="size-4" aria-hidden /> AI and analysis
+              </Link>
+              <Link href={`/applications/${encodeURIComponent(a.id)}/notices`} className="inline-flex items-center gap-2 rounded-lg border border-line px-3.5 py-2 text-sm font-medium hover:bg-canvas">
+                <Megaphone className="size-4" aria-hidden /> Notice board
               </Link>
               <button type="button" onClick={() => { setApplicationId(a.id); router.push("/overview"); }}
                 className="inline-flex items-center gap-2 rounded-lg bg-brand-700 px-3.5 py-2 text-sm font-medium text-white hover:bg-brand-800">

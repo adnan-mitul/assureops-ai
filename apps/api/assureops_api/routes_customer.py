@@ -108,12 +108,52 @@ def submit_release(application_id: str, caller: Caller = CustomerCaller, body: R
             prev = svc.previous_release(s, release)
             change = svc.create_change_set(s, app, release, prev, caller.username)
             result["change_id"] = change.id
+            changed = [c["component"] for c in change.result.get("changes", [])]
+            from assureops_domain import notices
+
+            notices.change(s, app, subject=f"Release {release.version} submitted",
+                           body=(f"{caller.username} submitted release {release.version}"
+                                 + (f" (previous {prev.version}). Changed components: {', '.join(changed[:12]) or 'none'}"
+                                    f"{' and more' if len(changed) > 12 else ''}. Tests to retest: {len(change.result.get('retest', []))}"
+                                    + (" (conservative full retest: unmapped change or partial collection)." if change.result.get("conservative_fallback") else ".")
+                                    if prev else ". This is the first collected release.")))
             for case in s.scalars(select(AssessmentCase).where(AssessmentCase.application_id == app.id, AssessmentCase.state.in_(["published", "monitoring"]))):
                 if case.state == "published":
                     cases.transition(s, case, "monitoring")
                 cases.transition(s, case, "reassessment")
         audit(s, caller, "release.submit", result["release"]["version"], {"created": result["created"], "gaps": result["gaps"]})
         return result
+
+
+class NoticeIn(BaseModel):
+    subject: str = Field(min_length=3, max_length=200)
+    body: str = Field(min_length=1, max_length=4000)
+
+
+@router.get("/applications/{application_id}/notices")
+def list_notices(application_id: str, caller: Caller = CustomerCaller):
+    """The application's notice board: member posts and the platform's change notices, newest first."""
+    from assureops_domain.models import AppNotice
+
+    with tenant_session(caller.workspace_id) as s:
+        svc.get_application(s, application_id)
+        rows = s.scalars(select(AppNotice).where(AppNotice.application_id == application_id).order_by(AppNotice.created_at.desc()).limit(100))
+        return [{"id": n.id, "kind": n.kind, "author": n.author, "subject": n.subject, "body": n.body, "created_at": n.created_at} for n in rows]
+
+
+@router.post("/applications/{application_id}/notices", status_code=201)
+def post_notice(application_id: str, body: NoticeIn, caller: Caller = CustomerCaller):
+    """Post to the board; owners, reviewers and the assigned developers are notified in the portal, by mail and by webhook."""
+    from assureops_domain import notices
+
+    caller.require_role(*WRITE_ROLES, "reviewer")
+    with tenant_session(caller.workspace_id) as s:
+        app = svc.get_application(s, application_id)
+        require_application_writer(s, caller, app.id, "reviewer")
+        n = notices.post(s, app, author=caller.username, subject=body.subject, body=body.body)
+        s.flush()
+        audit(s, caller, "notice.post", app.id, {"notice": n.id})
+        return {"id": n.id, "kind": n.kind, "author": n.author, "subject": n.subject, "body": n.body, "created_at": n.created_at}
 
 
 @router.get("/applications/{application_id}/releases")
@@ -426,7 +466,10 @@ def customer_message(case_id: str, body: MessageIn, caller: Caller = CustomerCal
             raise api_error(404, "not_found", "case not found")
         require_application_writer(s, caller, case.application_id, "reviewer")
         s.add(CaseMessage(workspace_id=caller.workspace_id, case_id=case_id, author=caller.username, author_kind="customer", visibility="customer", body=body.body))
-        return {"ok": True}
+        from assureops_domain import notices
+
+        return {"ok": True, "notified": notices.case_message(s, case, author=caller.username, author_kind="customer", visibility="customer",
+                                                             body=body.body)}
 
 
 # ---------------- Reports ----------------

@@ -122,9 +122,9 @@ def run_generation(phase: str, route: router.Route, log=print) -> dict:
         elif phase == "C":
             from assureops_connectors import templates
 
-            data = {"requirements": case["requirements"], "templates": templates.catalogue(), "actors": case["actors"],
+            data = {"requirements": case["requirements"], "templates": templates.proposable_catalogue(), "actors": case["actors"],
                     "allowed_paths": case["allowed_paths"]}
-            ctx = {"actors": case["actors"], "templates": [t["id"] for t in templates.catalogue()]}
+            ctx = {"actors": case["actors"], "templates": [t["id"] for t in templates.proposable_catalogue()]}
         elif phase == "E":
             data = {"incident": case["incident"], "events": case["events"], "tests": case["tests"]}
             ctx = {"sources": {e["source_id"]: e["text"] for e in case["events"]}, "test_ids": [t["id"] for t in case["tests"]]}

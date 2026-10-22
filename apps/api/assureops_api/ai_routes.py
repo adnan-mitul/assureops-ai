@@ -153,8 +153,13 @@ def request_phase(application_id: str, phase: str, body: PhaseIn, caller: Caller
         return service.result_json(row)
 
 
+class PlanIn(BaseModel):
+    # Declared application facts the proposals could not know (assureops_connectors.templates.DECLARED_FACTS)
+    facts: dict = Field(default_factory=dict)
+
+
 @router.post("/applications/{application_id}/profiles/ai-plan", status_code=201)
-def build_ai_plan(application_id: str, caller: Caller = CustomerCaller):
+def build_ai_plan(application_id: str, body: PlanIn | None = None, caller: Caller = CustomerCaller):
     """Assemble one proposed profile revision from this application's accepted phase A and C proposals; another person activates it."""
     from assureops_ai import plan, service
     from assureops_domain import connections
@@ -164,7 +169,7 @@ def build_ai_plan(application_id: str, caller: Caller = CustomerCaller):
         app = svc.get_application(s, application_id)
         require_application_writer(s, caller, app.id)
         try:
-            row, summary = plan.assemble(s, app, actor=caller.username)
+            row, summary = plan.assemble(s, app, actor=caller.username, facts=(body.facts if body else {}))
         except service.AiError as exc:
             raise api_error(409, exc.code, exc.detail)
         except connections.OnboardingError as exc:

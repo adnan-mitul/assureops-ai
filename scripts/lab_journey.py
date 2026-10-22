@@ -120,6 +120,7 @@ def main():
     parser.add_argument("--connection", default=None, help="connection file name under profiles/connections (default: --app)")
     parser.add_argument("--ai-plan", action="store_true", help="build the test plan with phases A and C instead of a profile file")
     parser.add_argument("--purpose", default=None, help="declared application purpose (phase A reads it when no document is added)")
+    parser.add_argument("--facts", default="{}", help="JSON object of declared application facts for the AI-built plan")
     parser.add_argument("--source-file", default=None, help="policy or requirements text a reviewer approves as phase A's reference source")
     args = parser.parse_args()
 
@@ -161,9 +162,9 @@ def main():
         print(f"  requirements: {[(r['control'], r['statement'][:60]) for r in reqs.get('requirements', [])]}")
         tests = ai_phase(args.app, "C", dev, reviewer)
         print(f"  proposed tests: {[(t['control'], t['template'], t['name'][:50]) for t in tests.get('tests', [])]}")
-        built = ai_routes.build_ai_plan(args.app, caller=dev)
+        built = ai_routes.build_ai_plan(args.app, ai_routes.PlanIn(facts=json.loads(args.facts)), caller=dev)
         print(f"  plan r{built['revision']}: {built['plan']['tests']} tests on {built['plan']['controls_tested']}, "
-              f"not assessed {built['plan']['controls_not_assessed']}, skipped {built['plan']['skipped']}")
+              f"not assessed {built['plan']['controls_not_assessed']}, needs facts {built['plan']['needs_facts']}")
         proposed = built
     else:
         proposed = ro.propose_profile(args.app, ro.ProfileIn(profile=raw_profile), caller=dev)
