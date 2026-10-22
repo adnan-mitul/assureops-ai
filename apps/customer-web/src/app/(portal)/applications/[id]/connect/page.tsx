@@ -2,7 +2,7 @@
 
 import { api, post, useAction, usePoll } from "@assureops/ui/client";
 import { ApiErrorBanner, Button, Card, CardHeader, EmptyState, ErrorBanner, Field, LoadingState, Notice, StatusBadge, inputClass } from "@assureops/ui/components";
-import { CircleCheck, CircleDashed, KeyRound, Link2, PlugZap, Radio, ScrollText, ShieldCheck } from "lucide-react";
+import { CircleCheck, CircleDashed, GitBranch, KeyRound, Link2, PlugZap, Radio, ScrollText, ShieldCheck } from "lucide-react";
 import { useState } from "react";
 import { PageTop, useRouteId, WithSuspense } from "@/components/bits";
 import { DevelopersPanel } from "@/components/DevelopersPanel";
@@ -107,7 +107,10 @@ function Connect() {
   return (
     <div className="mx-auto max-w-[1400px] space-y-5">
       <PageTop eyebrow="Applications · Connect" title={`Connect ${appId}`}
-        subtitle="Connect any HTTP/JSON AI application with a versioned adapter, prove the target and scope, store test credentials encrypted, and have a different person review the control profile." />
+        subtitle="Connect any HTTP/JSON AI application with a versioned adapter, prove the target and scope, store test credentials encrypted, and have a different person review the control profile."
+        actions={<a href={`/applications/${encodeURIComponent(appId)}/ai#repository`}
+          className="inline-flex items-center gap-2 rounded-lg border border-line px-3.5 py-2 text-sm font-medium hover:bg-canvas">
+          <GitBranch className="size-4" aria-hidden /> GitHub repository and release gate</a>} />
       <ApiErrorBanner error={overview.error} />
       {(action.error || localError) && <ErrorBanner message={localError ?? action.error ?? ""} />}
 

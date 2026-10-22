@@ -55,6 +55,10 @@ function AiView() {
   const [codeMap, setCodeMap] = useState('{"code:target": "app.py", "code:transport": "server.py"}');
   const [ciToken, setCiToken] = useState<string | null>(null);
   const [repo, setRepo] = useState("");
+  const [bound, setBound] = useState<string | null>(null);
+  // Accepts owner/name or a pasted link such as https://github.com/owner/name(.git)
+  const repoName = repo.trim().replace(/^https?:\/\/(www\.)?github\.com\//i, "").replace(/\.git$/i, "").replace(/\/+$/, "");
+  const repoValid = /^[A-Za-z0-9_.-]+\/[A-Za-z0-9_.-]+$/.test(repoName);
   const [plan, setPlan] = useState<PlanResult | null>(null);
   const [facts, setFacts] = useState("{}");
   const factsValid = (() => { try { const v = JSON.parse(facts); return typeof v === "object" && v !== null && !Array.isArray(v); } catch { return false; } })();
@@ -215,16 +219,23 @@ function AiView() {
       </div>
 
       {isOwner && (
-        <Card className="p-5">
+        <div id="repository" className="scroll-mt-24"><Card className="p-5">
           <CardHeader title="Release gate and repository" icon={<GitBranch className="size-4" aria-hidden />} />
           <div className="mt-3 flex flex-wrap items-end gap-3">
             <Button onClick={() => action.run("ci", async () => setCiToken((await post<{ token: string }>(`${base}/ci-credentials`, {})).token))}>Issue CI credential</Button>
-            <Field label="Bind GitHub repository (owner/name)"><input className={inputClass} value={repo} onChange={(e) => setRepo(e.target.value)} /></Field>
-            <Button disabled={!repo.includes("/")} onClick={() => action.run("repo", () => post(`${base}/repositories`, { repository: repo }))}>Bind</Button>
+            <Field label="Bind GitHub repository (owner/name or its GitHub link)">
+              <input className={inputClass} value={repo} placeholder="acme/refund-bot or https://github.com/acme/refund-bot"
+                onChange={(e) => { setRepo(e.target.value); setBound(null); }} /></Field>
+            <Button disabled={!!action.busy || !repoValid} onClick={() => action.run("repo", async () => {
+              const res = await post<{ repository: string }>(`${base}/repositories`, { repository: repoName });
+              setBound(res.repository); setRepo("");
+            })}>Bind</Button>
           </div>
+          {repo && !repoValid && <p className="mt-1 text-xs text-red-700">Enter owner/name, for example acme/refund-bot, or paste the repository&apos;s GitHub link.</p>}
+          {bound && <div className="mt-3"><Notice tone="success">Repository {bound} is bound to this application. Its pipeline can now ask for release decisions with a CI credential.</Notice></div>}
           {ciToken && <Notice tone="warn"><p className="font-medium">Store this as a CI secret now; it is not shown again.</p><code className="break-all text-xs">{ciToken}</code></Notice>}
           <p className="mt-2 text-xs text-muted">Pipelines call /v1/integration/release-gate/check with the exact commit SHA and re-verify the receipt at deploy time (see docs/integrations/customer-release-gate.yml).</p>
-        </Card>)}
+        </Card></div>)}
     </div>
   );
 }
