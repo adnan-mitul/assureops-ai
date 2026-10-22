@@ -17,6 +17,10 @@ export default function ApplicationsPage() {
   const { data, error, loading, refresh } = usePoll<ApplicationSummary[]>("/v1/applications", 15000);
   const action = useAction();
   const [form, setForm] = useState({ id: "", name: "", purpose: "", environment: "staging" });
+  // Same rule as the API (^[a-z0-9][a-z0-9-]{3,40}$), explained instead of shown as a pattern
+  const idProblem = !form.id ? null : form.id.length < 4 ? "Use at least 4 characters, for example refund-bot."
+    : form.id.length > 41 ? "Use at most 41 characters." : !/^[a-z0-9][a-z0-9-]*$/.test(form.id)
+      ? "Use lowercase letters, digits and dashes only, starting with a letter or digit." : null;
   const [open, setOpen] = useState(false);
   const register = () => action.run("register", () => post("/v1/applications", { ...form, mode: "observe_only" }), () => {
     const id = form.id;
@@ -40,12 +44,14 @@ export default function ApplicationsPage() {
           </div>
           {open && (
             <div className="mt-4 grid gap-3 md:grid-cols-4">
-              <Field label="Application ID" hint="lowercase, digits, dashes"><input className={inputClass} value={form.id} onChange={(e) => setForm({ ...form, id: e.target.value })} /></Field>
+              <Field label="Application ID" hint={idProblem ?? "4–41 characters: lowercase letters, digits, dashes (e.g. refund-bot)"}>
+                <input className={`${inputClass} ${idProblem ? "border-red-400" : ""}`} aria-invalid={!!idProblem} value={form.id}
+                  onChange={(e) => setForm({ ...form, id: e.target.value.trim().toLowerCase() })} /></Field>
               <Field label="Name"><input className={inputClass} value={form.name} onChange={(e) => setForm({ ...form, name: e.target.value })} /></Field>
               <Field label="Environment"><select className={inputClass} value={form.environment} onChange={(e) => setForm({ ...form, environment: e.target.value })}>
                 <option value="staging">staging</option><option value="production">production</option></select></Field>
               <Field label="Purpose"><input className={inputClass} value={form.purpose} onChange={(e) => setForm({ ...form, purpose: e.target.value })} /></Field>
-              <div className="md:col-span-4"><Button variant="primary" disabled={!!action.busy || !form.id || !form.name || !form.purpose} onClick={register}>
+              <div className="md:col-span-4"><Button variant="primary" disabled={!!action.busy || !form.id || !!idProblem || !form.name || !form.purpose} onClick={register}>
                 {action.busy ? "Registering…" : "Register and connect"}</Button></div>
               {action.error && <div className="md:col-span-4"><ErrorBanner message={action.error} /></div>}
             </div>)}
