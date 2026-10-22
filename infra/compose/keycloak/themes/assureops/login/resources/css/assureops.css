@@ -138,3 +138,14 @@ body.ao-body { min-height: 100vh; display: flex; flex-direction: column; }
 .ao-panel .pf-v5-c-helper-text:has(a[href*="reset-credentials"]) { display: flex; justify-content: flex-end; margin-top: 0.55rem; }
 .ao-panel .pf-v5-c-helper-text a[href*="reset-credentials"] { font-size: 0.86rem; font-weight: 600; color: var(--ao-brand-800); text-decoration: none; }
 .ao-panel .pf-v5-c-helper-text a[href*="reset-credentials"]:hover { text-decoration: underline; }
+
+/* The input fills its box (text centred) and draws no outline of its own: the box's green ring shows focus */
+.ao-panel .pf-v5-c-form-control { display: flex; align-items: stretch; padding: 0 !important; }
+.ao-panel .pf-v5-c-form-control > input {
+  flex: 1; height: auto; min-height: calc(3rem - 2px); margin: 0; border: 0 !important; border-radius: 0.6rem;
+  outline: none !important; box-shadow: none !important; line-height: 1.4;
+}
+.ao-panel .pf-v5-c-form-control > input:focus, .ao-panel .pf-v5-c-form-control > input:focus-visible { outline: none !important; box-shadow: none !important; }
+.ao-panel .pf-v5-c-input-group, .ao-panel .pf-v5-c-input-group__item.pf-m-fill { display: flex; align-items: stretch; width: 100%; }
+.ao-panel .pf-v5-c-input-group__item:not(.pf-m-fill) { position: absolute; right: 0.35rem; top: 0; bottom: 0; display: flex; align-items: center; z-index: 2; }
+.ao-panel .pf-v5-c-input-group .pf-v5-c-button.pf-m-control { position: static; transform: none; }
