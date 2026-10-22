@@ -332,6 +332,7 @@ jobs:
         run: bash scripts/deploy/promote.sh staging ${{ needs.images.outputs.api_digest }} ${{ needs.images.outputs.runner_digest }}
         env:
           DEPLOY_TOKEN: ${{ secrets.STAGING_DEPLOY_TOKEN }}
+          DEPLOY_ENDPOINT: ${{ vars.DEPLOY_ENDPOINT }}  # per GitHub environment
 
   canary:
     name: Production canary
@@ -346,6 +347,7 @@ jobs:
       - run: bash scripts/deploy/promote.sh canary ${{ needs.images.outputs.api_digest }} ${{ needs.images.outputs.runner_digest }}
         env:
           DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
+          DEPLOY_ENDPOINT: ${{ vars.DEPLOY_ENDPOINT }}  # per GitHub environment
 
   production:
     name: Production (after canary health gate)
@@ -360,6 +362,7 @@ jobs:
       - run: bash scripts/deploy/promote.sh production ${{ needs.images.outputs.api_digest }} ${{ needs.images.outputs.runner_digest }}
         env:
           DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
+          DEPLOY_ENDPOINT: ${{ vars.DEPLOY_ENDPOINT }}  # per GitHub environment
 
   rollback:
     name: Roll production back to a previous digest
@@ -373,3 +376,4 @@ jobs:
       - run: bash scripts/deploy/promote.sh rollback ${{ inputs.rollback_digest }}
         env:
           DEPLOY_TOKEN: ${{ secrets.PRODUCTION_DEPLOY_TOKEN }}
+          DEPLOY_ENDPOINT: ${{ vars.DEPLOY_ENDPOINT }}  # per GitHub environment

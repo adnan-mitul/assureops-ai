@@ -69,3 +69,24 @@ npm run test:e2e                   # browser journeys, including the fresh-accou
 ```
 
 CI runs the same checks plus a dependency audit, an OpenAPI contract drift check, browser journeys with video, and signed images on `main`.
+
+## Deploying through the pipeline
+
+On every push to `main`, after the backend, portal and browser jobs pass, CI builds and signs immutable images (`ghcr.io/<owner>/assureops-*`, with SBOM and provenance). The deploy jobs are switched off until you configure hosting:
+
+1. In the repository settings, create the GitHub environments `staging`, `production-canary` and `production`. Add required reviewers to the production ones if you want a manual approval.
+2. Set the repository variable `DEPLOY_ENABLED=true`.
+3. Per environment, set the variable `DEPLOY_ENDPOINT` (your hosting's deployment API). Set the secret `STAGING_DEPLOY_TOKEN` on staging and `PRODUCTION_DEPLOY_TOKEN` on the production environments.
+
+The pipeline then:
+1. verifies each image signature;
+2. promotes by digest: staging, then a canary, then production after the canary health gate. Migrations run expand-then-contract (`scripts/deploy/promote.sh`, which posts to `DEPLOY_ENDPOINT/deployments`).
+
+The rollback job redeploys a previous digest.
+
+The hosting side must:
+- provide Postgres, Redis, the object store and Keycloak, with real secrets in a secret manager (never `dev.env`);
+- serve HTTPS with Secure cookies, with `STAFF_MFA_REQUIRED=true`;
+- configure SMTP (`NOTIFY_SMTP_HOST`, `NOTIFY_SMTP_USER`, `NOTIFY_SMTP_PASSWORD`, `NOTIFY_FROM`) so notices reach people by e-mail. Optionally set `NOTIFY_WEBHOOK_URL` and `NOTIFY_WEBHOOK_SECRET` for Slack or Teams relays.
+
+To try promotion locally without hosting, use `DEPLOY_ENDPOINT=local`: it runs `scripts/deploy/local_promote.py`, digest-based with health gates.
