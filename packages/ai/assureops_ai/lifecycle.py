@@ -15,7 +15,7 @@ from sqlalchemy.orm import Session
 
 from assureops_domain.models import ModelQualification, ModelRouteEvent, ModelRouteStage, now
 
-from .registry import PHASES
+from .registry import PHASES, QUICK_STATUS
 
 STAGES = ("development", "holdout", "shadow", "canary", "active", "retired", "rolled_back")
 SHADOW_MIN_RUNS = 5
@@ -35,7 +35,8 @@ class LifecycleError(Exception):
 def current_qualification(s: Session, row: ModelRouteStage) -> ModelQualification | None:
     phase = PHASES[row.phase]
     q = s.scalars(select(ModelQualification).where(ModelQualification.phase == row.phase, ModelQualification.provider == row.provider,
-                                                    ModelQualification.model == row.model).order_by(ModelQualification.created_at.desc())).first()
+                                                    ModelQualification.model == row.model, ModelQualification.status != QUICK_STATUS)
+                  .order_by(ModelQualification.created_at.desc())).first()
     if q and q.status == "qualified" and q.prompt_version == phase.prompt_version and q.schema_version == phase.schema_version:
         return q
     return None

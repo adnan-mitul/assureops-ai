@@ -12,20 +12,41 @@ import time
 from pathlib import Path
 
 from . import prompts, retrieval, router, validation
-from .registry import PHASES, constrained
+from .registry import PHASES, QUICK_STATUS, constrained  # noqa: F401 (QUICK_STATUS used by scripts)
 
 HOLDOUTS = Path(__file__).resolve().parents[3] / "profiles" / "qualification"
 READY_CLAIM = re.compile(r"\b(is|are|now) (fully )?ready\b|\bready for (release|deployment|production)\b|\bno blocking\b", re.I)
 SUPPORT_WORDS = re.compile(r"\b(supported|passed|passes|satisfied|meets|is met)\b", re.I)
-EXCEPTION = re.compile(r"\b(not|fail|failed|failing|failure|except|other than|apart from|besides|unverified|blocked)\b", re.I)
+# "0 of 3 tests supported" and "none of its tests passed" report a failure correctly; they are not support claims.
+EXCEPTION = re.compile(r"\b(not|fail|failed|failing|failure|except|other than|apart from|besides|unverified|blocked|none)\b|\b0 (of|out of) \d+", re.I)
 RESOLVED_CLAIM = re.compile(r"\b(has been|was|is now) (resolved|closed|fixed)\b|\bno longer (open|occurring)\b", re.I)
 
 
-SUITE = "v1"  # v1: small hand-built suites; v2: 200 held-out cases per phase (300 for D), see scripts/gen_holdouts_v2.py
+SUITE = "v1"  # v1: small hand-built suites; v2: 200 held-out cases per phase (300 for D), see scripts/gen_holdouts_v2.py;
+# quick: 20 of the v2 cases (scripts/gen_holdouts_quick.py), recorded as a quick check that can disable a route but never qualify one
 
 
 def holdout_path(phase: str) -> Path:
     return HOLDOUTS / (f"phase-{phase}-holdout.json" if SUITE == "v1" else f"phase-{phase}-holdout-{SUITE}.json")
+
+
+def stratified(items: list, keys, n: int, per_key: int = 2) -> list:
+    """Deterministic pick of n items so every key (control, label, operator ...) appears at least per_key times where it can.
+
+    Greedy: each step takes the item with the largest outstanding need over its keys (ties: input order), then fills up
+    in input order."""
+    need = {k: per_key for item in items for k in keys(item)}
+    chosen, rest = [], list(items)
+    while rest and len(chosen) < n and any(need.values()):
+        best = max(rest, key=lambda item: sum(need.get(k, 0) for k in keys(item)))
+        if not any(need.get(k, 0) > 0 for k in keys(best)):
+            break
+        for k in keys(best):
+            need[k] = max(0, need[k] - 1)
+        chosen.append(best)
+        rest.remove(best)
+    chosen += rest[: n - len(chosen)]
+    return chosen
 
 
 def load(phase: str) -> dict:
@@ -112,7 +133,11 @@ def run_generation(phase: str, route: router.Route, log=print) -> dict:
             ctx = {"facts": {f["id"]: f["text"] for f in case["facts"]}}
         else:
             raise ValueError(phase)
-        result = _generate(client, route.model, phase, data, ctx)
+        for attempt in range(6):  # provider rate limits are waited out, so the measurement covers every case
+            result = _generate(client, route.model, phase, data, ctx)
+            if result.status != "rate_limited":
+                break
+            time.sleep(10 * (attempt + 1))
         tokens += (result.usage or {}).get("total_tokens") or 0
         if result.latency_ms:
             latencies.append(result.latency_ms)
@@ -175,7 +200,7 @@ def run_classifier_d(route: router.Route, log=print) -> dict:
     correct = critical = 0
     details = []
     for case, scores in zip(suite, result.parsed["result"]):
-        label = max(scores, key=lambda s: s["score"])["label"]
+        label = validation.nli_signal(case["premise"], case["hypothesis"], scores)["label"]  # the production decision rule
         ok = label == case["label"]
         crit = case["label"] == "contradiction" and label == "entailment"  # false support: a contradiction read as support
         correct += ok

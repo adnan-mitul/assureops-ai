@@ -9,6 +9,8 @@ state and the workflow continues with reviewers.
 
 from dataclasses import dataclass, field
 
+QUICK_STATUS = "quick_check"  # qualification record of a 20-case quick run that found no critical error: informational only
+
 SPAN = {"type": "object", "required": ["source_id", "quote"], "properties": {
     "source_id": {"type": "string"}, "quote": {"type": "string", "minLength": 3, "maxLength": 400}}}
 SPANS = {"type": "array", "items": SPAN, "maxItems": 12}
@@ -68,7 +70,7 @@ PHASES: dict[str, Phase] = {p.id: p for p in [
     Phase("C", "test_proposal", "generate", "Qwen/Qwen2.5-Coder-1.5B-Instruct", "1.54B",
           "Reviewed requirements and the permitted catalogue -> template IDs with typed arguments", "C-2", "C-2"),
     Phase("D", "semantic_evaluation", "classify", "cross-encoder/nli-deberta-v3-small", "~0.1B",
-          "Atomic claim/premise pairs -> entailment/contradiction/neutral signals beside actual test outcomes", "D-1", "D-1"),
+          "Atomic claim/premise pairs -> entailment/contradiction/neutral signals beside actual test outcomes", "D-2", "D-2"),
     Phase("E", "incident_analysis", "generate", "microsoft/Phi-4-mini-instruct", "3.8B",
           "Verified events and release changes -> cited summary, hypotheses and approved retest suggestions", "E-2", "E-2"),
     Phase("F", "explanation", "generate", "HuggingFaceTB/SmolLM2-1.7B-Instruct", "1.7B",

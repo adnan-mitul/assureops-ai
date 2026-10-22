@@ -126,7 +126,7 @@ def _reusable(run: TestRun, run_release: Release, release: Release, edge_set: li
         return False
     if run.test_digest and run.test_digest != test["digest"]:  # the test definition itself changed
         return False
-    if run.outcome == "error":
+    if run.outcome in ("error", "inconclusive"):  # nothing was exercised, so there is nothing to carry forward
         return False
     if sorted(run.dependency_fingerprints) != edge_set:  # reviewed edges changed since collection
         return False
@@ -172,7 +172,7 @@ def readiness(session: Session, application_id: str, release: Release, p: dict) 
                 validity = "stale"
             if not evidence_store.available(artifacts.get(chosen.artifact_id)):
                 validity = "unavailable"  # deleted, missing or failed its integrity check
-            result = {"passed": "supported", "failed": "failed", "error": "unverified"}[chosen.outcome]
+            result = {"passed": "supported", "failed": "failed", "error": "unverified", "inconclusive": "unverified"}[chosen.outcome]
             review = reviews.get(chosen.id)
             if test.get("requires_review") and result == "supported" and not (review and review.decision == "accept"):
                 result = "review_required"

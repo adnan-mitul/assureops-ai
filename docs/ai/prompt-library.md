@@ -235,7 +235,7 @@ Output schema:
 ## Phase D: semantic evaluation
 
 - Candidate: `cross-encoder/nli-deberta-v3-small` (~0.1B), kind `classify`
-- Prompt version `D-1`, schema version `D-1`
+- Prompt version `D-2`, schema version `D-2`
 - Purpose: Atomic claim/premise pairs -> entailment/contradiction/neutral signals beside actual test outcomes
 
 No generative prompt: this phase calls an encoder (embedding, NLI classification or screening) on bounded inputs.

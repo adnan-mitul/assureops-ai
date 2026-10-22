@@ -34,7 +34,7 @@ export default function EvidencePage() {
                   <Td>{e.release}</Td>
                   <Td><StatusBadge status={e.outcome} /></Td>
                   <Td className="whitespace-nowrap">{e.passed_trials}/{e.trials} passed
-                    <span className="mt-1 flex gap-0.5" aria-hidden>{e.trial_outcomes.map((ok, i) => <span key={i} className={`size-2 rounded-sm ${ok ? "bg-brand-600" : "bg-red-600"}`} />)}</span></Td>
+                    <span className="mt-1 flex gap-0.5" aria-hidden>{e.trial_outcomes.map((ok, i) => <span key={i} className={`size-2 rounded-sm ${ok === null ? "bg-gray-400" : ok ? "bg-brand-600" : "bg-red-600"}`} />)}</span></Td>
                   <Td>{e.available ? <><span className="text-xs">Available</span><span className="block"><Mono>sha256 {shortHash(e.evidence_hash, 10)}</Mono></span></> : <StatusBadge status="unavailable" />}</Td>
                   <Td>{e.review ? <StatusBadge status={e.review.decision === "accept" ? "accepted" : "rejected"} label={`${e.review.decision === "accept" ? "Accepted" : "Rejected"} by ${e.review.reviewer}`} /> : <span className="text-xs text-muted">No review</span>}</Td>
                   <Td className="whitespace-nowrap text-muted">{formatTime(e.created_at)}</Td>

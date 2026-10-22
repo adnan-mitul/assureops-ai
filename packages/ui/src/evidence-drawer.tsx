@@ -18,7 +18,7 @@ export type Evidence = {
   outcome: string;
   trials: number;
   passed_trials: number;
-  trial_outcomes: boolean[];
+  trial_outcomes: (boolean | null)[];  // null: inconclusive, the attempt under test was never made
   expected: string;
   observation_source: string;
   origin: string;
@@ -98,7 +98,7 @@ export function EvidenceDrawer({ runId, onClose, path = "/v1/evidence" }: { runI
                 <StatusBadge status={evidence.outcome} />
                 <span className="text-xs text-muted">{evidence.passed_trials}/{evidence.trials} trials passed</span>
                 <span className="flex gap-0.5" aria-label="Trial results">
-                  {evidence.trial_outcomes.map((ok, i) => <span key={i} className={`size-2.5 rounded-sm ${ok ? "bg-brand-600" : "bg-red-600"}`} title={`Trial ${i + 1}: ${ok ? "passed" : "failed"}`} />)}
+                  {evidence.trial_outcomes.map((ok, i) => <span key={i} className={`size-2.5 rounded-sm ${ok === null ? "bg-gray-400" : ok ? "bg-brand-600" : "bg-red-600"}`} title={`Trial ${i + 1}: ${ok === null ? "inconclusive" : ok ? "passed" : "failed"}`} />)}
                 </span>
               </div>
               <p className="mt-2"><span className="text-xs text-muted">Expected: </span>{evidence.expected}</p>

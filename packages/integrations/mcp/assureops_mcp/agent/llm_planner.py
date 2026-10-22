@@ -9,6 +9,7 @@ Endpoint: AGENT_LLM_URL (Ollama native API, default http://127.0.0.1:8740); mode
 Decoding is constrained to a JSON schema whose tool names are the release's allowed tools.
 """
 
+import asyncio
 import json
 import os
 import re
@@ -56,7 +57,8 @@ async def run(message: str, ctx: RunContext, gateway: Gateway, config: dict, sec
     reply, seen_docs, started = "", set(), time.time()
     for _ in range(MAX_TURNS):
         try:
-            step = _ask(messages, config, sorted(allowed))
+            # A slow CPU model must not freeze the agent's event loop (its MCP sessions and other requests time out otherwise).
+            step = await asyncio.to_thread(_ask, messages, config, sorted(allowed))
         except (httpx.HTTPError, ValueError, KeyError) as exc:
             reply = f"The assistant is unavailable right now ({exc.__class__.__name__})."
             break

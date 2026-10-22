@@ -21,6 +21,21 @@ NEGATION = re.compile(r"\b(not|no|never|nor|without|isn't|doesn't)\b[^.;]{0,25}$
 def verdict_claims(text: str) -> list[str]:
     """Certification/safety words that are asserted, not negated ("this is not a certification" is allowed)."""
     return [m.group(0) for m in FORBIDDEN_VERDICTS.finditer(text) if not NEGATION.search(text[:m.start()])]
+NUMERIC_TOKEN = re.compile(r"[A-Za-z]*-?\d+(?:[.,]\d+)*")
+
+
+def nli_signal(premise: str, claim: str, scores: list[dict]) -> dict:
+    """Phase D decision rule (D-2): the classifier's top label, except that a claim naming a number or identifier the premise
+    does not contain is never read as entailed. Small NLI models largely ignore numbers ("within 6 days" vs "within 36 days"),
+    and a false "entailment" is the critical error, so the rule only ever moves a label away from support."""
+    best = max(scores, key=lambda x: x.get("score", 0)) if scores else {}
+    label, score = str(best.get("label", "")).lower(), float(best.get("score", 0))
+    missing = sorted({m.rstrip(".,") for m in NUMERIC_TOKEN.findall(claim)} - {m.rstrip(".,") for m in NUMERIC_TOKEN.findall(premise)})
+    if label == "entailment" and missing:
+        return {"label": "neutral", "score": score, "guard": f"claim names {', '.join(missing)}, which the premise does not contain"}
+    return {"label": label, "score": score, "guard": None}
+
+
 SECRETISH = re.compile(r"(?i)\b(sk-[A-Za-z0-9_-]{8,}|gsk_[A-Za-z0-9]{8,}|ghp_[A-Za-z0-9]{8,}|AKIA[0-9A-Z]{12,}|[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[a-z]{2,})\b")
 
 

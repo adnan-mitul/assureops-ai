@@ -19,7 +19,7 @@ from assureops_domain.models import ModelQualification
 
 from .providers.groq import GroqProvider, fits_constraint
 from .providers.private import PrivateEncoder, PrivateGeneration
-from .registry import PHASES
+from .registry import PHASES, QUICK_STATUS
 
 
 def env(name: str, default: str = "") -> str:
@@ -45,8 +45,10 @@ def private_model(phase: str) -> str:
 
 def qualification(phase: str, provider: str, model: str) -> dict | None:
     with platform_session() as s:
+        # A passed quick check is informational and leaves the latest full qualification in force.
         row = s.scalars(select(ModelQualification).where(ModelQualification.phase == phase, ModelQualification.provider == provider,
-                                                         ModelQualification.model == model).order_by(ModelQualification.created_at.desc())).first()
+                                                         ModelQualification.model == model, ModelQualification.status != QUICK_STATUS)
+                        .order_by(ModelQualification.created_at.desc())).first()
         if row is None:
             return None
         return {"id": row.id, "status": row.status, "dataset": row.dataset, "metrics": row.metrics, "prompt_version": row.prompt_version,

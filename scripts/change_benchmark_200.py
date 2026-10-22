@@ -1,6 +1,7 @@
 """200-scenario change benchmark: full retest vs reviewed rule-only map vs AI-assisted map (plan v6 P10).
 
     python scripts/change_benchmark_200.py [--limit N] [--split held_out]
+    python scripts/change_benchmark_200.py --quick --sync-edges --out var/benchmarks/change-benchmark-quick.json
 
 Runs on an isolated copy of the reference stack (workspace "bench", application "refund-bench",
 agent :8716, tool server :8726, own state and credentials), so the reference application's
@@ -198,9 +199,14 @@ def main():
     parser.add_argument("--split", choices=["development", "held_out"], default=None)
     parser.add_argument("--sync-edges", action="store_true", help="reset the bench application's reviewed edges to the coverage contract file")
     parser.add_argument("--out", type=Path, default=OUT)
+    parser.add_argument("--quick", action="store_true", help="40 held-out scenarios covering every mutation operator at least twice")
     args = parser.parse_args()
     spec = json.loads((ROOT / "profiles" / "qualification" / "change-scenarios-v1.json").read_text())
     scenarios = [s for s in spec["scenarios"] if not args.split or s["split"] == args.split][: args.limit]
+    if args.quick:  # a routine check; the full 140 held-out scenarios remain the measurement of record
+        from assureops_ai.qualification import stratified
+
+        scenarios = stratified([s for s in spec["scenarios"] if s["split"] == "held_out"], lambda s: s["operators"], 40)
     procs = start_stack()
     try:
         print("connection:", ensure_connection_and_profile())

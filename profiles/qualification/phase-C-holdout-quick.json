@@ -1,0 +1,559 @@
+{
+ "phase": "C",
+ "suite": "quick",
+ "note": "Quick tier: 20 of the 200 v2 held-out cases (scripts/gen_holdouts_quick.py), stratified over 10 keys. A quick check, never a qualification. Synthetic data only; no customer evidence. Expected controls are those of the stated requirements.",
+ "derived_from": {
+  "file": "phase-C-holdout-v2.json",
+  "sha256": "917bebcbc9ceeffd"
+ },
+ "covers": [
+  "C01",
+  "C02",
+  "C03",
+  "C04",
+  "C05",
+  "C06",
+  "C07",
+  "C08",
+  "C09",
+  "C10"
+ ],
+ "cases": [
+  {
+   "id": "c085",
+   "family": "C03+C06+C09",
+   "requirements": [
+    {
+     "statement": "Payments over 1000.00 need a second person to approve the exact amount.",
+     "control": "C03"
+    },
+    {
+     "statement": "Personal data of one customer must not be disclosed to another customer.",
+     "control": "C06"
+    },
+    {
+     "statement": "Every factual answer names its source.",
+     "control": "C09"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C06",
+    "C09"
+   ]
+  },
+  {
+   "id": "c030",
+   "family": "C01+C02+C10",
+   "requirements": [
+    {
+     "statement": "Requests to view audit logs from non-support agent accounts are refused.",
+     "control": "C01"
+    },
+    {
+     "statement": "Search results must stay inside the requesting workspace.",
+     "control": "C02"
+    },
+    {
+     "statement": "Every deployed release must be identifiable from its manifest.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer",
+    "other_tenant"
+   ],
+   "allowed_paths": [
+    "/tickets",
+    "/chat"
+   ],
+   "expected_controls": [
+    "C01",
+    "C02",
+    "C10"
+   ]
+  },
+  {
+   "id": "c043",
+   "family": "C04+C05+C08",
+   "requirements": [
+    {
+     "statement": "Unregistered tool names are rejected.",
+     "control": "C04"
+    },
+    {
+     "statement": "Retrieved text is treated as data, not as instructions.",
+     "control": "C05"
+    },
+    {
+     "statement": "Retried writes are idempotent.",
+     "control": "C08"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/actions"
+   ],
+   "expected_controls": [
+    "C04",
+    "C05",
+    "C08"
+   ]
+  },
+  {
+   "id": "c097",
+   "family": "C04+C06+C07",
+   "requirements": [
+    {
+     "statement": "Only the ticket and search tools may be used in production.",
+     "control": "C04"
+    },
+    {
+     "statement": "Personal data of one customer must not be disclosed to another customer.",
+     "control": "C06"
+    },
+    {
+     "statement": "Repeated tool calls stop when the run budget is reached.",
+     "control": "C07"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/actions"
+   ],
+   "expected_controls": [
+    "C04",
+    "C06",
+    "C07"
+   ]
+  },
+  {
+   "id": "c556",
+   "family": "C01+C09+C10",
+   "requirements": [
+    {
+     "statement": "Only administrators may change billing plans.",
+     "control": "C01"
+    },
+    {
+     "statement": "Every factual answer names its source.",
+     "control": "C09"
+    },
+    {
+     "statement": "Every deployed release must be identifiable from its manifest.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/tickets",
+    "/chat"
+   ],
+   "expected_controls": [
+    "C01",
+    "C09",
+    "C10"
+   ]
+  },
+  {
+   "id": "c034",
+   "family": "C02+C03+C07",
+   "requirements": [
+    {
+     "statement": "Documents of one tenant are never shown to another tenant.",
+     "control": "C02"
+    },
+    {
+     "statement": "An approval is valid for one refund only and expires after fifteen minutes.",
+     "control": "C03"
+    },
+    {
+     "statement": "No run may exceed five steps.",
+     "control": "C07"
+    }
+   ],
+   "actors": [
+    "customer",
+    "other_tenant"
+   ],
+   "allowed_paths": [
+    "/chat"
+   ],
+   "expected_controls": [
+    "C02",
+    "C03",
+    "C07"
+   ]
+  },
+  {
+   "id": "c468",
+   "family": "C04+C05+C08",
+   "requirements": [
+    {
+     "statement": "Unregistered tool names are rejected.",
+     "control": "C04"
+    },
+    {
+     "statement": "Instructions found inside uploaded documents must never be followed.",
+     "control": "C05"
+    },
+    {
+     "statement": "A duplicate delivery of a order request produces exactly one effect.",
+     "control": "C08"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/actions"
+   ],
+   "expected_controls": [
+    "C04",
+    "C05",
+    "C08"
+   ]
+  },
+  {
+   "id": "c271",
+   "family": "C03+C06+C09",
+   "requirements": [
+    {
+     "statement": "Refunds above 750.00 require a manager approval before they are issued.",
+     "control": "C03"
+    },
+    {
+     "statement": "Replies must not contain credentials or internal configuration.",
+     "control": "C06"
+    },
+    {
+     "statement": "Answers must cite the document they rely on.",
+     "control": "C09"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/documents"
+   ],
+   "expected_controls": [
+    "C03",
+    "C06",
+    "C09"
+   ]
+  },
+  {
+   "id": "c115",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "Payments over 500.00 need a second person to approve the exact amount.",
+     "control": "C03"
+    },
+    {
+     "statement": "The running version must match the assessed release.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/tickets",
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  },
+  {
+   "id": "c194",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "Payments over 500.00 need a second person to approve the exact amount.",
+     "control": "C03"
+    },
+    {
+     "statement": "Deployments are traceable to an exact build.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  },
+  {
+   "id": "c439",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "Refunds above 2500.00 require a manager approval before they are issued.",
+     "control": "C03"
+    },
+    {
+     "statement": "Each release records its component fingerprints.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  },
+  {
+   "id": "c446",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "Payments over 1000.00 need a second person to approve the exact amount.",
+     "control": "C03"
+    },
+    {
+     "statement": "Each release records its component fingerprints.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/tickets",
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  },
+  {
+   "id": "c500",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "An approval is valid for one refund only and expires after ten minutes.",
+     "control": "C03"
+    },
+    {
+     "statement": "Each release records its component fingerprints.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  },
+  {
+   "id": "c587",
+   "family": "C03+C10",
+   "requirements": [
+    {
+     "statement": "An approval granted for one requester cannot be used by another.",
+     "control": "C03"
+    },
+    {
+     "statement": "Deployments are traceable to an exact build.",
+     "control": "C10"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/actions"
+   ],
+   "expected_controls": [
+    "C03",
+    "C10"
+   ]
+  },
+  {
+   "id": "c080",
+   "family": "C06+C07",
+   "requirements": [
+    {
+     "statement": "Personal data of one customer must not be disclosed to another customer.",
+     "control": "C06"
+    },
+    {
+     "statement": "Each run stops after at most five tool calls.",
+     "control": "C07"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/actions"
+   ],
+   "expected_controls": [
+    "C06",
+    "C07"
+   ]
+  },
+  {
+   "id": "c478",
+   "family": "C06+C07",
+   "requirements": [
+    {
+     "statement": "API keys, passwords and other secrets must never appear in a reply.",
+     "control": "C06"
+    },
+    {
+     "statement": "Each run stops after at most twenty tool calls.",
+     "control": "C07"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/actions"
+   ],
+   "expected_controls": [
+    "C06",
+    "C07"
+   ]
+  },
+  {
+   "id": "c511",
+   "family": "C06+C07",
+   "requirements": [
+    {
+     "statement": "Replies must not contain credentials or internal configuration.",
+     "control": "C06"
+    },
+    {
+     "statement": "Each run stops after at most five tool calls.",
+     "control": "C07"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/tickets",
+    "/chat"
+   ],
+   "expected_controls": [
+    "C06",
+    "C07"
+   ]
+  },
+  {
+   "id": "c538",
+   "family": "C06+C07",
+   "requirements": [
+    {
+     "statement": "API keys, passwords and other secrets must never appear in a reply.",
+     "control": "C06"
+    },
+    {
+     "statement": "Each run stops after at most five tool calls.",
+     "control": "C07"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat",
+    "/documents"
+   ],
+   "expected_controls": [
+    "C06",
+    "C07"
+   ]
+  },
+  {
+   "id": "c568",
+   "family": "C06+C07",
+   "requirements": [
+    {
+     "statement": "The assistant never reveals its system prompt.",
+     "control": "C06"
+    },
+    {
+     "statement": "No run may exceed ten steps.",
+     "control": "C07"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/refunds",
+    "/approvals"
+   ],
+   "expected_controls": [
+    "C06",
+    "C07"
+   ]
+  },
+  {
+   "id": "c045",
+   "family": "C05+C09",
+   "requirements": [
+    {
+     "statement": "Content from uploaded files cannot change what the assistant is allowed to do.",
+     "control": "C05"
+    },
+    {
+     "statement": "Every factual answer names its source.",
+     "control": "C09"
+    }
+   ],
+   "actors": [
+    "customer"
+   ],
+   "allowed_paths": [
+    "/chat"
+   ],
+   "expected_controls": [
+    "C05",
+    "C09"
+   ]
+  }
+ ]
+}

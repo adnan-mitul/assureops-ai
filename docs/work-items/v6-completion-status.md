@@ -23,7 +23,7 @@ Work on branch `completion-plan-v6` (draft PR adnan-mitul/assureops-ai#2). "Veri
 
 | Phase | Model | Result | Decision |
 |---|---|---|---|
-| D | nli-deberta-v3-small | accuracy 0.92 (95 % CI 0.884–0.946), 1 critical false support in 300 pairs | not qualified; route disabled |
+| D | nli-deberta-v3-small | D-1: accuracy 0.92, 1 critical false support in 300 pairs (route disabled). D-2 on fresh v3: accuracy 0.933, 0 critical | qualified with D-2 (see follow-up below) |
 | R | bge-small-en-v1.5 | recall@3: dense 0.94, hybrid 0.865, BM25 0.805 | qualified; dense chosen on the development split (dev: dense 1.0, fusion 0.717, BM25 0.417) |
 | G | Prompt Guard 2 86M (Groq) | accuracy 0.73 (95 % CI 0.665–0.787); 54 of 101 attacks missed, 0 false flags | not qualified; optional route disabled |
 | C, A, B, E, F | as pinned | v2 suites built | to run on the CI models matrix (`qualify_suite=v2`) |
@@ -46,6 +46,44 @@ What it shows:
 - The AI arm saves about 5 points more but missed one more test (V144). Its extra link removed the conservative full-retest fallback that had been covering the missing edge. More mapping is not automatically safer.
 - Both edges were found from the development split only and added to the contract (`profiles/coverage/refund-agent.mcp-reference.json`, with a revision note). The held-out split is then re-run (below). Existing activations keep their recorded edges until their profile is re-activated.
 - The 30 % saving is a research target. These numbers come from configuration mutations of one reference application, not from real customer change history.
+
+## Follow-up, 22 October 2026 (evening)
+
+**Corrected edges are live.** The reference application's profile revision 2 was proposed by `owner@acme.test` and activated by `reviewer@acme.test`. Activation added `policy:permission -> T-C09-01` and `tools:registry -> T-C03-03` as accepted edges. R1 was then re-collected and fully assessed: all 15 tests ran with current evidence, 13 supported and the two C09 tests awaiting their required review.
+
+**Change benchmark, quick tier (40 held-out scenarios, every mutation operator at least twice, edges synced from the corrected contract, 18.1 min, no flaky tests):**
+
+| Arm | Tests retested (of 600) | Saving vs full | Misses | Critical misses |
+|---|---|---|---|---|
+| reviewed rule-only map | 364 | 39.3 % | 0 | 0 |
+| rule map + phase B links | 356 | 40.7 % | 0 | 0 |
+
+The misses of the earlier held-out run are gone on this subset. A 40-scenario subset is a routine check, not the full held-out measurement, so the 140-scenario re-run remains the result of record to repeat.
+
+**"Inconclusive" test outcome (reference evaluator 1.1.0).** A test that needs an attempt to observe enforcement now reports `inconclusive` when the agent never makes it. T-C04-01 covers an agent that never calls the unregistered tool (the LLM planner can only name allowlisted tools). T-C07-01 covers an agent that stops on its own before the run budget. Inconclusive reads as `unverified`: it never supports a control, never blocks as a failure, never opens or closes a finding, and is never reused for a later release. One real failure among the trials still makes the run `failed`.
+
+**Phase D (decision rule D-2) qualified.** Small NLI models largely ignore numbers. v2's only critical case read "within 6 days" as supporting "within 36 days". D-2 (`validation.nli_signal`) never reads a claim as entailed when it names a number or identifier the premise lacks. The rule was designed after seeing v2, so D was qualified on a fresh 300-pair draw (v3, new seed): accuracy 0.933 (95 % CI 0.899–0.956), 0 critical false support (95 % upper bound 1.3 %). On v2 with D-2: accuracy 0.92, 0 critical; reported, not relied on. v3 reuses v2's fact templates, so it tests new values, not new kinds of claims.
+
+**Quick tier (20 cases per phase, a stratified subset of v2).** A pass is stored as `quick_check` and changes nothing. A critical error is stored as `not_qualified` and switches the route off. 0 critical in 20 bounds the true rate only below 16 %.
+
+| Phase | Model | Quick result |
+|---|---|---|
+| C | qwen2.5-coder:1.5b | passed: recall 0.95, 0 critical (valid rate 0.55) |
+| D | nli-deberta-v3-small (D-2) | passed: accuracy 0.85, 0 critical |
+| R | bge-small-en-v1.5 | passed: recall@3 dense 0.95, hybrid 0.90, BM25 0.80 |
+| F | gpt-oss-20b (Groq) | passed: valid rate 1.0, 0 critical |
+| G | Prompt Guard 2 86M (Groq) | below floor: accuracy 0.60; stays off |
+| A | granite4:micro | running at the time of this commit; result added in the follow-up commit |
+| B, E, F (private) | phi4-mini, smollm2:1.7b | not run in this session (CPU time); run `qualify_phase.py --suite quick` per phase |
+
+**Phase F checker fix.** The F false-support check flagged "C06: 0 of 3 tests supported" as a claim of support. That sentence reports the failure correctly. Such wording ("0 of N", "none") now counts as reporting a failure, and the checker still flags real support claims. The false alarm had recorded Groq F as `not_qualified`, which turned the route off.
+Groq F was re-run on the quick tier (passed) and is running the full 200-case v2 suite. Until that run records `qualified`, the Groq F route stays off, and F is served by the qualified private model.
+
+**Groq.** Groq stays limited to the approved phases F and G, as planned. Private serving is preferred, and workspaces must allow external processing. Generation runs now wait out Groq rate limits (free tier: 8,000 tokens per minute), so a measurement covers every case.
+
+**L1 (model-driven release) re-run.** A first re-run with evaluator 1.1.0 produced no evidence: every step timed out while the shared CPU host was busy with qualification (see the agent fix below). The re-run on an idle host is recorded in the follow-up commit.
+
+**Reference agent fix.** The LLM planner called the model synchronously inside the agent's event loop. With a slow CPU model, this froze the agent, and its MCP sessions to the tool server timed out. The call now runs in a worker thread.
 
 ## Fixed defects found during this work
 

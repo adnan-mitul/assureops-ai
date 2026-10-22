@@ -1,0 +1,156 @@
+{
+ "phase": "D",
+ "suite": "quick",
+ "note": "Quick tier: 20 of the 300 v2 held-out cases (scripts/gen_holdouts_quick.py), stratified over 3 keys. A quick check, never a qualification. Synthetic data only; no customer evidence. Each family has one entailed, one contradicted and one neutral hypothesis for the same premise.",
+ "derived_from": {
+  "file": "phase-D-holdout-v2.json",
+  "sha256": "7dd3394c7d407d22"
+ },
+ "covers": [
+  "contradiction",
+  "entailment",
+  "neutral"
+ ],
+ "cases": [
+  {
+   "id": "d050-ent",
+   "family": "d050",
+   "premise": "Acme accepts refund requests within 18 days of purchase.",
+   "hypothesis": "Refund requests are accepted within 18 days.",
+   "label": "entailment"
+  },
+  {
+   "id": "d050-con",
+   "family": "d050",
+   "premise": "Acme accepts refund requests within 18 days of purchase.",
+   "hypothesis": "Refund requests are accepted within 21 days.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d050-neu",
+   "family": "d050",
+   "premise": "Acme accepts refund requests within 18 days of purchase.",
+   "hypothesis": "Acme ships orders internationally.",
+   "label": "neutral"
+  },
+  {
+   "id": "d083-ent",
+   "family": "d083",
+   "premise": "The run stopped after 18 tool calls because the budget was reached.",
+   "hypothesis": "The run was limited to 18 tool calls.",
+   "label": "entailment"
+  },
+  {
+   "id": "d083-con",
+   "family": "d083",
+   "premise": "The run stopped after 18 tool calls because the budget was reached.",
+   "hypothesis": "The run made unlimited tool calls.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d083-neu",
+   "family": "d083",
+   "premise": "The run stopped after 18 tool calls because the budget was reached.",
+   "hypothesis": "The run used the search tool.",
+   "label": "neutral"
+  },
+  {
+   "id": "d109-ent",
+   "family": "d109",
+   "premise": "I don't know based on the permitted documents.",
+   "hypothesis": "The assistant does not know the answer.",
+   "label": "entailment"
+  },
+  {
+   "id": "d109-con",
+   "family": "d109",
+   "premise": "I don't know based on the permitted documents.",
+   "hypothesis": "The assistant answered the question with a citation.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d109-neu",
+   "family": "d109",
+   "premise": "I don't know based on the permitted documents.",
+   "hypothesis": "The documents are written in English.",
+   "label": "neutral"
+  },
+  {
+   "id": "d035-ent",
+   "family": "d035",
+   "premise": "The reply cites document KB-19.",
+   "hypothesis": "The answer names KB-19 as its source.",
+   "label": "entailment"
+  },
+  {
+   "id": "d035-con",
+   "family": "d035",
+   "premise": "The reply cites document KB-19.",
+   "hypothesis": "The reply cites no document.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d035-neu",
+   "family": "d035",
+   "premise": "The reply cites document KB-19.",
+   "hypothesis": "KB-19 was updated last month.",
+   "label": "neutral"
+  },
+  {
+   "id": "d064-ent",
+   "family": "d064",
+   "premise": "Document D-932 belongs to workspace initech.",
+   "hypothesis": "Workspace initech owns document D-932.",
+   "label": "entailment"
+  },
+  {
+   "id": "d064-con",
+   "family": "d064",
+   "premise": "Document D-932 belongs to workspace initech.",
+   "hypothesis": "Document D-932 belongs to every workspace.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d064-neu",
+   "family": "d064",
+   "premise": "Document D-932 belongs to workspace initech.",
+   "hypothesis": "Document D-932 was written in English.",
+   "label": "neutral"
+  },
+  {
+   "id": "d080-ent",
+   "family": "d080",
+   "premise": "Acme accepts refund requests within 68 days of purchase.",
+   "hypothesis": "Refund requests are accepted within 68 days.",
+   "label": "entailment"
+  },
+  {
+   "id": "d080-con",
+   "family": "d080",
+   "premise": "Acme accepts refund requests within 68 days of purchase.",
+   "hypothesis": "Refund requests are accepted within 108 days.",
+   "label": "contradiction"
+  },
+  {
+   "id": "d080-neu",
+   "family": "d080",
+   "premise": "Acme accepts refund requests within 68 days of purchase.",
+   "hypothesis": "Acme ships orders internationally.",
+   "label": "neutral"
+  },
+  {
+   "id": "d059-ent",
+   "family": "d059",
+   "premise": "I don't know based on the permitted documents.",
+   "hypothesis": "The assistant does not know the answer.",
+   "label": "entailment"
+  },
+  {
+   "id": "d059-con",
+   "family": "d059",
+   "premise": "I don't know based on the permitted documents.",
+   "hypothesis": "The assistant answered the question with a citation.",
+   "label": "contradiction"
+  }
+ ]
+}

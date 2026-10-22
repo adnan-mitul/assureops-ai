@@ -1,0 +1,1727 @@
+{
+ "phase": "B",
+ "suite": "quick",
+ "note": "Quick tier: 20 of the 200 v2 held-out cases (scripts/gen_holdouts_quick.py), stratified over 10 keys. A quick check, never a qualification. Synthetic data only; no customer evidence. Expected links follow a fixed test-type -> component rule (oracle), restricted to listed components.",
+ "derived_from": {
+  "file": "phase-B-holdout-v2.json",
+  "sha256": "e52736d93404116c"
+ },
+ "covers": [
+  "C01",
+  "C02",
+  "C03",
+  "C04",
+  "C05",
+  "C06",
+  "C07",
+  "C08",
+  "C09",
+  "C10"
+ ],
+ "cases": [
+  {
+   "id": "b136",
+   "family": "C04+C05+C06+C07+C10",
+   "tests": [
+    {
+     "id": "T1-C04",
+     "name": "Unregistered tool call is rejected",
+     "control": "C04",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C05",
+     "name": "Instruction in a document cannot trigger an action",
+     "control": "C05",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C06",
+     "name": "Credential never appears in a reply",
+     "control": "C06",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C07",
+     "name": "Repeated calls stop at the run budget",
+     "control": "C07",
+     "template": "scenario"
+    },
+    {
+     "id": "T5-C10",
+     "name": "Running release matches the manifest",
+     "control": "C10",
+     "template": "manifest_identity"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C04",
+     "tools:registry"
+    ],
+    [
+     "T2-C05",
+     "prompt:system"
+    ],
+    [
+     "T2-C05",
+     "corpus:docs"
+    ],
+    [
+     "T3-C06",
+     "prompt:system"
+    ],
+    [
+     "T4-C07",
+     "config:limits"
+    ]
+   ]
+  },
+  {
+   "id": "b088",
+   "family": "C01+C02+C03+C04+C09",
+   "tests": [
+    {
+     "id": "T1-C01",
+     "name": "Customer role cannot change billing plans",
+     "control": "C01",
+     "template": "auth_required"
+    },
+    {
+     "id": "T2-C02",
+     "name": "Another tenant's records are never returned",
+     "control": "C02",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C04",
+     "name": "Unregistered tool call is rejected",
+     "control": "C04",
+     "template": "scenario"
+    },
+    {
+     "id": "T5-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C01",
+     "code:transport"
+    ],
+    [
+     "T2-C02",
+     "code:target"
+    ],
+    [
+     "T3-C03",
+     "code:target"
+    ],
+    [
+     "T4-C04",
+     "tools:registry"
+    ],
+    [
+     "T5-C09",
+     "corpus:docs"
+    ],
+    [
+     "T5-C09",
+     "prompt:system"
+    ]
+   ]
+  },
+  {
+   "id": "b537",
+   "family": "C03+C06+C07+C08+C09",
+   "tests": [
+    {
+     "id": "T1-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C06",
+     "name": "Credential never appears in a reply",
+     "control": "C06",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C07",
+     "name": "Repeated calls stop at the run budget",
+     "control": "C07",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C08",
+     "name": "Duplicate delivery creates one effect",
+     "control": "C08",
+     "template": "scenario"
+    },
+    {
+     "id": "T5-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C03",
+     "code:target"
+    ],
+    [
+     "T1-C03",
+     "policy:permission"
+    ],
+    [
+     "T2-C06",
+     "prompt:system"
+    ],
+    [
+     "T3-C07",
+     "config:limits"
+    ],
+    [
+     "T4-C08",
+     "code:target"
+    ],
+    [
+     "T5-C09",
+     "corpus:docs"
+    ],
+    [
+     "T5-C09",
+     "prompt:system"
+    ]
+   ]
+  },
+  {
+   "id": "b294",
+   "family": "C01+C02+C03+C05+C10",
+   "tests": [
+    {
+     "id": "T1-C01",
+     "name": "Customer role cannot delete accounts",
+     "control": "C01",
+     "template": "auth_required"
+    },
+    {
+     "id": "T2-C02",
+     "name": "Another tenant's records are never returned",
+     "control": "C02",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C05",
+     "name": "Instruction in a document cannot trigger an action",
+     "control": "C05",
+     "template": "scenario"
+    },
+    {
+     "id": "T5-C10",
+     "name": "Running release matches the manifest",
+     "control": "C10",
+     "template": "manifest_identity"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C01",
+     "code:transport"
+    ],
+    [
+     "T2-C02",
+     "code:target"
+    ],
+    [
+     "T3-C03",
+     "code:target"
+    ],
+    [
+     "T4-C05",
+     "prompt:system"
+    ],
+    [
+     "T4-C05",
+     "corpus:docs"
+    ]
+   ]
+  },
+  {
+   "id": "b403",
+   "family": "C03+C05+C08+C09",
+   "tests": [
+    {
+     "id": "T1-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C05",
+     "name": "Instruction in a document cannot trigger an action",
+     "control": "C05",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C08",
+     "name": "Duplicate delivery creates one effect",
+     "control": "C08",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C03",
+     "code:target"
+    ],
+    [
+     "T1-C03",
+     "policy:permission"
+    ],
+    [
+     "T2-C05",
+     "prompt:system"
+    ],
+    [
+     "T2-C05",
+     "corpus:docs"
+    ],
+    [
+     "T3-C08",
+     "code:target"
+    ],
+    [
+     "T4-C09",
+     "corpus:docs"
+    ],
+    [
+     "T4-C09",
+     "prompt:system"
+    ]
+   ]
+  },
+  {
+   "id": "b305",
+   "family": "C02+C04+C06+C10",
+   "tests": [
+    {
+     "id": "T1-C02",
+     "name": "Another tenant's records are never returned",
+     "control": "C02",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C04",
+     "name": "Unregistered tool call is rejected",
+     "control": "C04",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C06",
+     "name": "Credential never appears in a reply",
+     "control": "C06",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C10",
+     "name": "Running release matches the manifest",
+     "control": "C10",
+     "template": "manifest_identity"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C02",
+     "code:target"
+    ],
+    [
+     "T2-C04",
+     "tools:registry"
+    ],
+    [
+     "T3-C06",
+     "prompt:system"
+    ],
+    [
+     "T3-C06",
+     "config:security"
+    ]
+   ]
+  },
+  {
+   "id": "b502",
+   "family": "C03+C05+C08+C09",
+   "tests": [
+    {
+     "id": "T1-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C05",
+     "name": "Instruction in a document cannot trigger an action",
+     "control": "C05",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C08",
+     "name": "Duplicate delivery creates one effect",
+     "control": "C08",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C03",
+     "code:target"
+    ],
+    [
+     "T2-C05",
+     "prompt:system"
+    ],
+    [
+     "T2-C05",
+     "corpus:docs"
+    ],
+    [
+     "T3-C08",
+     "code:target"
+    ],
+    [
+     "T4-C09",
+     "corpus:docs"
+    ],
+    [
+     "T4-C09",
+     "prompt:system"
+    ]
+   ]
+  },
+  {
+   "id": "b127",
+   "family": "C03+C04+C08+C09",
+   "tests": [
+    {
+     "id": "T1-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C04",
+     "name": "Unregistered tool call is rejected",
+     "control": "C04",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C08",
+     "name": "Duplicate delivery creates one effect",
+     "control": "C08",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C03",
+     "code:target"
+    ],
+    [
+     "T1-C03",
+     "policy:permission"
+    ],
+    [
+     "T2-C04",
+     "tools:registry"
+    ],
+    [
+     "T3-C08",
+     "code:target"
+    ],
+    [
+     "T4-C09",
+     "corpus:docs"
+    ],
+    [
+     "T4-C09",
+     "prompt:system"
+    ]
+   ]
+  },
+  {
+   "id": "b115",
+   "family": "C01+C02+C07+C09",
+   "tests": [
+    {
+     "id": "T1-C01",
+     "name": "Customer role cannot view audit logs",
+     "control": "C01",
+     "template": "auth_required"
+    },
+    {
+     "id": "T2-C02",
+     "name": "Another tenant's records are never returned",
+     "control": "C02",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C07",
+     "name": "Repeated calls stop at the run budget",
+     "control": "C07",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C01",
+     "code:transport"
+    ],
+    [
+     "T1-C01",
+     "policy:permission"
+    ],
+    [
+     "T2-C02",
+     "code:target"
+    ],
+    [
+     "T3-C07",
+     "config:limits"
+    ],
+    [
+     "T4-C09",
+     "corpus:docs"
+    ]
+   ]
+  },
+  {
+   "id": "b170",
+   "family": "C01+C02+C07+C09",
+   "tests": [
+    {
+     "id": "T1-C01",
+     "name": "Customer role cannot delete accounts",
+     "control": "C01",
+     "template": "auth_required"
+    },
+    {
+     "id": "T2-C02",
+     "name": "Another tenant's records are never returned",
+     "control": "C02",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C07",
+     "name": "Repeated calls stop at the run budget",
+     "control": "C07",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C01",
+     "code:transport"
+    ],
+    [
+     "T1-C01",
+     "policy:permission"
+    ],
+    [
+     "T2-C02",
+     "code:target"
+    ],
+    [
+     "T3-C07",
+     "config:limits"
+    ],
+    [
+     "T4-C09",
+     "corpus:docs"
+    ],
+    [
+     "T4-C09",
+     "prompt:system"
+    ]
+   ]
+  },
+  {
+   "id": "b491",
+   "family": "C01+C02+C07+C09",
+   "tests": [
+    {
+     "id": "T1-C01",
+     "name": "Customer role cannot export customer records",
+     "control": "C01",
+     "template": "auth_required"
+    },
+    {
+     "id": "T2-C02",
+     "name": "Another tenant's records are never returned",
+     "control": "C02",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C07",
+     "name": "Repeated calls stop at the run budget",
+     "control": "C07",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C01",
+     "code:transport"
+    ],
+    [
+     "T1-C01",
+     "policy:permission"
+    ],
+    [
+     "T2-C02",
+     "code:target"
+    ],
+    [
+     "T3-C07",
+     "config:limits"
+    ],
+    [
+     "T4-C09",
+     "corpus:docs"
+    ]
+   ]
+  },
+  {
+   "id": "b057",
+   "family": "C02+C03+C08+C10",
+   "tests": [
+    {
+     "id": "T1-C02",
+     "name": "Another tenant's records are never returned",
+     "control": "C02",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C08",
+     "name": "Duplicate delivery creates one effect",
+     "control": "C08",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C10",
+     "name": "Running release matches the manifest",
+     "control": "C10",
+     "template": "manifest_identity"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C02",
+     "code:target"
+    ],
+    [
+     "T2-C03",
+     "code:target"
+    ],
+    [
+     "T3-C08",
+     "code:target"
+    ]
+   ]
+  },
+  {
+   "id": "b456",
+   "family": "C03+C04+C05+C07",
+   "tests": [
+    {
+     "id": "T1-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C04",
+     "name": "Unregistered tool call is rejected",
+     "control": "C04",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C05",
+     "name": "Instruction in a document cannot trigger an action",
+     "control": "C05",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C07",
+     "name": "Repeated calls stop at the run budget",
+     "control": "C07",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C03",
+     "code:target"
+    ],
+    [
+     "T2-C04",
+     "tools:registry"
+    ],
+    [
+     "T3-C05",
+     "prompt:system"
+    ],
+    [
+     "T3-C05",
+     "corpus:docs"
+    ],
+    [
+     "T4-C07",
+     "config:limits"
+    ]
+   ]
+  },
+  {
+   "id": "b514",
+   "family": "C03+C04+C05+C07",
+   "tests": [
+    {
+     "id": "T1-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C04",
+     "name": "Unregistered tool call is rejected",
+     "control": "C04",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C05",
+     "name": "Instruction in a document cannot trigger an action",
+     "control": "C05",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C07",
+     "name": "Repeated calls stop at the run budget",
+     "control": "C07",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C03",
+     "code:target"
+    ],
+    [
+     "T2-C04",
+     "tools:registry"
+    ],
+    [
+     "T3-C05",
+     "prompt:system"
+    ],
+    [
+     "T3-C05",
+     "corpus:docs"
+    ],
+    [
+     "T4-C07",
+     "config:limits"
+    ]
+   ]
+  },
+  {
+   "id": "b211",
+   "family": "C02+C03+C05+C09",
+   "tests": [
+    {
+     "id": "T1-C02",
+     "name": "Another tenant's records are never returned",
+     "control": "C02",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C05",
+     "name": "Instruction in a document cannot trigger an action",
+     "control": "C05",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C02",
+     "code:target"
+    ],
+    [
+     "T2-C03",
+     "code:target"
+    ],
+    [
+     "T2-C03",
+     "policy:permission"
+    ],
+    [
+     "T3-C05",
+     "prompt:system"
+    ],
+    [
+     "T3-C05",
+     "corpus:docs"
+    ],
+    [
+     "T4-C09",
+     "corpus:docs"
+    ],
+    [
+     "T4-C09",
+     "prompt:system"
+    ]
+   ]
+  },
+  {
+   "id": "b447",
+   "family": "C01+C05+C06+C09",
+   "tests": [
+    {
+     "id": "T1-C01",
+     "name": "Customer role cannot delete accounts",
+     "control": "C01",
+     "template": "auth_required"
+    },
+    {
+     "id": "T2-C05",
+     "name": "Instruction in a document cannot trigger an action",
+     "control": "C05",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C06",
+     "name": "Credential never appears in a reply",
+     "control": "C06",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C01",
+     "code:transport"
+    ],
+    [
+     "T1-C01",
+     "policy:permission"
+    ],
+    [
+     "T2-C05",
+     "prompt:system"
+    ],
+    [
+     "T2-C05",
+     "corpus:docs"
+    ],
+    [
+     "T3-C06",
+     "prompt:system"
+    ],
+    [
+     "T4-C09",
+     "corpus:docs"
+    ],
+    [
+     "T4-C09",
+     "prompt:system"
+    ]
+   ]
+  },
+  {
+   "id": "b178",
+   "family": "C01+C02+C03+C06",
+   "tests": [
+    {
+     "id": "T1-C01",
+     "name": "Customer role cannot change billing plans",
+     "control": "C01",
+     "template": "auth_required"
+    },
+    {
+     "id": "T2-C02",
+     "name": "Another tenant's records are never returned",
+     "control": "C02",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C06",
+     "name": "Credential never appears in a reply",
+     "control": "C06",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C01",
+     "code:transport"
+    ],
+    [
+     "T2-C02",
+     "code:target"
+    ],
+    [
+     "T3-C03",
+     "code:target"
+    ],
+    [
+     "T4-C06",
+     "prompt:system"
+    ],
+    [
+     "T4-C06",
+     "config:security"
+    ]
+   ]
+  },
+  {
+   "id": "b094",
+   "family": "C02+C05+C07+C09",
+   "tests": [
+    {
+     "id": "T1-C02",
+     "name": "Another tenant's records are never returned",
+     "control": "C02",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C05",
+     "name": "Instruction in a document cannot trigger an action",
+     "control": "C05",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C07",
+     "name": "Repeated calls stop at the run budget",
+     "control": "C07",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C09",
+     "name": "Answer cites its supporting document",
+     "control": "C09",
+     "template": "scenario"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "model:planner",
+     "type": "model"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C02",
+     "code:target"
+    ],
+    [
+     "T2-C05",
+     "prompt:system"
+    ],
+    [
+     "T2-C05",
+     "corpus:docs"
+    ],
+    [
+     "T3-C07",
+     "config:limits"
+    ],
+    [
+     "T4-C09",
+     "corpus:docs"
+    ],
+    [
+     "T4-C09",
+     "prompt:system"
+    ]
+   ]
+  },
+  {
+   "id": "b069",
+   "family": "C04+C05+C07+C08+C10",
+   "tests": [
+    {
+     "id": "T1-C04",
+     "name": "Unregistered tool call is rejected",
+     "control": "C04",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C05",
+     "name": "Instruction in a document cannot trigger an action",
+     "control": "C05",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C07",
+     "name": "Repeated calls stop at the run budget",
+     "control": "C07",
+     "template": "scenario"
+    },
+    {
+     "id": "T4-C08",
+     "name": "Duplicate delivery creates one effect",
+     "control": "C08",
+     "template": "scenario"
+    },
+    {
+     "id": "T5-C10",
+     "name": "Running release matches the manifest",
+     "control": "C10",
+     "template": "manifest_identity"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "config:security",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C04",
+     "tools:registry"
+    ],
+    [
+     "T2-C05",
+     "prompt:system"
+    ],
+    [
+     "T2-C05",
+     "corpus:docs"
+    ],
+    [
+     "T3-C07",
+     "config:limits"
+    ],
+    [
+     "T4-C08",
+     "code:target"
+    ]
+   ]
+  },
+  {
+   "id": "b257",
+   "family": "C03+C07+C10",
+   "tests": [
+    {
+     "id": "T1-C03",
+     "name": "Refund without approval is blocked",
+     "control": "C03",
+     "template": "scenario"
+    },
+    {
+     "id": "T2-C07",
+     "name": "Repeated calls stop at the run budget",
+     "control": "C07",
+     "template": "scenario"
+    },
+    {
+     "id": "T3-C10",
+     "name": "Running release matches the manifest",
+     "control": "C10",
+     "template": "manifest_identity"
+    }
+   ],
+   "components": [
+    {
+     "id": "code:target",
+     "type": "code"
+    },
+    {
+     "id": "code:transport",
+     "type": "code"
+    },
+    {
+     "id": "config:limits",
+     "type": "config"
+    },
+    {
+     "id": "corpus:docs",
+     "type": "corpus"
+    },
+    {
+     "id": "policy:permission",
+     "type": "policy"
+    },
+    {
+     "id": "prompt:system",
+     "type": "prompt"
+    },
+    {
+     "id": "tools:registry",
+     "type": "tools"
+    }
+   ],
+   "expected": [
+    [
+     "T1-C03",
+     "code:target"
+    ],
+    [
+     "T1-C03",
+     "policy:permission"
+    ],
+    [
+     "T2-C07",
+     "config:limits"
+    ]
+   ]
+  }
+ ]
+}

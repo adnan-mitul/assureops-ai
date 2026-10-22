@@ -20,7 +20,7 @@ def set_executor(fn):
 class McpReferenceAdapter(Adapter):
     adapter_id = "assureops-mcp-reference"
     version = "0.3.0"
-    evaluator_version = "reference-runner-1.0.0"
+    evaluator_version = "reference-runner-1.1.0"  # 1.1: "inconclusive" when the attempt under test is never made
 
     def __init__(self):
         self._http = HttpJsonAdapter()

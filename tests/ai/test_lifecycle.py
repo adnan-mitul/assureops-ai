@@ -152,3 +152,28 @@ def test_one_workspace_cannot_fill_the_shared_queue(workspace, monkeypatch):
             service.request(s, app, PHASE, {}, "dev@acme.test")
         assert exc.value.code == "queue_full"
         s.execute(delete(Outbox).where(Outbox.workspace_id == workspace, Outbox.kind == "ai_phase"))
+
+
+def test_a_passed_quick_check_never_qualifies_or_replaces_a_qualification_but_a_critical_one_disables(candidates, monkeypatch):
+    from assureops_ai.registry import QUICK_STATUS
+
+    monkeypatch.setenv("PRIVATE_INFERENCE_URL", "http://127.0.0.1:9/v1")
+    a, b = candidates
+    phase = PHASES[PHASE]
+
+    def record(model: str, status: str):
+        with platform_session() as p:
+            p.add(ModelQualification(phase=PHASE, provider="private", model=model, artifact_digest="test", prompt_version=phase.prompt_version,
+                                     schema_version=phase.schema_version, dataset="phase-C-holdout-quick", metrics={}, status=status,
+                                     recorded_by="test"))
+
+    record(b, QUICK_STATUS)  # a quick pass alone is not a qualification
+    assert not router._resolve(PHASE, False, b, "").available
+    _qualify(a)
+    record(a, QUICK_STATUS)  # a later quick pass leaves the full qualification in force
+    assert router._resolve(PHASE, False, a, "").available
+    with platform_session() as p:
+        row = lifecycle.register(p, phase=PHASE, provider="private", model=a, actor="op1")
+        assert lifecycle.current_qualification(p, row).status == "qualified"
+    record(a, "not_qualified")  # a quick run that found a critical error switches the route off
+    assert not router._resolve(PHASE, False, a, "").available

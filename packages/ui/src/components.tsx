@@ -103,6 +103,7 @@ const STATUS: Record<string, { label: string; style: string; icon: typeof Circle
   reused: { label: "Reused", style: INFO, icon: CircleCheck },
   // test outcome
   passed: { label: "Passed", style: GOOD, icon: CircleCheck },
+  inconclusive: { label: "Inconclusive", style: NEUTRAL, icon: CircleHelp },
   error: { label: "Infrastructure error", style: NEUTRAL, icon: CircleHelp },
   // assessment_job
   queued: { label: "Queued", style: WARN, icon: Clock3 },

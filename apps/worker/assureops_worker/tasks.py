@@ -94,11 +94,11 @@ def _run_reference(job, app_row, conn, p, test, step_id) -> dict:
     try:
         for _ in range(test["trials"]):
             ok, record = runner.IMPLEMENTATIONS[test["args"]["implementation"]](target)
-            trials.append({"passed": bool(ok), "record": record})
+            trials.append(runner.trial(ok, record))
     except Exception as exc:  # infrastructure error: not proof of an application defect
         return {"status": "error", "error": f"{exc.__class__.__name__}: {exc}", "trials": trials}
     return {"status": "completed", "trials": trials, "adapter": "assureops-mcp-reference", "adapter_version": "0.3.0",
-            "evaluator_version": "reference-runner-1.0.0"}
+            "evaluator_version": "reference-runner-1.1.0"}  # 1.1: "inconclusive" when the attempt is never made
 
 
 def _run_via_relay(workspace_id: str, application_id: str, step_id: str, token: int, capsule: dict, timeout: float, tick) -> dict:
@@ -184,7 +184,10 @@ def run_step(self, workspace_id: str, step_id: str):
         job = s.get(Assessment, current.assessment_id)
         release = s.get(Release, job.release_id)
         passed = sum(t["passed"] for t in trials)
-        outcome = "error" if error else ("passed" if passed == len(trials) else "failed")
+        unexercised = sum(bool(t.get("inconclusive")) for t in trials)
+        # Inconclusive only when no trial failed: one real failure is a failure whatever the other trials did.
+        outcome = "error" if error else ("passed" if passed == len(trials) else "failed" if len(trials) - passed - unexercised
+                                         else "inconclusive")
         record = {"test_id": current.test_id, "template": test.get("template"), "release": release.version,
                   "release_manifest_hash": release.manifest_hash, "expected": test["expected"], "error": error,
                   "partial_record": outcome_raw.get("partial_record"), "trials": trials,
@@ -198,7 +201,7 @@ def run_step(self, workspace_id: str, step_id: str):
         edges = reducer.accepted_edges(s, job.application_id, p)
         run = TestRun(workspace_id=workspace_id, application_id=job.application_id, release_id=release.id, assessment_id=job.id, step_id=step_id,
                       test_id=current.test_id, control_id=test["control"], outcome=outcome, trials=len(trials) or test["trials"], passed_trials=passed,
-                      trial_outcomes=[t["passed"] for t in trials], dependency_fingerprints=reducer.dependency_fingerprints(release, edges.get(current.test_id, [])),
+                      trial_outcomes=[None if t.get("inconclusive") else t["passed"] for t in trials], dependency_fingerprints=reducer.dependency_fingerprints(release, edges.get(current.test_id, [])),
                       profile_version=profile_version(p), artifact_id=artifact.id, expected=test["expected"],
                       observation_source=_observation_source(frozen), test_digest=test["digest"],
                       evaluator_version=outcome_raw.get("evaluator_version") or frozen["connection"].get("evaluator_version", ""))

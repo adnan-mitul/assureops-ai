@@ -332,7 +332,7 @@ class TestRun(Base):
     step_id: Mapped[str] = mapped_column(String, unique=True)  # one committed result per logical step
     test_id: Mapped[str] = mapped_column(String)
     control_id: Mapped[str] = mapped_column(String)
-    outcome: Mapped[str] = mapped_column(String)  # passed | failed | error
+    outcome: Mapped[str] = mapped_column(String)  # passed | failed | inconclusive (attempt never made) | error
     trials: Mapped[int] = mapped_column(Integer)
     passed_trials: Mapped[int] = mapped_column(Integer)
     trial_outcomes: Mapped[list] = mapped_column(JSON)

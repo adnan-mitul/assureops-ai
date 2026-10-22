@@ -287,19 +287,19 @@ def _screen(workspace_id, result_id, token, route, data) -> str:
 def _classify(workspace_id, result_id, token, route, data, ctx) -> str:
     """Phase D: NLI signals beside the actual test outcome. A signal never changes the outcome; disagreement asks for review."""
     result = router.encoder_client(route).classify_pairs([tuple(p) for p in data["pairs"]], route.model)
-    call = {"provider": route.provider, "model": route.model, "prompt_version": "D-1", "schema_version": "D-1",
+    call = {"provider": route.provider, "model": route.model, "prompt_version": "D-2", "schema_version": "D-2",
             "input_sha256": canonical_hash(data), "status": result.status, "validation": {}, "usage": {}, "latency_ms": result.latency_ms}
     if not result.ok:
         return _finish(workspace_id, result_id, token, "pending" if result.status in ("timeout", "unavailable") else "unavailable",
                        call=call, route=route, error=result.error, retry=result.status in ("timeout", "unavailable"))
     signals = []
     for pair, scores in zip(data["pairs"], result.parsed["result"]):
-        best = max(scores, key=lambda x: x.get("score", 0)) if isinstance(scores, list) and scores else {}
-        label = str(best.get("label", "")).lower()
-        if label not in LABELS:
+        sig = validation.nli_signal(pair[0], pair[1], scores if isinstance(scores, list) else [])
+        if sig["label"] not in LABELS:
             return _finish(workspace_id, result_id, token, "unavailable", call={**call, "status": "invalid_output"}, route=route,
-                           error=f"classifier returned unknown label {label!r}")
-        signals.append({"claim": pair[1], "premise_excerpt": pair[0][:200], "label": label, "score": round(float(best.get("score", 0)), 4)})
+                           error=f"classifier returned unknown label {sig['label']!r}")
+        signals.append({"claim": pair[1], "premise_excerpt": pair[0][:200], "label": sig["label"], "score": round(sig["score"], 4),
+                        **({"guard": sig["guard"]} if sig["guard"] else {})})
     contradicts = any(sg["label"] == "contradiction" for sg in signals) and ctx["outcome"] == "passed"
     unsupported = ctx["outcome"] == "passed" and not any(sg["label"] == "entailment" for sg in signals)
     status = "review_required" if contradicts or unsupported else "proposed"
