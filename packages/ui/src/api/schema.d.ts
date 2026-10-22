@@ -1815,6 +1815,26 @@ export interface paths {
         patch?: never;
         trace?: never;
     };
+    "/v1/staff/cases/{case_id}/prepare": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Prepare
+         * @description Verify the customer's connection and collect the running release, so the application can be planned and assessed.
+         */
+        post: operations["prepare_v1_staff_cases__case_id__prepare_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
     "/v1/staff/cases/{case_id}/profile-reviews": {
         parameters: {
             query?: never;
@@ -1844,6 +1864,26 @@ export interface paths {
         put?: never;
         /** Staff Propose Profile */
         post: operations["staff_propose_profile_v1_staff_cases__case_id__profiles_post"];
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/staff/cases/{case_id}/profiles/baseline": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        get?: never;
+        put?: never;
+        /**
+         * Staff Baseline
+         * @description Propose a test plan from what the customer declared at submission; an AssureOps admin activates it.
+         */
+        post: operations["staff_baseline_v1_staff_cases__case_id__profiles_baseline_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2128,6 +2168,30 @@ export interface paths {
         get: operations["work_queue_v1_staff_work_queue_get"];
         put?: never;
         post?: never;
+        delete?: never;
+        options?: never;
+        head?: never;
+        patch?: never;
+        trace?: never;
+    };
+    "/v1/submissions": {
+        parameters: {
+            query?: never;
+            header?: never;
+            path?: never;
+            cookie?: never;
+        };
+        /**
+         * My Submissions
+         * @description The customer's applications under test: where each stands and the published result, if any.
+         */
+        get: operations["my_submissions_v1_submissions_get"];
+        put?: never;
+        /**
+         * Submit
+         * @description One step for the customer: application, connection, repository and an assessment case for AssureOps.
+         */
+        post: operations["submit_v1_submissions_post"];
         delete?: never;
         options?: never;
         head?: never;
@@ -2657,6 +2721,60 @@ export interface components {
             note: string;
             /** To */
             to: string;
+        };
+        /** SubmissionIn */
+        SubmissionIn: {
+            /**
+             * Base Url
+             * @description where the running application answers, scheme://host[:port]
+             */
+            base_url: string;
+            /**
+             * Chat Path
+             * @description the endpoint that takes a user message, e.g. /chat
+             */
+            chat_path?: string | null;
+            /**
+             * Environment
+             * @default staging
+             */
+            environment: string;
+            /** Extra Paths */
+            extra_paths?: string[];
+            /**
+             * Health Path
+             * @default /health
+             */
+            health_path: string;
+            /**
+             * Manifest Path
+             * @default /manifest
+             */
+            manifest_path: string;
+            /**
+             * Message Field
+             * @default message
+             */
+            message_field: string;
+            /** Name */
+            name: string;
+            /** Purpose */
+            purpose: string;
+            /**
+             * Reply Field
+             * @default reply
+             */
+            reply_field: string;
+            /**
+             * Repository
+             * @description GitHub link or owner/name
+             */
+            repository: string;
+            /**
+             * Test Token
+             * @description bearer token of a synthetic test account
+             */
+            test_token?: string | null;
         };
         /** TransitionIn */
         TransitionIn: {
@@ -6751,6 +6869,39 @@ export interface operations {
             };
         };
     };
+    prepare_v1_staff_cases__case_id__prepare_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
     staff_review_profile_v1_staff_cases__case_id__profile_reviews_post: {
         parameters: {
             query?: never;
@@ -6837,6 +6988,39 @@ export interface operations {
                 "application/json": components["schemas"]["StaffProfileIn"];
             };
         };
+        responses: {
+            /** @description Successful Response */
+            201: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    staff_baseline_v1_staff_cases__case_id__profiles_baseline_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+            };
+            path: {
+                case_id: string;
+            };
+            cookie?: never;
+        };
+        requestBody?: never;
         responses: {
             /** @description Successful Response */
             201: {
@@ -7367,6 +7551,74 @@ export interface operations {
         responses: {
             /** @description Successful Response */
             200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    my_submissions_v1_submissions_get: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-workspace-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody?: never;
+        responses: {
+            /** @description Successful Response */
+            200: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": unknown;
+                };
+            };
+            /** @description Validation Error */
+            422: {
+                headers: {
+                    [name: string]: unknown;
+                };
+                content: {
+                    "application/json": components["schemas"]["HTTPValidationError"];
+                };
+            };
+        };
+    };
+    submit_v1_submissions_post: {
+        parameters: {
+            query?: never;
+            header?: {
+                authorization?: string | null;
+                "x-workspace-id"?: string | null;
+            };
+            path?: never;
+            cookie?: never;
+        };
+        requestBody: {
+            content: {
+                "application/json": components["schemas"]["SubmissionIn"];
+            };
+        };
+        responses: {
+            /** @description Successful Response */
+            201: {
                 headers: {
                     [name: string]: unknown;
                 };

@@ -42,8 +42,8 @@ def load_env() -> dict:
     return values
 
 
-def client(client_id: str, secret: str, port: int, audience: str, token_lifespan: int) -> dict:
-    origin = f"http://localhost:{port}"
+def client(client_id: str, secret: str, port: int, audience: str, token_lifespan: int, origin: str | None = None) -> dict:
+    origin = (origin or f"http://localhost:{port}").rstrip("/")  # PUBLIC_*_ORIGIN when hosted
     return {
         "clientId": client_id,
         "protocol": "openid-connect",
@@ -131,11 +131,12 @@ def main():
             added.append(f"{otp_key(email)}={env[otp_key(email)]}")
     if added:
         ENV_FILE.write_text(ENV_FILE.read_text().rstrip("\n") + "\n# Staff TOTP secrets (local test values)\n" + "\n".join(added) + "\n")
-    staff_client = client("staff-web", env["STAFF_WEB_CLIENT_SECRET"], 3710, "assureops-staff-api", 300)
+    staff_client = client("staff-web", env["STAFF_WEB_CLIENT_SECRET"], 3710, "assureops-staff-api", 300, env.get("PUBLIC_STAFF_ORIGIN"))
     staff_client["protocolMappers"].append(AMR_MAPPER)
     realms = {
         "realm-assureops.rendered.json": realm(
-            "assureops", [client("customer-web", env["CUSTOMER_WEB_CLIENT_SECRET"], 3700, "assureops-customer-api", 300)],
+            "assureops", [client("customer-web", env["CUSTOMER_WEB_CLIENT_SECRET"], 3700, "assureops-customer-api", 300,
+                                       env.get("PUBLIC_CUSTOMER_ORIGIN"))],
             [user(e, f, l, password) for e, f, l in CUSTOMER_USERS], 1800, registration=True),
         "realm-assureops-staff.rendered.json": {**realm(
             "assureops-staff", [staff_client],

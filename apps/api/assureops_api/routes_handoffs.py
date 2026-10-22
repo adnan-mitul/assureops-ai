@@ -1,5 +1,6 @@
 """Public inquiries, staff conversion into workspaces, invitations, member grants/revocation."""
 
+import os
 import re
 import time
 
@@ -15,7 +16,7 @@ from .auth import Caller, CustomerCaller, StaffCaller, _verify, api_error
 from assureops_domain.config import settings
 
 router = APIRouter(prefix="/v1", tags=["handoffs"])
-PORTAL = "http://localhost:3700"
+PORTAL = os.environ.get("PUBLIC_CUSTOMER_ORIGIN", "http://localhost:3700")  # invitation links point here; set the public address when hosted
 
 
 def _err(exc: handoffs.HandoffError):

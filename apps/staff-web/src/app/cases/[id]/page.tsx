@@ -10,6 +10,7 @@ import { CaseHeader } from "@/components/case/CaseHeader";
 import { EvidenceRequests, MessageThread } from "@/components/case/CaseConversation";
 import { FindingsPanel } from "@/components/case/FindingsPanel";
 import { ReadinessPanel } from "@/components/case/ReadinessPanel";
+import { SetupPanel } from "@/components/case/SetupPanel";
 import { TestEvidence } from "@/components/case/TestEvidence";
 import { AnalystActions, AssessmentsPanel, ReportsPanel } from "@/components/case/WorkPanel";
 import { CaseTabs } from "@/components/staff-ui";
@@ -38,6 +39,7 @@ function CaseWorkspace() {
       {error && <ApiErrorBanner error={error} />}
       <CaseHeader data={data} />
       <CaseTabs caseId={data.id} active="workspace" />
+      <SetupPanel data={data} onChange={refresh} />
       <AnalystActions data={data} onChange={refresh} />
       <ReadinessPanel overview={data.overview} />
       {data.overview.readiness && <TestEvidence caseId={data.id} readiness={data.overview.readiness} duty={data.your_duty} onChange={refresh} />}

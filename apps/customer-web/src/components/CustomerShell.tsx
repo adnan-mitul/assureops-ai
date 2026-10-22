@@ -2,12 +2,13 @@
 
 import { useUnread } from "@assureops/ui/inbox";
 import { MobileNav, NoAccess, Sidebar, SkipLink, Topbar, type NavItem } from "@assureops/ui/shell";
-import { Activity, Boxes, Building2, ClipboardCheck, FileBadge, FileText, FolderKanban, GitBranch, House, Settings, TriangleAlert } from "lucide-react";
+import { Activity, Boxes, Building2, ClipboardCheck, FileBadge, FileText, FolderKanban, GitBranch, House, Send, Settings, TriangleAlert } from "lucide-react";
 import type { ReactNode } from "react";
 import { AppProvider, useApp } from "@/lib/app-context";
 
 const NAV: NavItem[] = [
   { href: "/overview", label: "Dashboard", icon: House },
+  { href: "/submit", label: "Test an application", icon: Send },
   { href: "/applications", label: "Applications", icon: Boxes },
   { href: "/assessments", label: "Assessments", icon: ClipboardCheck },
   { href: "/findings", label: "Findings", icon: TriangleAlert },

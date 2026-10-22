@@ -1420,6 +1420,101 @@
     "title": "StageIn",
     "type": "object"
    },
+   "SubmissionIn": {
+    "properties": {
+     "base_url": {
+      "description": "where the running application answers, scheme://host[:port]",
+      "title": "Base Url",
+      "type": "string"
+     },
+     "chat_path": {
+      "anyOf": [
+       {
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "the endpoint that takes a user message, e.g. /chat",
+      "title": "Chat Path"
+     },
+     "environment": {
+      "default": "staging",
+      "pattern": "^(staging|production)$",
+      "title": "Environment",
+      "type": "string"
+     },
+     "extra_paths": {
+      "items": {
+       "type": "string"
+      },
+      "maxItems": 20,
+      "title": "Extra Paths",
+      "type": "array"
+     },
+     "health_path": {
+      "default": "/health",
+      "title": "Health Path",
+      "type": "string"
+     },
+     "manifest_path": {
+      "default": "/manifest",
+      "title": "Manifest Path",
+      "type": "string"
+     },
+     "message_field": {
+      "default": "message",
+      "maxLength": 60,
+      "title": "Message Field",
+      "type": "string"
+     },
+     "name": {
+      "maxLength": 120,
+      "minLength": 3,
+      "title": "Name",
+      "type": "string"
+     },
+     "purpose": {
+      "maxLength": 2000,
+      "minLength": 10,
+      "title": "Purpose",
+      "type": "string"
+     },
+     "reply_field": {
+      "default": "reply",
+      "maxLength": 60,
+      "title": "Reply Field",
+      "type": "string"
+     },
+     "repository": {
+      "description": "GitHub link or owner/name",
+      "title": "Repository",
+      "type": "string"
+     },
+     "test_token": {
+      "anyOf": [
+       {
+        "maxLength": 4096,
+        "type": "string"
+       },
+       {
+        "type": "null"
+       }
+      ],
+      "description": "bearer token of a synthetic test account",
+      "title": "Test Token"
+     }
+    },
+    "required": [
+     "name",
+     "purpose",
+     "repository",
+     "base_url"
+    ],
+    "title": "SubmissionIn",
+    "type": "object"
+   },
    "TransitionIn": {
     "properties": {
      "result": {
@@ -9735,6 +9830,63 @@
     ]
    }
   },
+  "/v1/staff/cases/{case_id}/prepare": {
+   "post": {
+    "description": "Verify the customer's connection and collect the running release, so the application can be planned and assessed.",
+    "operationId": "prepare_v1_staff_cases__case_id__prepare_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "case_id",
+      "required": true,
+      "schema": {
+       "title": "Case Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Prepare",
+    "tags": [
+     "simple"
+    ]
+   }
+  },
   "/v1/staff/cases/{case_id}/profile-reviews": {
    "post": {
     "operationId": "staff_review_profile_v1_staff_cases__case_id__profile_reviews_post",
@@ -9918,6 +10070,63 @@
     "summary": "Staff Propose Profile",
     "tags": [
      "staff"
+    ]
+   }
+  },
+  "/v1/staff/cases/{case_id}/profiles/baseline": {
+   "post": {
+    "description": "Propose a test plan from what the customer declared at submission; an AssureOps admin activates it.",
+    "operationId": "staff_baseline_v1_staff_cases__case_id__profiles_baseline_post",
+    "parameters": [
+     {
+      "in": "path",
+      "name": "case_id",
+      "required": true,
+      "schema": {
+       "title": "Case Id",
+       "type": "string"
+      }
+     },
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     }
+    ],
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Staff Baseline",
+    "tags": [
+     "simple"
     ]
    }
   },
@@ -10786,6 +10995,142 @@
     "summary": "Work Queue",
     "tags": [
      "staff"
+    ]
+   }
+  },
+  "/v1/submissions": {
+   "get": {
+    "description": "The customer's applications under test: where each stands and the published result, if any.",
+    "operationId": "my_submissions_v1_submissions_get",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-workspace-id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Workspace-Id"
+      }
+     }
+    ],
+    "responses": {
+     "200": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "My Submissions",
+    "tags": [
+     "simple"
+    ]
+   },
+   "post": {
+    "description": "One step for the customer: application, connection, repository and an assessment case for AssureOps.",
+    "operationId": "submit_v1_submissions_post",
+    "parameters": [
+     {
+      "in": "header",
+      "name": "authorization",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "Authorization"
+      }
+     },
+     {
+      "in": "header",
+      "name": "x-workspace-id",
+      "required": false,
+      "schema": {
+       "anyOf": [
+        {
+         "type": "string"
+        },
+        {
+         "type": "null"
+        }
+       ],
+       "title": "X-Workspace-Id"
+      }
+     }
+    ],
+    "requestBody": {
+     "content": {
+      "application/json": {
+       "schema": {
+        "$ref": "#/components/schemas/SubmissionIn"
+       }
+      }
+     },
+     "required": true
+    },
+    "responses": {
+     "201": {
+      "content": {
+       "application/json": {
+        "schema": {}
+       }
+      },
+      "description": "Successful Response"
+     },
+     "422": {
+      "content": {
+       "application/json": {
+        "schema": {
+         "$ref": "#/components/schemas/HTTPValidationError"
+        }
+       }
+      },
+      "description": "Validation Error"
+     }
+    },
+    "summary": "Submit",
+    "tags": [
+     "simple"
     ]
    }
   },

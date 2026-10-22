@@ -86,9 +86,13 @@ services:
     environment:
       KC_BOOTSTRAP_ADMIN_USERNAME: admin
       KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD}
+      # Behind a TLS proxy (docs/guides/free-deployment.md) the public issuer comes from the proxy's X-Forwarded headers;
+      # the port is published on 127.0.0.1 only, so nothing else can set them.
+      KC_PROXY_HEADERS: xforwarded
     volumes:
       - ./keycloak/realm-assureops.rendered.json:/opt/keycloak/data/import/realm-assureops.json:ro
       - ./keycloak/realm-assureops-staff.rendered.json:/opt/keycloak/data/import/realm-assureops-staff.json:ro
+      - kcdata:/opt/keycloak/data/h2  # accounts people register survive restarts (the realm import only seeds a new database)
 
   objectstore:
     image: chrislusf/seaweedfs:3.80
@@ -215,3 +219,4 @@ volumes:
   pgdata:
   redisdata:
   objdata:
+  kcdata:

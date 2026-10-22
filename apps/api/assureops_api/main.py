@@ -4,7 +4,7 @@ from fastapi import FastAPI, HTTPException, Request
 from fastapi.exceptions import RequestValidationError
 from fastapi.responses import JSONResponse
 
-from . import ai_routes, metrics, routes_admin, routes_customer, routes_delivery, routes_handoffs, routes_integration, routes_notifications, routes_onboarding, routes_relay, routes_risk, routes_staff
+from . import ai_routes, metrics, routes_admin, routes_customer, routes_delivery, routes_handoffs, routes_integration, routes_notifications, routes_onboarding, routes_relay, routes_risk, routes_simple, routes_staff
 
 app = FastAPI(title="AssureOps API", version="0.3.0")
 
@@ -47,3 +47,4 @@ app.include_router(routes_handoffs.router)
 app.include_router(routes_risk.router)
 app.include_router(routes_notifications.router)
 app.include_router(routes_relay.router)
+app.include_router(routes_simple.router)

@@ -4,6 +4,26 @@ This walks through one customer, Acme, assessing its own AI application end to e
 
 Roles used below: **owner** (runs the workspace), **developer** (connects and changes one assigned application), **reviewer** (approves what someone else proposed), and on the AssureOps side an **analyst**, an independent **senior reviewer** and a **case manager**. One person never approves their own proposal.
 
+## The simple path (three roles)
+
+1. **Customer (workspace owner):** **Test an application** in the sidebar. Enter:
+   - the name and what the application does;
+   - the **GitHub link**;
+   - the **live URL**;
+   - the **environment** (staging or production);
+   - optionally the chat endpoint and a synthetic test account token.
+
+   Then **Submit for testing**. This creates the application, its connection, the repository binding and an assessment case in one step.
+2. **AssureOps admin** (staff portal, case manager): assigns a **developer** (analyst duty) and an **admin approver** (senior reviewer duty) to the new case.
+3. **AssureOps developer:** on the case's **Test setup** panel:
+   - **Verify and collect**;
+   - **Build test plan**;
+   - after the admin has activated the plan, **Run full assessment**, then **Draft report**.
+4. **AssureOps admin:** **Activate plan** on the same panel, then reviews and **publishes** the report. The developer can do neither.
+5. **Customer:** **Test an application → Your submissions** shows where each application stands. **Open the result** appears when the report is published, with the evidence bundle download.
+
+The sections below describe the full path, for customers who connect, plan and assess themselves.
+
 ## 0. What the application must offer
 
 AssureOps tests the application from outside, over HTTP, as named test accounts. The application provides:
