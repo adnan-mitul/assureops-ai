@@ -95,11 +95,6 @@
     <li><span class="ao-step">3</span><div><strong>Approve</strong><small>An independent admin checks the evidence</small></div></li>
     <li><span class="ao-step">4</span><div><strong>Report</strong><small>Results per area, with proof, by e-mail</small></div></li>
   </ol>
-  <div class="ao-stats">
-    <div><b>10</b><span>risk areas tested</span></div>
-    <div><b>~40%</b><span>fewer re-runs after a change</span></div>
-    <div><b>2</b><span>people behind every decision</span></div>
-  </div>
   <div class="ao-card">
     <div class="ao-card-head"><span>Refund Bot · 2.4.1</span><span class="ao-pill">Gate: ready</span></div>
     <div class="ao-bar"><i style="width:92%"></i></div>
@@ -117,6 +112,9 @@
     <main class="${properties.kcLoginMain!}">
       <div class="${properties.kcLoginMainHeader!}">
         <h1 class="${properties.kcLoginMainTitle!}" id="kc-page-title"><#nested "header"></h1>
+        <#if url.loginAction?? && (url.loginAction?contains("/login-actions/authenticate") || url.loginAction?contains("/protocol/openid-connect/auth"))>
+          <p class="ao-sub"><#if aoStaff>Staff access: password and a one-time code from your authenticator app.<#else>Welcome back. Sign in to follow your applications, results and reports.</#if></p>
+        </#if>
         <#if realm.internationalizationEnabled  && locale.supported?size gt 1>
         <div class="${properties.kcLoginMainHeaderUtilities!}">
           <div class="${properties.kcInputClass!}">
@@ -225,6 +223,7 @@
       <div class="pf-v5-c-login__main-footer">
         <#nested "socialProviders">
       </div>
+      <p class="ao-secure"><span class="ao-lock"></span>Secure sign-in. Your connection is encrypted and every action is recorded.</p>
     </main>
 
     <@loginFooter.content/>
