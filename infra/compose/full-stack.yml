@@ -145,6 +145,9 @@ services:
       dockerfile: infra/api/Dockerfile
     command: ["migrate"]
     restart: "no"
+    environment:
+      ENCODER_MODELS_DIR: /models/hf
+      ASSUREOPS_SEED_APPS: ${ASSUREOPS_SEED_APPS:-true}
     depends_on:
       postgres:
         condition: service_healthy
