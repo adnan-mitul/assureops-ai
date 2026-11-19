@@ -1,0 +1,25 @@
+# Caddy reverse proxy for AssureOps on a single VPS (host networking).
+# Ensures TLS via Let's Encrypt; internal API, DB, Redis, S3 and workers stay bound to 127.0.0.1.
+#
+# Run once on the VPS (after DNS A records point to the VPS IP and ports 80/443 are open):
+#   docker run -d --name caddy --network host --restart unless-stopped \
+#     -v "$PWD/infra/caddy/Caddyfile:/etc/caddy/Caddyfile:ro" \
+#     -v caddy_data:/data -v caddy_config:/config \
+#     caddy:2.8.4
+
+assureops-ai.rafidahad.me {
+	reverse_proxy 127.0.0.1:3700
+}
+
+staff.assureops-ai.rafidahad.me {
+	reverse_proxy 127.0.0.1:3710
+}
+
+auth.assureops-ai.rafidahad.me {
+	reverse_proxy 127.0.0.1:8780
+}
+
+# Optional: uncomment if external CI pipelines call /v1/integration/release-gate/check
+# api.assureops-ai.rafidahad.me {
+# 	reverse_proxy 127.0.0.1:8700
+# }
