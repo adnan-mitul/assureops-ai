@@ -36,6 +36,13 @@ def test_http_errors_map_to_typed_states(status, expected):
     assert r.status == expected and not r.ok
 
 
+def test_failed_json_generation_is_the_models_invalid_output_not_a_provider_error():
+    body = {"error": {"message": "Failed to generate JSON.", "type": "invalid_request_error", "code": "json_validate_failed"}}
+    calls = []
+    r = gen(provider(lambda req: httpx.Response(400, json=body), calls))
+    assert r.status == "invalid_output" and len(calls) == 1  # counted against the model, never retried
+
+
 def test_rate_limit_is_retried_with_a_bound(monkeypatch):
     monkeypatch.setattr("time.sleep", lambda *_: None)
     calls = []

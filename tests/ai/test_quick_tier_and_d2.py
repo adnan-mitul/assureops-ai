@@ -94,3 +94,15 @@ def test_phase_c_may_propose_runnable_scenarios_but_not_the_identity_test():
     assert "scenario" in validation.c_test_problem(broken, ctx)
     identity = {"template": "manifest_identity", "control": "C10", "name": "Identity", "args": {}}
     assert "not offered" in validation.c_test_problem(identity, ctx)
+
+
+def test_blank_padding_in_lists_is_dropped_but_a_real_sixth_hypothesis_still_fails():
+    from assureops_ai.validation import check_schema, validate
+
+    base = {"summary": "s", "retest_suggestions": [], "spans": []}
+    padded = {**base, "hypotheses": ["h1", "h2", "h3", "h4", "h5", ""]}  # gpt-oss-20b pads the list with ""
+    assert validate("E", padded, {"sources": {}, "test_ids": []})["status"] == "valid"
+    assert padded["hypotheses"] == ["h1", "h2", "h3", "h4", "h5"]  # the caller keeps the cleaned output
+    six = {**base, "hypotheses": ["h1", "h2", "h3", "h4", "h5", "h6"]}
+    assert validate("E", six, {"sources": {}, "test_ids": []})["status"] == "invalid_output"
+    assert check_schema("E", six)

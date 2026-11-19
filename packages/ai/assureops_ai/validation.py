@@ -63,7 +63,14 @@ def check_spans(spans: list[dict], sources: dict[str, str]) -> list[str]:
 
 
 def validate(phase: str, output: dict, ctx: dict) -> dict:
-    """Returns {"status": "valid"|"invalid_output"|"unsupported_claims", "problems": [...]}."""
+    """Returns {"status": "valid"|"invalid_output"|"unsupported_claims", "problems": [...]}.
+
+    Blank strings in top-level lists (e.g. a trailing "" after the last hypothesis) are padding, not content: they are
+    dropped in place before the schema check, so the caller keeps the cleaned output."""
+    if isinstance(output, dict):
+        for key, value in output.items():
+            if isinstance(value, list):
+                output[key] = [v for v in value if not (isinstance(v, str) and not v.strip())]
     problems = check_schema(phase, output)
     if problems:
         return {"status": "invalid_output", "problems": problems}

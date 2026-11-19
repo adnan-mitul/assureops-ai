@@ -12,7 +12,7 @@ The models need about 8–10 GB of RAM, so most free "app hosting" tiers (Render
 | Server | Oracle Cloud Always Free, Ampere A1: 4 ARM cores, 24 GB RAM, 200 GB disk (a card is needed to sign up; Always Free resources are not charged) |
 | Public address with HTTPS | A free DuckDNS subdomain (e.g. `assureops.duckdns.org`) plus Caddy, which gets Let's Encrypt certificates automatically. Alternatively, Cloudflare Tunnel if you own a domain |
 | E-mail | **Resend** free plan (3,000 e-mails a month): set `RESEND_API_KEY` in `dev.env`. Until you verify a sending domain in Resend, it only delivers to the e-mail address that owns the Resend account; other recipients are kept in `var/mail` with the reason. Brevo or a Gmail app password over SMTP also work |
-| External model (optional) | Groq free tier for phases F and G |
+| External model (optional) | Groq for phases A, C, E, F and G (no Ollama needed; the free tier is too small for full qualification, a paid key costs cents) |
 | Code and images | GitHub (this repository) |
 
 ## 1. Create the server

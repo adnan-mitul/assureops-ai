@@ -1,0 +1,134 @@
+# Continuous Delivery to a single Linux VPS via GHCR + SSH.
+# Runs automatically after the `ci` workflow passes on `main`, or manually via workflow_dispatch.
+# Configure repo variable VPS_DEPLOY_ENABLED=true and production environment secrets:
+#   VPS_HOST, VPS_USER, VPS_SSH_KEY, (optional) VPS_PORT, VPS_APP_DIR, GHCR_READ_TOKEN.
+name: cd-vps
+
+on:
+  workflow_run:
+    workflows: ["ci"]
+    types: [completed]
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      ref:
+        description: "Git ref or SHA to deploy (ignored if rollback=true)"
+        required: false
+        default: "main"
+      rollback:
+        description: "Roll back VPS to the previous :rollback image tags"
+        type: boolean
+        required: false
+        default: false
+
+permissions:
+  contents: read
+  packages: write
+
+env:
+  REGISTRY: ghcr.io
+
+jobs:
+  resolve:
+    name: Resolve deployment target
+    if: >-
+      (github.event_name == 'workflow_dispatch') ||
+      (github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.event == 'push')
+    runs-on: ubuntu-24.04
+    outputs:
+      sha: ${{ steps.meta.outputs.sha }}
+      image_prefix: ${{ steps.meta.outputs.image_prefix }}
+      rollback: ${{ github.event_name == 'workflow_dispatch' && inputs.rollback }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || inputs.ref }}
+          persist-credentials: false
+      - id: meta
+        run: |
+          echo "sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
+          owner_lc="$(printf '%s' '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')"
+          echo "image_prefix=ghcr.io/${owner_lc}/assureops" >> "$GITHUB_OUTPUT"
+
+  build-images:
+    name: Build & push ${{ matrix.name }} image
+    needs: resolve
+    if: needs.resolve.outputs.rollback != 'true'
+    runs-on: ubuntu-24.04
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: app
+            dockerfile: infra/api/Dockerfile
+            build_args: ""
+          - name: encoder
+            dockerfile: infra/encoder/Dockerfile
+            build_args: ""
+          - name: customer-web
+            dockerfile: infra/portal/Dockerfile
+            build_args: |
+              APP=customer-web
+              PORTAL_ID=customer-web
+          - name: staff-web
+            dockerfile: infra/portal/Dockerfile
+            build_args: |
+              APP=staff-web
+              PORTAL_ID=staff-web
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ needs.resolve.outputs.sha }}
+          persist-credentials: false
+      - uses: docker/setup-buildx-action@v3
+      - uses: docker/login-action@v3
+        with:
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+      - uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ${{ matrix.dockerfile }}
+          push: true
+          build-args: ${{ matrix.build_args }}
+          tags: |
+            ${{ needs.resolve.outputs.image_prefix }}-${{ matrix.name }}:${{ needs.resolve.outputs.sha }}
+            ${{ needs.resolve.outputs.image_prefix }}-${{ matrix.name }}:main
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+          labels: org.opencontainers.image.revision=${{ needs.resolve.outputs.sha }}
+
+  deploy-vps:
+    name: Deploy to VPS
+    needs: [resolve, build-images]
+    if: ${{ !cancelled() && (needs.resolve.outputs.rollback == 'true' || needs.build-images.result == 'success') && vars.VPS_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-24.04
+    environment: production
+    steps:
+      - name: Deploy over SSH
+        env:
+          VPS_HOST: ${{ secrets.VPS_HOST }}
+          VPS_USER: ${{ secrets.VPS_USER }}
+          VPS_PORT: ${{ secrets.VPS_PORT || '22' }}
+          VPS_APP_DIR: ${{ secrets.VPS_APP_DIR || '/opt/assureops-ai' }}
+          VPS_SSH_KEY: ${{ secrets.VPS_SSH_KEY }}
+          GHCR_USER: ${{ github.actor }}
+          GHCR_TOKEN: ${{ secrets.GHCR_READ_TOKEN || github.token }}
+          DEPLOY_SHA: ${{ needs.resolve.outputs.sha }}
+          IMAGE_PREFIX: ${{ needs.resolve.outputs.image_prefix }}
+          ROLLBACK: ${{ needs.resolve.outputs.rollback }}
+        run: |
+          set -euo pipefail
+          install -m 700 -d ~/.ssh
+          printf '%s\n' "$VPS_SSH_KEY" > ~/.ssh/deploy_key
+          chmod 600 ~/.ssh/deploy_key
+          ssh-keyscan -p "$VPS_PORT" -H "$VPS_HOST" >> ~/.ssh/known_hosts
+
+          if [ "$ROLLBACK" = "true" ]; then
+            ssh -i ~/.ssh/deploy_key -p "$VPS_PORT" "${VPS_USER}@${VPS_HOST}" \
+              "cd '$VPS_APP_DIR' && bash scripts/deploy/vps_deploy.sh --rollback"
+          else
+            printf '%s' "$GHCR_TOKEN" | ssh -i ~/.ssh/deploy_key -p "$VPS_PORT" "${VPS_USER}@${VPS_HOST}" \
+              "docker login ghcr.io -u '$GHCR_USER' --password-stdin >/dev/null && cd '$VPS_APP_DIR' && { bash scripts/deploy/vps_deploy.sh --sha '$DEPLOY_SHA' --registry '$IMAGE_PREFIX'; rc=\$?; docker logout ghcr.io >/dev/null 2>&1 || true; exit \$rc; }"
+          fi

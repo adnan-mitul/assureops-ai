@@ -71,15 +71,18 @@ It connects, verifies, has a developer propose and a reviewer activate the profi
 
 Models only propose (requirements, dependency links, catalogue tests, semantic signals, incident summaries, explanation drafts, screening scores); rules and reviewers decide. Every phase stays disabled until its exact model artifact has a qualification record for the current prompt and schema version.
 
-| Phase | Model (as planned) | Served by |
-|---|---|---|
-| A requirements | Granite-4.0-micro (3B) | local Ollama `granite4:micro` |
-| B dependencies, E incidents | Phi-4-mini (3.8B) | local Ollama `phi4-mini` |
-| C tests | Qwen2.5-Coder-1.5B | local Ollama `qwen2.5-coder:1.5b` |
-| D evidence | DeBERTa-v3-small NLI | local encoder service (pinned revision) |
-| F explanation | SmolLM2-1.7B | local Ollama `smollm2:1.7b` (Groq `openai/gpt-oss-20b` qualified as an approved external route) |
-| R retrieval | BGE-small-en-v1.5 | local encoder service; hybrid with BM25 |
-| G screening | Llama Prompt Guard 2 (86M) | Groq (approved external phase) |
+| Phase | Model (as planned) | Served by | Groq route (200-case v2 suite, 2026-10-29) |
+|---|---|---|---|
+| A requirements | Granite-4.0-micro (3B) | local Ollama `granite4:micro` | `openai/gpt-oss-20b` qualified: valid 0.94, recall 0.944, 0 critical |
+| B dependencies | Phi-4-mini (3.8B) | local Ollama `phi4-mini` | not qualified: gpt-oss-20b and -120b abstain (recall 0.28 / 0.31, floor 0.4); stays off, the reviewed rule map applies |
+| C tests | Qwen2.5-Coder-1.5B | local Ollama `qwen2.5-coder:1.5b` | `openai/gpt-oss-120b` with prompt C-4 qualified: valid 0.89, recall 0.904, 0 critical (gpt-oss-20b: valid 0.60) |
+| D evidence | DeBERTa-v3-small NLI | local encoder service (pinned revision) | — (private only) |
+| E incidents | Phi-4-mini (3.8B) | local Ollama `phi4-mini` | `openai/gpt-oss-20b` qualified: valid 0.96, recall 0.997, 0 critical |
+| F explanation | SmolLM2-1.7B | local Ollama `smollm2:1.7b` | `openai/gpt-oss-20b` qualified: valid 1.0, 0 critical |
+| R retrieval | BGE-small-en-v1.5 | local encoder service; hybrid with BM25 | — (private only) |
+| G screening | Llama Prompt Guard 2 (86M) | Groq | `meta-llama/llama-prompt-guard-2-86m` qualified: accuracy 1.0, 0 critical |
+
+Groq is an approved external provider for phases A, B, C, E, F and G. Without Ollama (for example a small cloud VM), set `GROQ_MAX_PARAMS_B` to cover the pinned models (gpt-oss-120b is 120B) and qualify each phase with `--provider groq`; phases A, B, C and E then send the workspace's requirements, components and incident events to Groq, so only workspaces that allow external processing use them.
 
 Setup on a CPU host: install Ollama, `bash scripts/start_models.sh` (Ollama on :8740 with models on `OLLAMA_MODELS`, encoder service on :8730), `ollama pull` the four generation models, `python scripts/fetch_models.py` for the pinned encoders, then `python scripts/qualify_phase.py --phase <X> --provider private --model <id> --record` for each phase. Groq needs `GROQ_ENABLED=true`, a server-side `GROQ_API_KEY`, a pinned model per phase and a workspace that allows external processing; `scripts/groq_models.py` lists account models against the ≤3.8B constraint, and a larger model needs an explicit operator exception (`GROQ_SIZE_EXCEPTION_MODEL`). A qualified private route always wins, and a private outage never turns into an external call.
 

@@ -132,3 +132,12 @@ def test_sandbox_runs_one_capsule_and_scope_violation_is_an_error(target):
     out = isolation.run_capsule(capsule, timeout=30)
     assert out["status"] == "error" and "outside the authorized scope" in out["error"]
     assert SECRET not in json.dumps(out)
+
+
+def test_scenario_rejects_non_object_assertions_instead_of_crashing():
+    steps = [{"name": "s1", "method": "GET", "path": "/x"}]
+    ok = {"steps": steps, "assert": [{"any": [{"step": "s1", "op": "eq", "path": "status", "expected": 200}]}]}
+    templates.validate_args("scenario", ok)
+    for bad in ({"steps": steps, "assert": [{"any": ["s1 returns 200"]}]}, {"steps": steps, "assert": ["s1 returns 200"]}):
+        with pytest.raises(templates.TemplateError):
+            templates.validate_args("scenario", bad)

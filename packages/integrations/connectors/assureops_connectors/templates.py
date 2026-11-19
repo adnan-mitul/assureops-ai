@@ -20,6 +20,8 @@ REQ = {"type": "object", "required": ["method", "path"], "properties": {
 ACTOR = {"type": "string", "minLength": 1}
 STATUSES = {"type": "array", "items": {"type": "integer"}, "minItems": 1}
 STRINGS = {"type": "array", "items": {"type": "string"}}
+ASSERTION = {"type": "object", "required": ["step", "op"], "properties": {"step": {"type": "string"}, "op": {"enum": list(OPERATORS)},
+                                                                       "path": {"type": "string"}}}
 
 TEMPLATES: dict[str, dict] = {
     "scenario": {
@@ -34,9 +36,8 @@ TEMPLATES: dict[str, dict] = {
                     "path": REQ["properties"]["path"], "body": {}, "headers": {"type": "object"}, "capture": {"type": "object"},
                     "parallel": {"type": "integer"}, "repeat": {"type": "integer"}}}]}},
             "assert": {"type": "array", "minItems": 1, "items": {"anyOf": [
-                {"type": "object", "required": ["any"], "properties": {"any": {"type": "array", "minItems": 1}}},
-                {"type": "object", "required": ["step", "op"], "properties": {"step": {"type": "string"}, "op": {"enum": list(OPERATORS)},
-                                                                              "path": {"type": "string"}}}]}},
+                {"type": "object", "required": ["any"], "properties": {"any": {"type": "array", "minItems": 1, "items": ASSERTION}}},
+                ASSERTION]}},
             "vars": {"type": "object"}}},
     },
     "manifest_identity": {

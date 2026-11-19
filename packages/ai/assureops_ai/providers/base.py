@@ -118,8 +118,11 @@ class OpenAICompatible:
         if status != "succeeded":
             message = ""
             try:
-                message = str(res.json().get("error", {}).get("message", ""))[:300]
-            except ValueError:
+                error = res.json().get("error", {})
+                message = str(error.get("message", ""))[:300]
+                if error.get("code") == "json_validate_failed":  # the model's output broke the requested JSON: its failure, not the provider's
+                    status = "invalid_output"
+            except (ValueError, AttributeError):
                 pass
             return ProviderResult(status, self.name, model, request_id=request_id, latency_ms=latency, error=f"HTTP {res.status_code}: {message}")
         try:
