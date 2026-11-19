@@ -55,7 +55,7 @@ def test_promotion_needs_qualification_evidence_and_a_second_person_and_rollback
     a, b = candidates
     with platform_session() as p:
         ra = lifecycle.register(p, phase=PHASE, provider="private", model=a, actor="op1").id
-        assert _code(lambda: lifecycle.register(p, phase=PHASE, provider="groq", model="x", actor="op1")) == "invalid_route"  # C is not approved for Groq
+        assert _code(lambda: lifecycle.register(p, phase="D", provider="groq", model="x", actor="op1")) == "invalid_route"  # D is private-only (not approved for Groq)
     _to(ra, "holdout", "op1")
     with platform_session() as p:
         assert _code(lambda: lifecycle.transition(p, p.get(ModelRouteStage, ra), to="shadow", actor="op1", note="x")) == "not_qualified"
