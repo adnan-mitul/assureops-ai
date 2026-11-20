@@ -4,8 +4,8 @@ import {
   ShieldCheck, Terminal, Workflow,
 } from "lucide-react";
 import Link from "next/link";
-
-export const dynamic = "force-dynamic";
+import { connection } from "next/server";
+import { Suspense } from "react";
 
 export const metadata: Metadata = {
   title: "AssureOps AI — Live Architecture, Whitepaper & System Docs",
@@ -98,8 +98,41 @@ const MCP_TOOLS = [
   ["export_customers()", "Admin-only export endpoint used to verify role-based access enforcement."],
 ];
 
-export default async function DocsPage() {
+async function LiveApiStatus() {
+  await connection();
   const api = await probeApiHealth();
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-lg font-bold">
+          <Activity className="size-5 text-brand-700" aria-hidden /> Live System Status
+        </h2>
+        <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${api.ok ? "bg-brand-100 text-brand-800" : "bg-amber-50 text-amber-800"}`}>
+          <CheckCircle2 className="size-3.5" aria-hidden /> {api.label}
+        </span>
+      </div>
+      <p className="mt-1 text-xs text-muted">Real-time server probe against internal FastAPI `/health` ({api.checkedAt})</p>
+    </>
+  );
+}
+
+function LiveApiStatusFallback() {
+  return (
+    <>
+      <div className="flex items-center justify-between gap-2">
+        <h2 className="flex items-center gap-2 text-lg font-bold">
+          <Activity className="size-5 text-brand-700" aria-hidden /> Live System Status
+        </h2>
+        <span className="inline-flex items-center gap-1.5 rounded-full bg-brand-50 px-2.5 py-1 text-xs font-semibold text-brand-800">
+          Checking API…
+        </span>
+      </div>
+      <p className="mt-1 text-xs text-muted">Real-time server probe against internal FastAPI `/health`</p>
+    </>
+  );
+}
+
+export default function DocsPage() {
 
   return (
     <div className="mx-auto max-w-6xl space-y-12 pb-12 text-ink">
@@ -158,15 +191,9 @@ export default async function DocsPage() {
         {/* Live System Dashboard */}
         <aside aria-label="Live system telemetry" className="flex flex-col justify-between rounded-2xl border border-line bg-surface p-6 shadow-sm">
           <div>
-            <div className="flex items-center justify-between gap-2">
-              <h2 className="flex items-center gap-2 text-lg font-bold">
-                <Activity className="size-5 text-brand-700" aria-hidden /> Live System Status
-              </h2>
-              <span className={`inline-flex items-center gap-1.5 rounded-full px-2.5 py-1 text-xs font-semibold ${api.ok ? "bg-brand-100 text-brand-800" : "bg-amber-50 text-amber-800"}`}>
-                <CheckCircle2 className="size-3.5" aria-hidden /> {api.label}
-              </span>
-            </div>
-            <p className="mt-1 text-xs text-muted">Real-time server probe against internal FastAPI `/health` ({api.checkedAt})</p>
+            <Suspense fallback={<LiveApiStatusFallback />}>
+              <LiveApiStatus />
+            </Suspense>
 
             <dl className="mt-5 grid grid-cols-2 gap-3 text-sm">
               <div className="rounded-xl border border-line bg-canvas p-3">
