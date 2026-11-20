@@ -104,6 +104,7 @@ export default function LandingPage() {
             <a href="#how" className="hidden rounded-md px-2 py-1 hover:bg-brand-50 md:inline">How it works</a>
             <a href="#tests" className="hidden rounded-md px-2 py-1 hover:bg-brand-50 md:inline">What we test</a>
             <a href="#pricing" className="rounded-md px-2 py-1 hover:bg-brand-50">Pricing</a>
+            <Link href="/docs" className="rounded-md px-2 py-1 font-medium text-brand-700 hover:bg-brand-50">Docs</Link>
             <a href="#faq" className="hidden rounded-md px-2 py-1 hover:bg-brand-50 sm:inline">FAQ</a>
             <Link href={SIGN_IN} className="inline-flex items-center gap-1.5 rounded-lg border border-line px-3 py-2 font-medium hover:bg-brand-50">
               <LogIn className="size-4" aria-hidden /> Sign in
@@ -291,7 +292,7 @@ export default function LandingPage() {
       <footer className="border-t border-line bg-white">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-6 text-sm text-muted sm:px-8">
           <span className="flex items-center gap-2"><ShieldCheck className="size-4 text-brand-700" aria-hidden /> AssureOps AI. Evidence-backed readiness, not a certification.</span>
-          <span className="flex gap-4"><a href="#pricing" className="hover:text-ink">Pricing</a><Link href="/contact" className="hover:text-ink">Contact</Link><Link href={SIGN_IN} className="hover:text-ink">Sign in</Link></span>
+          <span className="flex gap-4"><a href="#pricing" className="hover:text-ink">Pricing</a><Link href="/docs" className="hover:text-ink">Docs</Link><Link href="/contact" className="hover:text-ink">Contact</Link><Link href={SIGN_IN} className="hover:text-ink">Sign in</Link></span>
         </div>
       </footer>
     </div>
